@@ -1,0 +1,206 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Menu, X, User, Shield } from 'lucide-react';
+
+export default function Navigation() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string>('');
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token') || localStorage.getItem('bossToken');
+    if (token) {
+      setIsAuthenticated(true);
+      // Try to get user role from stored user data
+      const userData = localStorage.getItem('user') || localStorage.getItem('bossUser');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setUserRole(user.role);
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+        }
+      }
+    }
+  }, []);
+
+  const navItems = [
+    { name: 'Features', href: '/features' },
+    { name: 'Solutions', href: '/solutions' },
+    { name: 'How It Works', href: '/how-it-works' },
+    { name: 'Pricing', href: '/pricing' },
+    { name: 'About', href: '/about' },
+    { name: 'FAQ', href: '/faq' },
+    { name: 'Contact', href: '/contact' },
+  ];
+
+  const dashboardItems = [
+    { name: 'Staff', href: '/dashboard/staff', icon: User },
+  ];
+
+  const bossItems = [
+    { name: 'Boss Panel', href: '/bossdashboard', icon: Shield }
+  ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('bossToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('bossUser');
+    setIsAuthenticated(false);
+    setUserRole('');
+    window.location.href = '/';
+  };
+
+  return (
+    <nav className="bg-black text-white shadow-sm sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-3">
+            <Image 
+              src="/logo.png" 
+              alt="TapTab POS Logo" 
+              width={100} 
+              height={40}
+              className="rounded-lg"
+            />
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                href={item.href}
+                className="text-white hover:text-[#FF4B30] transition-colors duration-150"
+              >
+                {item.name}
+              </Link>
+            ))}
+            
+            {isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                {userRole === 'SUPER_ADMIN' ? (
+                  bossItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-1"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </Link>
+                  ))
+                ) : (
+                  dashboardItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-1"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </Link>
+                  ))
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="text-white hover:text-[#FF4B30] transition-colors duration-150"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="bg-[#FF4B30] hover:bg-[#E63E29] text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-150 text-sm"
+              >
+                Login
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="text-white hover:text-[#FF4B30] transition-colors duration-150"
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-black border-t border-[#333]">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className="block px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {item.name}
+                </Link>
+              ))}
+              
+              {isAuthenticated ? (
+                <>
+                  {userRole === 'SUPER_ADMIN' ? (
+                    bossItems.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className="block px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-2"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.name}</span>
+                      </Link>
+                    ))
+                  ) : (
+                    dashboardItems.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className="block px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-2"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.name}</span>
+                      </Link>
+                    ))
+                  )}
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsOpen(false);
+                    }}
+                    className="block w-full text-left px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <Link
+                  href="/login"
+                  className="block px-3 py-2 bg-[#FF4B30] hover:bg-[#E63E29] text-white rounded-lg mx-3 mt-4 text-center text-sm transition-all duration-150"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+} 

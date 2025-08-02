@@ -1,0 +1,39 @@
+{
+  "name": "TapTab POS - Smart Restaurant Point of Sale",
+  "short_name": "TapTab POS",
+  "description": "Revolutionize your restaurant with QR ordering, smart printing, and real-time management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fff7ed",
+  "theme_color": "#f97316",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "food"],
+  "lang": "en",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "screenshots": [
+    {
+      "src": "/logo.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "TapTab POS Dashboard"
+    }
+  ]
+} 
