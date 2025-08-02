@@ -30,6 +30,14 @@ export default function BossLoginPage() {
         // Store boss token separately
         localStorage.setItem('bossToken', data.token);
         localStorage.setItem('bossUser', JSON.stringify(data.user));
+        
+        // Console log the boss token for debugging
+        console.log('👑 Boss login successful!');
+        console.log('📧 Boss email:', data.user.email);
+        console.log('👤 Boss role:', data.user.role);
+        console.log('🔑 Boss token:', data.token);
+        console.log('📝 Full boss data:', data.user);
+        
         router.push('/bossdashboard');
       } else {
         setError(data.message || 'Login failed');

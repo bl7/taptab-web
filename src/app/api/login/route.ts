@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
       const token = generateToken(payload);
 
-      return NextResponse.json({
+      const response = {
         user: {
           id: user.id,
           email: user.email,
@@ -76,7 +76,15 @@ export async function POST(request: NextRequest) {
           },
         },
         token,
-      });
+      };
+
+      // Console log the token and entire response when logged in
+      console.log('=== LOGIN SUCCESS ===');
+      console.log('Token:', token);
+      console.log('Full Response:', JSON.stringify(response, null, 2));
+      console.log('=====================');
+
+      return NextResponse.json(response);
     }
 
     return NextResponse.json(

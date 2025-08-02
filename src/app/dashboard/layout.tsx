@@ -40,6 +40,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                           <a href="/dashboard/menu" className="flex items-center px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
                             <span className="text-sm">Menu Management</span>
                           </a>
+                          <a href="/dashboard/tables" className="flex items-center px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
+                            <span className="text-sm">Table Management</span>
+                          </a>
                           <a href="/dashboard/analytics" className="flex items-center px-4 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg">
                             <span className="text-sm">Analytics</span>
                           </a>

@@ -85,6 +85,14 @@ function LoginForm() {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
+      // Console log the token for debugging
+      console.log('🔐 Login successful!');
+      console.log('📧 User email:', data.user.email);
+      console.log('👤 User role:', data.user.role);
+      console.log('🏪 Tenant:', data.user.tenant?.name || 'N/A');
+      console.log('🔑 Token:', data.token);
+      console.log('📝 Full user data:', data.user);
+      
       // Redirect to dashboard
       router.push('/dashboard/staff');
     } catch (error: unknown) {

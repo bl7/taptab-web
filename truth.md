@@ -1,233 +1,176 @@
-# Taptab POS - Unified System Specification (Cursor Source of Truth)
 
-**Project**: Taptab POS  
-**Type**: Multi-tenant SaaS Restaurant POS System  
-**Stack**: Next.js 14+ (App Router), PostgreSQL + Redis, Android (Capacitor), PWA  
-**Target Market**: Small to medium restaurants, cafes, food trucks
+🌐 TAPTAB WEBSITE DRAFT
+Tagline: “Smart Ordering. Happy Tables.”
 
----
+🔁 1. Site Map Overview
+Page	URL	SEO Purpose
+Home	/	Keyword-rich landing
+Features	/features	POS + QR ordering keywords
+How it Works	/how-it-works	Funnel for user understanding
+Pricing	/pricing	Monetization & plan conversion
+FAQ	/faq	SEO-rich queries & organic traffic
+Contact	/contact	Trust, conversion
+Dashboard (Login)	/login	Auth landing
 
-## 🏗️ Architecture Overview
+🎨 2. Vibe & Aesthetic
+Visual Style: Vector illustrations of restaurant staff, guests, kitchens, cozy hospitality scenes
 
-### Multi-Tenant Structure
-- **Tenant Isolation**: Row-level security with `tenant_id` on all tables
-- **Shared Infrastructure**: Single database, Redis cache, tenant-aware queries
-- **Scalability**: Horizontal scaling via PgBouncer, optional read replicas
-- **Branding**: White-labeled per tenant with custom logo/color
+Inspiration: The image you sent — curved containers, modern sans-serif fonts, warm playful colors (similar to Stripe, Notion, Framer)
 
-### Tech Stack
-```
-Frontend: Next.js 14 (App Router) + TypeScript + Tailwind
-Backend: Next.js API Routes + tRPC + PostgreSQL + Prisma (for schema only)
-Database Access: Direct PG SQL queries for CRUD
-Cache: Redis (sessions, queue)
-Mobile: Capacitor Android app + PWA
-Real-time: SSE + WebSocket fallback
-Printer Comm: Bluetooth via Capacitor plugin
-```
+Animations:
 
----
-### DB rule
-```
-use prisma only to make the tables, use pg for CRUD 
-```
+GSAP + Framer Motion
 
-## 🔐 Authentication & Roles
+Floating stars/steam effects around food
 
-### Roles & Permissions
-```ts
-enum Role {
-  SUPER_ADMIN = 'super_admin',
-  TENANT_ADMIN = 'tenant_admin',
-  MANAGER = 'manager',
-  CASHIER = 'cashier',
-  WAITER = 'waiter',
-  KITCHEN = 'kitchen',
-  READONLY = 'readonly'
-}
-```
+Table order animations
 
-- Admins can create usernames/passwords for staff
-- Password + email-based login, OTP email verification
-- Password reset flow with one-time secure link
-- Multi-admin per tenant supported
-- Session management with refresh tokens & Redis blacklist
-- PIN-based switching for staff
-- Audit log for critical operations
+Sticky pricing CTA
 
----
+🏠 3. Home Page (/)
+Hero Section:
+Title: “Revolutionize Table Service with TapTab”
 
-## 📱 Platform Strategy
+Subtitle: “From QR ordering to smart printing, TapTab makes restaurants run smoother.”
 
-### Devices
-| Type | Use | Auto Print | Notes |
-|------|-----|------------|-------|
-| Admin Tablet | Full control | ✅ | Main POS with kitchen printer via Bluetooth |
-| Waiter Tablet | Order + POS | ❌ | Manual print only |
-| Phone | Waiter/Staff | ❌ | PWA/manual only |
-| Kitchen Display | Orders | ✗ | Browser/PWA |
-| Customer Device | Ordering | ✗ | QR menu only |
+CTA: Try it Free and See How It Works
 
-### Offline Strategy
-- App will not function offline for now
-- Queue printing & local retry logic for failed print jobs
-- Orders persist locally if connection fails (sync on restore)
+Features Preview:
+Icons for: QR Menu, Waiter App, Bluetooth Printing, Admin Dashboard
 
----
+Visual:
+Restaurant scene with guests scanning QR
 
-## 💡 UI/UX Development Rules
-- **Framework**: Tailwind CSS
-- **Design System**: Minimalist, modern UI
-- **Layout**: Grid-based, mobile/tablet first
-- **Aesthetics**: Soft shadows, rounded corners, bold typography
-- **Performance**: Lazy load routes, image compression, CDN assets
-- **Components**: Use `shadcn/ui`, `lucide-react`, `framer-motion`
-- **Print Status**: Always visible retry/error indicator
+Waiter holding a tablet with TapTab UI
 
----
+Social Proof:
+“Trusted by 500+ Restaurants in the UK”
 
-## 🔌 Printer Integration
+Partner logos (filler if none yet)
 
-### Plugin
-- `cordova-plugin-bluetooth-serial` + `@awesome-cordova-plugins/bluetooth-serial`
+Testimonials:
+Carousel of 3 happy owners with photos
 
-### Behavior
-- **Admin device** auto-connects printer on boot
-- **Only one printer** connected at a time (per branch)
-- **Auto printing** for new QR/delivery/POS orders
-- **Manual print** allowed on waiter device
-- **Print retry queue** (local with retries & fail state)
-- **Print templates** vary by receipt type & tenant
-- **Two receipts per order**: kitchen + customer
+CTA Strip:
+“Take orders in 30 seconds flat – Start Free Today”
 
----
+⚙️ 4. Features Page (/features)
+Break features by use-case:
 
-## 🍽️ Menu Management
-- Live updates from dashboard, real-time reflect in all apps
-- Supports: modifiers, variants, combos, tags
-- Time-based availability
-- Translations, nutritional info, WebP images
+🪑 Guest Features
+QR table ordering
 
----
+Real-time order status
 
-## 🛒 Order System
-- QR code ordering from customer with no waiter intervention
-- Waiter can mark as served/completed
-- Guest can order multiple times per session/table
-- Cancel order allowed (logged with reason)
-- Order state machine:
-```text
-DRAFT → PENDING → CONFIRMED → PREPARING → READY → SERVED → COMPLETED
-                              ↓
-                          CANCELLED
-```
-- Waiter can modify order before serving
+Multi-language support
 
----
+🧍 Staff Features
+Waiter tablet app
 
-## 💳 Payments
+Manual Bluetooth print override
 
-### Supported Methods
-```ts
-enum PaymentMethod {
-  CASH = 'cash',
-  CARD = 'card',
-  DIGITAL_WALLET = 'digital_wallet',
-  SPLIT = 'split',
-  VOUCHER = 'voucher',
-  ACCOUNT = 'account'
-}
-```
-- Customers can optionally pay during QR order (payment optional)
-- Waiter confirms final payment manually
-- Supports partial and split payments
-- Refund and tip tracking
-- No Stripe, use native Android payment APIs if needed
+Cancel/edit tickets
 
----
+Order status tracking (served, pending)
 
-## 🔄 Delivery Platform Integration
-- Free method only (no paid APIs)
-- Connect via webhook or polling
-- Auto print delivery orders as they come
-- Separate receipt template per platform
-- Retry failed fetches and print
+👨‍🍳 Kitchen/Printer
+One-click print to kitchen from Admin device
 
-```ts
-interface DeliveryIntegration {
-  platform: 'ubereats' | 'doordash' | 'deliveroo';
-  method: 'webhook' | 'manual_entry';
-  features: { orderSync: true; basicPrinting: true }
-}
-```
+Auto printing & retries
 
----
+Offline mode queue
 
-## 📊 Reporting & Dashboard
-- Order status, daily revenue, active orders
-- Staff performance, payment breakdown
-- Live dashboard for POS view + print status
+🧑‍💻 Admin Dashboard
+Menu sync
 
----
+Modifier/tag support
 
-## 🔄 Sync & Storage
-- All orders synced to central server
-- Local SQLite for temporary storage & retry
-- Image & asset CDN caching
+Printer pairing
 
----
+Table management
 
-## 🏪 Multi-location + Multi-tenant
-- Fully multi-tenant
-- White-labeled per restaurant
-- Separate menus, branding, printers, dashboards per tenant
-- Shared DB with tenant-aware Prisma schema
-- `tenant_id` in all tables; enforce with RLS
+Each block animated in from left/right with framer-motion.
 
----
+💡 5. How It Works (/how-it-works)
+Step-by-step illustration:
 
-## 🧪 Dev Rules
-- Prisma: only for schema definition
-- CRUD: all logic via direct PostgreSQL queries
-- Backend: Next.js API + tRPC (for internal calls)
-- Auth: implemented using tRPC + JWT + Redis sessions
-- Email: OTP login, password reset, email verification via Resend
-- Redis: rate limiting, sessions, print queue
+Guest scans QR → selects items
 
----
+Kitchen receives print
 
-## 🧱 Project Kickoff Steps
-1. Implement multi-tenant auth system (email, OTP, password reset)
-2. Setup RLS in PostgreSQL
-3. Build admin dashboard to manage staff, menu, printers
-4. Add Bluetooth printer logic in Capacitor app
-5. Add QR ordering + real-time order flow
-6. Design clean mobile-first POS UI
+Waiter updates status
 
----
+Admin tracks orders + syncs
 
-## 🧩 Sample Schema Snippets
-```sql
-CREATE POLICY tenant_isolation ON orders 
-FOR ALL TO authenticated_users 
-USING (tenant_id = current_tenant_id());
+With animated SVG line between them + interaction on hover.
 
-CREATE TABLE audit_log (
-  id BIGSERIAL PRIMARY KEY,
-  tenant_id UUID NOT NULL,
-  user_id UUID,
-  action VARCHAR(50),
-  table_name VARCHAR(50),
-  record_id UUID,
-  old_values JSONB,
-  new_values JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
+💰 6. Pricing Page (/pricing)
+Plan	Price	Features
+Starter	Free	Up to 5 tables, QR ordering
+Pro	£29/mo	Bluetooth printing, dashboard, modifiers
+Premium	£59/mo	All features, unlimited devices
 
----
+Animated pricing switcher (monthly/yearly)
 
-## ✅ Source of Truth
-This document is the authoritative source for the Taptab POS system. Cursor and all collaborators should refer to this for architecture, behavior, and implementation rules.
+Comparison Table:
+Tick & cross layout for feature comparison
 
-Update this document as requirements evolve.
+❓ 7. FAQ Page (/faq)
+Use structured data (FAQPage) for SEO.
+Sample questions:
+
+How do guests place orders?
+Guests scan a QR code and browse your live menu — no app needed.
+
+Does TapTab work offline?
+Yes. Orders are queued and synced when back online.
+
+Can we use our existing printers?
+TapTab works with most Sunmi/Android-based Bluetooth thermal printers.
+
+Can I control which orders get printed?
+Yes, only admin devices can auto-print. Staff can manually trigger print too.
+
+📬 8. Contact Page (/contact)
+Contact Form (Netlify/NextJS API)
+
+Email + WhatsApp link
+
+Support hours
+
+Map (optional)
+
+🔐 9. Login Page (/login)
+Simple branded form:
+
+Email + password
+
+OTP flow ready (in future)
+
+CTA: “Need a restaurant account? [Start Free Trial]”
+
+🔧 10. Technical Plan
+Tech	Stack
+Frontend	Next.js + Tailwind + Framer Motion
+Backend	Next.js API + PostgreSQL via pg
+Auth	Magic link / password login (NextAuth or custom)
+Print Logic	Capacitor plugin for Sunmi/Bluetooth
+PWA	Mobile-friendly, offline queueing
+SEO	Structured Data, Open Graph, full meta tagging
+
+✅ 11. Cursor-Compatible TODO List (in .taptab.todo.md)
+markdown
+Copy
+Edit
+- [ ] Create Next.js project
+- [ ] Setup Tailwind CSS
+- [ ] Add GSAP / Framer Motion
+- [ ] Build `/` Home page with animated hero + CTA
+- [ ] Build `/features` with icon sections
+- [ ] Build `/how-it-works` timeline
+- [ ] Build `/pricing` with toggle + table
+- [ ] Build `/faq` with schema markup
+- [ ] Build `/contact` with form
+- [ ] Implement SEO meta tags on all pages
+- [ ] Add `/login` with future-proofed flow
+- [ ] Setup PWA capabilities

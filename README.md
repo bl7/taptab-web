@@ -5,7 +5,7 @@ A modern, cloud-based Point of Sale system designed for small to medium restaura
 ## 🏗️ Architecture
 
 - **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
-- **Backend**: Next.js API Routes + tRPC + PostgreSQL + Prisma
+- **Backend**: Next.js API Routes + tRPC + PostgreSQL
 - **Authentication**: JWT + Redis sessions + OTP email verification
 - **Database**: PostgreSQL with Row-Level Security (RLS)
 - **Cache**: Redis for sessions, rate limiting, and queues
@@ -54,15 +54,12 @@ NEXTAUTH_SECRET="your-nextauth-secret"
 npm install
 ```
 
-2. Generate Prisma client:
-```bash
-npm run db:generate
-```
+2. Set up environment variables:
+   ```bash
+   cp env.example .env
+   ```
 
-3. Push database schema:
-```bash
-npm run db:push
-```
+3. Set up your external restaurant API backend
 
 4. Start development server:
 ```bash
@@ -152,9 +149,9 @@ npm run build            # Build for production
 npm run start            # Start production server
 
 # Database
-npm run db:generate      # Generate Prisma client
-npm run db:push          # Push schema to database
-npm run db:studio        # Open Prisma Studio
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run start            # Start production server
 
 # Linting
 npm run lint             # Run ESLint
