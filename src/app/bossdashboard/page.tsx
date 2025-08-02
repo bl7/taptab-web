@@ -60,7 +60,7 @@ export default function BossDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading dashboard...</p>
+          <p className="mt-4 text-black">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -71,7 +71,7 @@ export default function BossDashboard() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">Super Admin Dashboard</h1>
-        <p className="text-gray-400 mt-2">System overview and management</p>
+        <p className="text-black mt-2">System overview and management</p>
       </div>
 
       {/* Stats Grid */}
@@ -79,7 +79,7 @@ export default function BossDashboard() {
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Users</p>
+              <p className="text-black text-sm">Total Users</p>
               <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
             </div>
             <div className="bg-blue-600 p-3 rounded-lg">
@@ -91,7 +91,7 @@ export default function BossDashboard() {
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Total Restaurants</p>
+              <p className="text-black text-sm">Total Restaurants</p>
               <p className="text-2xl font-bold text-white">{stats.totalTenants}</p>
             </div>
             <div className="bg-green-600 p-3 rounded-lg">
@@ -103,7 +103,7 @@ export default function BossDashboard() {
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Active Users</p>
+              <p className="text-black text-sm">Active Users</p>
               <p className="text-2xl font-bold text-white">{stats.activeUsers}</p>
             </div>
             <div className="bg-purple-600 p-3 rounded-lg">
@@ -115,7 +115,7 @@ export default function BossDashboard() {
         <div className="bg-gray-800 rounded-lg p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-400 text-sm">Active Restaurants</p>
+              <p className="text-black text-sm">Active Restaurants</p>
               <p className="text-2xl font-bold text-white">{stats.activeTenants}</p>
             </div>
             <div className="bg-orange-600 p-3 rounded-lg">
@@ -134,7 +134,7 @@ export default function BossDashboard() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Manage Users</h3>
-              <p className="text-gray-400 text-sm">View and manage all system users</p>
+              <p className="text-black text-sm">View and manage all system users</p>
             </div>
           </div>
           <div className="mt-4">
@@ -155,7 +155,7 @@ export default function BossDashboard() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Restaurants</h3>
-              <p className="text-gray-400 text-sm">Manage restaurant tenants</p>
+              <p className="text-black text-sm">Manage restaurant tenants</p>
             </div>
           </div>
           <div className="mt-4">
@@ -176,7 +176,7 @@ export default function BossDashboard() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Analytics</h3>
-              <p className="text-gray-400 text-sm">System-wide analytics and reports</p>
+              <p className="text-black text-sm">System-wide analytics and reports</p>
             </div>
           </div>
           <div className="mt-4">
@@ -201,7 +201,7 @@ export default function BossDashboard() {
             </div>
             <div>
               <p className="text-white text-sm">New restaurant &quot;Pizza Palace&quot; registered</p>
-              <p className="text-gray-400 text-xs">2 hours ago</p>
+              <p className="text-black text-xs">2 hours ago</p>
             </div>
           </div>
           
@@ -211,7 +211,7 @@ export default function BossDashboard() {
             </div>
             <div>
               <p className="text-white text-sm">5 new users added to &quot;Burger Joint&quot;</p>
-              <p className="text-gray-400 text-xs">4 hours ago</p>
+              <p className="text-black text-xs">4 hours ago</p>
             </div>
           </div>
           
@@ -221,7 +221,7 @@ export default function BossDashboard() {
             </div>
             <div>
               <p className="text-white text-sm">System maintenance completed</p>
-              <p className="text-gray-400 text-xs">1 day ago</p>
+              <p className="text-black text-xs">1 day ago</p>
             </div>
           </div>
         </div>

@@ -68,13 +68,13 @@ export default function BlogPage() {
       {/* Hero Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6">
+          <h1 className="text-5xl md:text-6xl font-bold text-black mb-6">
             Restaurant Industry
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 block">
               Insights & Tips
             </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+          <p className="text-xl text-black max-w-3xl mx-auto mb-8">
             Expert advice, industry trends, and practical tips to help your restaurant thrive in the digital age.
           </p>
           
@@ -111,7 +111,7 @@ export default function BlogPage() {
       {/* Featured Post */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Featured Article</h2>
+          <h2 className="text-3xl font-bold text-black mb-8">Featured Article</h2>
           {blogPosts.filter(post => post.featured).map((post) => (
             <motion.div
               key={post.title}
@@ -143,8 +143,8 @@ export default function BlogPage() {
                       {post.readTime}
                     </div>
                   </div>
-                  <h3 className="text-3xl font-bold text-gray-900 mb-4">{post.title}</h3>
-                  <p className="text-gray-600 text-lg mb-6">{post.excerpt}</p>
+                  <h3 className="text-3xl font-bold text-black mb-4">{post.title}</h3>
+                  <p className="text-black text-lg mb-6">{post.excerpt}</p>
                   <button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-200 flex items-center gap-2">
                     Read Full Article
                     <ArrowRight className="w-4 h-4" />
@@ -159,7 +159,7 @@ export default function BlogPage() {
       {/* Blog Posts Grid */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Latest Articles</h2>
+          <h2 className="text-3xl font-bold text-black mb-8">Latest Articles</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {blogPosts.filter(post => !post.featured).map((post, index) => (
               <motion.div
@@ -185,8 +185,8 @@ export default function BlogPage() {
                       {post.readTime}
                     </div>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{post.title}</h3>
-                  <p className="text-gray-600 mb-4">{post.excerpt}</p>
+                  <h3 className="text-xl font-bold text-black mb-3">{post.title}</h3>
+                  <p className="text-black mb-4">{post.excerpt}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500 text-sm">{post.date}</span>
                     <button className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-1">
@@ -214,7 +214,7 @@ export default function BlogPage() {
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-full text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white"
+              className="flex-1 px-4 py-3 rounded-full text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white"
             />
             <button className="bg-white text-orange-600 px-6 py-3 rounded-full font-semibold hover:shadow-lg transition-all duration-200">
               Subscribe

@@ -58,12 +58,12 @@ export interface Order {
 
 export interface Table {
   id: string;
-  number: number;
+  number: string;
   capacity: number;
   status: 'available' | 'occupied' | 'reserved' | 'cleaning';
   location?: string;
   currentOrderId?: string;
-  tenantId: string;
+  tenantId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -143,6 +143,13 @@ class APIClient {
   ): Promise<T> {
     const token = localStorage.getItem('token') || localStorage.getItem('bossToken');
     
+    console.log('🔗 API Request Details:');
+    console.log('  Base URL:', this.baseURL);
+    console.log('  Endpoint:', endpoint);
+    console.log('  Full URL:', `${this.baseURL}${endpoint}`);
+    console.log('  Token exists:', !!token);
+    console.log('  Token preview:', token ? `${token.substring(0, 20)}...` : 'No token');
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -152,10 +159,19 @@ class APIClient {
       ...options,
     };
 
+    console.log('  Request headers:', config.headers);
+    console.log('  Request method:', config.method || 'GET');
+
     const response = await fetch(`${this.baseURL}${endpoint}`, config);
     const data: APIResponse<T> = await response.json();
 
+    console.log('📡 API Response Details:');
+    console.log('  Status:', response.status);
+    console.log('  Status text:', response.statusText);
+    console.log('  Response data:', data);
+
     if (!response.ok) {
+      console.error('❌ API Error:', response.status, data);
       throw new APIError(
         response.status,
         data.error?.code || 'UNKNOWN_ERROR',
@@ -185,22 +201,29 @@ class APIClient {
   // Menu endpoints
   async getMenuItems(categoryId?: string): Promise<{ items: MenuItem[] }> {
     const params = categoryId ? `?category=${categoryId}` : '';
-    const response = await this.request<{ data: { items: MenuItem[] } }>(`/menu/items${params}`);
-    return { items: response.data.items };
+    console.log('🍽️ Fetching menu items from:', `${this.baseURL}/menu/items${params}`);
+    const response = await this.request<{ items: MenuItem[] }>(`/menu/items${params}`);
+    console.log('🍽️ Menu items response:', response);
+    console.log('🍽️ Menu items array:', response.items);
+    console.log('🍽️ Number of menu items:', response.items?.length || 0);
+    if (response.items && response.items.length > 0) {
+      console.log('🍽️ First menu item example:', response.items[0]);
+    }
+    return { items: response.items };
   }
 
   async createMenuItem(data: {
     name: string;
     description?: string;
     price: number;
-    categoryId: string;
+    categoryId?: string;
     image?: string;
   }): Promise<{ item: MenuItem }> {
-    const response = await this.request<{ data: { item: MenuItem } }>('/menu/items', {
+    const response = await this.request<{ item: MenuItem }>('/menu/items', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return { item: response.data.item };
+    return { item: response.item };
   }
 
   async updateMenuItem(
@@ -214,34 +237,41 @@ class APIClient {
       isActive?: boolean;
     }
   ): Promise<{ item: MenuItem }> {
-    const response = await this.request<{ data: { item: MenuItem } }>(`/menu/items/${id}`, {
+    const response = await this.request<{ item: MenuItem }>(`/menu/items/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return { item: response.data.item };
+    return { item: response.item };
   }
 
   async deleteMenuItem(id: string): Promise<{ success: boolean }> {
-    const response = await this.request<{ data: { success: boolean } }>(`/menu/items/${id}`, {
+    const response = await this.request<{ success: boolean }>(`/menu/items/${id}`, {
       method: 'DELETE',
     });
-    return { success: response.data.success };
+    return { success: response.success };
   }
 
   async getMenuCategories(): Promise<{ categories: MenuCategory[] }> {
-    const response = await this.request<{ data: { categories: MenuCategory[] } }>('/menu/categories');
-    return { categories: response.data.categories };
+    console.log('📂 Fetching menu categories from:', `${this.baseURL}/menu/categories`);
+    const response = await this.request<{ categories: MenuCategory[] }>('/menu/categories');
+    console.log('📂 Menu categories response:', response);
+    console.log('📂 Menu categories array:', response.categories);
+    console.log('📂 Number of categories:', response.categories?.length || 0);
+    if (response.categories && response.categories.length > 0) {
+      console.log('📂 First category example:', response.categories[0]);
+    }
+    return { categories: response.categories };
   }
 
   async createMenuCategory(data: {
     name: string;
     sortOrder?: number;
   }): Promise<{ category: MenuCategory }> {
-    const response = await this.request<{ data: { category: MenuCategory } }>('/menu/categories', {
+    const response = await this.request<{ category: MenuCategory }>('/menu/categories', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return { category: response.data.category };
+    return { category: response.category };
   }
 
   async updateMenuCategory(id: string, data: {
@@ -249,18 +279,18 @@ class APIClient {
     sortOrder?: number;
     isActive?: boolean;
   }): Promise<{ category: MenuCategory }> {
-    const response = await this.request<{ data: { category: MenuCategory } }>(`/menu/categories/${id}`, {
+    const response = await this.request<{ category: MenuCategory }>(`/menu/categories/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return { category: response.data.category };
+    return { category: response.category };
   }
 
   async deleteMenuCategory(id: string): Promise<{ success: boolean }> {
-    const response = await this.request<{ data: { success: boolean } }>(`/menu/categories/${id}`, {
+    const response = await this.request<{ success: boolean }>(`/menu/categories/${id}`, {
       method: 'DELETE',
     });
-    return { success: response.data.success };
+    return { success: response.success };
   }
 
   // Orders endpoints
@@ -327,53 +357,58 @@ class APIClient {
   // Tables endpoints
   async getTables(): Promise<{ tables: Table[] }> {
     console.log('🔍 Fetching tables from:', `${this.baseURL}/tables`);
-    const response = await this.request<{ data: { tables: Table[] } }>('/tables');
+    const response = await this.request<{ tables: Table[] }>('/tables');
     console.log('📋 Tables response:', response);
-    return { tables: response.data.tables };
+    console.log('📋 Tables array:', response.tables);
+    console.log('📋 Number of tables:', response.tables?.length || 0);
+    if (response.tables && response.tables.length > 0) {
+      console.log('📋 First table example:', response.tables[0]);
+    }
+    return { tables: response.tables };
   }
 
   async createTable(data: {
-    number: number;
+    number: string;
     capacity: number;
     location?: string;
     status?: string;
   }): Promise<{ table: Table }> {
     console.log('➕ Creating table with data:', data);
     console.log('🔗 POST request to:', `${this.baseURL}/tables`);
-    const response = await this.request<{ data: { table: Table } }>('/tables', {
+    const response = await this.request<{ table: Table }>('/tables', {
       method: 'POST',
       body: JSON.stringify(data),
     });
     console.log('✅ Create table response:', response);
-    return { table: response.data.table };
+    return { table: response.table };
   }
 
   async updateTable(id: string, data: {
-    number?: number;
+    number?: string;
     capacity?: number;
     location?: string;
     status?: string;
   }): Promise<{ table: Table }> {
-    const response = await this.request<{ data: { table: Table } }>(`/tables/${id}`, {
+    const response = await this.request<{ table: Table }>(`/tables/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    return { table: response.data.table };
+    return { table: response.table };
   }
 
   async updateTableStatus(id: string, status: string): Promise<{ table: Table }> {
-    const response = await this.request<{ data: { table: Table } }>(`/tables/${id}/status`, {
+    const response = await this.request<{ table: Table }>(`/tables/${id}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     });
-    return { table: response.data.table };
+    return { table: response.table };
   }
 
   async deleteTable(id: string): Promise<{ success: boolean }> {
-    const response = await this.request<{ data: { success: boolean } }>(`/tables/${id}`, {
+    const response = await this.request<{ success: boolean }>(`/tables/${id}`, {
       method: 'DELETE',
     });
-    return { success: response.data.success };
+    return { success: response.success };
   }
 
   // Analytics endpoints
@@ -428,7 +463,165 @@ class APIClient {
     } }>('/health');
     return response.data;
   }
+
+  // Deliveroo Configuration endpoints
+  async getDeliverooConfig(): Promise<{ config: {
+    restaurantId: string;
+    clientId: string;
+    isActive: boolean;
+  } }> {
+    const response = await this.request<{ config: {
+      restaurantId: string;
+      clientId: string;
+      isActive: boolean;
+    } }>('/deliveroo-config');
+    return { config: response.config };
+  }
+
+  async saveDeliverooConfig(data: {
+    restaurantId: string;
+    clientId: string;
+    clientSecret: string;
+  }): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<{ success: boolean; message: string }>('/deliveroo-config', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return { success: response.success, message: response.message };
+  }
+
+  async deleteDeliverooConfig(): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<{ success: boolean; message: string }>('/deliveroo-config', {
+      method: 'DELETE',
+    });
+    return { success: response.success, message: response.message };
+  }
+
+  async testDeliverooConnection(): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<{ success: boolean; message: string }>('/deliveroo-config/test', {
+      method: 'POST',
+    });
+    return { success: response.success, message: response.message };
+  }
 }
 
 // Export singleton instance
-export const api = new APIClient(); 
+export const api = new APIClient();
+
+// Public API client for ordering page (no authentication required)
+export class PublicAPIClient {
+  private baseURL: string;
+
+  constructor(baseURL: string = API_BASE_URL) {
+    this.baseURL = baseURL;
+  }
+
+  private async request<T>(
+    endpoint: string,
+    tenantSlug: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    console.log('🔗 Public API Request Details:');
+    console.log('  Base URL:', this.baseURL);
+    console.log('  Endpoint:', endpoint);
+    console.log('  Full URL:', `${this.baseURL}${endpoint}`);
+    console.log('  Tenant Slug:', tenantSlug);
+    console.log('  No authentication required for public endpoints');
+    
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Tenant-Slug': tenantSlug,
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    console.log('  Request headers:', config.headers);
+    console.log('  Request method:', config.method || 'GET');
+
+    const response = await fetch(`${this.baseURL}${endpoint}`, config);
+    const data: APIResponse<T> = await response.json();
+
+    console.log('📡 Public API Response Details:');
+    console.log('  Status:', response.status);
+    console.log('  Status text:', response.statusText);
+    console.log('  Response data:', data);
+
+    if (!response.ok) {
+      console.error('❌ Public API Error:', response.status, data);
+      throw new APIError(
+        response.status,
+        data.error?.code || 'UNKNOWN_ERROR',
+        data.error?.message || 'An unknown error occurred'
+      );
+    }
+
+    if (!data.success) {
+      throw new APIError(
+        response.status,
+        data.error?.code || 'API_ERROR',
+        data.error?.message || 'API request failed'
+      );
+    }
+
+    return data.data as T;
+  }
+
+  // Public menu endpoints (no authentication required)
+  async getPublicMenuItems(tenantSlug: string, categoryId?: string): Promise<{ items: MenuItem[] }> {
+    const params = categoryId ? `?category=${categoryId}` : '';
+    console.log('🍽️ Fetching public menu items from:', `${this.baseURL}/menu/items${params}`);
+    const response = await this.request<{ items: MenuItem[] }>(`/menu/items${params}`, tenantSlug);
+    console.log('🍽️ Public menu items response:', response);
+    console.log('🍽️ Public menu items array:', response.items);
+    console.log('🍽️ Number of public menu items:', response.items?.length || 0);
+    if (response.items && response.items.length > 0) {
+      console.log('🍽️ First public menu item example:', response.items[0]);
+    }
+    return { items: response.items };
+  }
+
+  async getPublicMenuCategories(tenantSlug: string): Promise<{ categories: MenuCategory[] }> {
+    console.log('📂 Fetching public menu categories from:', `${this.baseURL}/menu/categories`);
+    const response = await this.request<{ categories: MenuCategory[] }>('/menu/categories', tenantSlug);
+    console.log('📂 Public menu categories response:', response);
+    console.log('📂 Public menu categories array:', response.categories);
+    console.log('📂 Number of public categories:', response.categories?.length || 0);
+    if (response.categories && response.categories.length > 0) {
+      console.log('📂 First public category example:', response.categories[0]);
+    }
+    return { categories: response.categories };
+  }
+
+  async getPublicTables(tenantSlug: string): Promise<{ tables: Table[] }> {
+    console.log('🔍 Fetching public tables from:', `${this.baseURL}/tables`);
+    const response = await this.request<{ tables: Table[] }>('/tables', tenantSlug);
+    console.log('📋 Public tables response:', response);
+    console.log('📋 Public tables array:', response.tables);
+    console.log('📋 Number of public tables:', response.tables?.length || 0);
+    if (response.tables && response.tables.length > 0) {
+      console.log('📋 First public table example:', response.tables[0]);
+    }
+    return { tables: response.tables };
+  }
+
+  async createPublicOrder(data: {
+    tableId: string;
+    items: Array<{
+      menuItemId: string;
+      quantity: number;
+      notes?: string;
+    }>;
+  }, tenantSlug: string): Promise<{ order: Order }> {
+    console.log('📝 Creating public order:', data);
+    const response = await this.request<{ order: Order }>('/orders', tenantSlug, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    console.log('✅ Public order created:', response);
+    return { order: response.order };
+  }
+}
+
+export const publicApi = new PublicAPIClient(); 

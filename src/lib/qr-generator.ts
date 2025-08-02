@@ -2,7 +2,7 @@ import QRCode from 'qrcode';
 
 export interface TableQRData {
   tableId: string;
-  tableNumber: number;
+  tableNumber: string;
   tenantId: string;
   tenantSlug: string;
 }

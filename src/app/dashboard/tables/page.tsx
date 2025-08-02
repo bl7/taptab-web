@@ -51,8 +51,12 @@ export default function TablesPage() {
     console.log('🔄 Starting to fetch tables...');
     try {
       const response = await api.getTables();
-      console.log('📋 Tables response:', response);
+      console.log('📋 Tables response from API:', response);
       console.log('📊 Number of tables:', response.tables?.length || 0);
+      console.log('📋 Tables array:', response.tables);
+      if (response.tables && response.tables.length > 0) {
+        console.log('📋 First table in response:', response.tables[0]);
+      }
       setTables(response.tables || []);
     } catch (error) {
       console.error('❌ Error fetching tables:', error);
@@ -76,13 +80,8 @@ export default function TablesPage() {
   }) => {
     setApiLoading(true);
     try {
-      // Convert string number to actual number for API
-      const apiData = {
-        ...tableData,
-        number: parseInt(tableData.number) || 0
-      };
-      console.log('📝 Sending table data to API:', apiData);
-      const response = await api.createTable(apiData);
+      console.log('📝 Sending table data to API:', tableData);
+      const response = await api.createTable(tableData);
       setTables(prev => [response.table, ...prev]);
       setShowAddModal(false);
     } catch (error) {
@@ -142,11 +141,11 @@ export default function TablesPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'occupied': return 'bg-red-100 text-red-800';
-      case 'reserved': return 'bg-yellow-100 text-yellow-800';
-      case 'cleaning': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'available': return 'bg-green-100 text-green-900'; // Darker green for better readability
+      case 'occupied': return 'bg-red-100 text-red-900';     // Darker red for better readability
+      case 'reserved': return 'bg-yellow-100 text-yellow-900'; // Darker yellow for better readability
+      case 'cleaning': return 'bg-blue-100 text-blue-900';   // Darker blue for better readability
+      default: return 'bg-gray-100 text-gray-900';           // Darker gray for better readability
     }
   };
 
@@ -155,7 +154,7 @@ export default function TablesPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading tables...</p>
+          <p className="mt-4 text-black">Loading tables...</p>
         </div>
       </div>
     );
@@ -168,8 +167,8 @@ export default function TablesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Table Management</h1>
-              <p className="text-sm text-gray-600 mt-1">
+                      <h1 className="text-2xl font-bold text-black">Table Management</h1>
+        <p className="text-sm text-black mt-1">
                 Manage restaurant tables and generate QR codes for ordering
               </p>
             </div>
@@ -196,10 +195,10 @@ export default function TablesPage() {
               <div className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">Table {table.number}</h3>
-                    <p className="text-sm text-gray-600">Capacity: {table.capacity} people</p>
+                            <h3 className="text-xl font-bold text-black">Table {table.number}</h3>
+        <p className="text-sm text-black">Capacity: {table.capacity} people</p>
                     {table.location && (
-                      <p className="text-xs text-gray-500">{table.location}</p>
+                                              <p className="text-xs text-black">{table.location}</p>
                     )}
                   </div>
                   <div className="flex space-x-1">
@@ -207,7 +206,7 @@ export default function TablesPage() {
                       onClick={() => {
                         setSelectedTableForQR(table);
                       }}
-                      className="p-2 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50"
+                      className="p-2 text-black hover:text-blue-600 rounded-lg hover:bg-blue-50"
                       title="Generate QR Code"
                     >
                       <QrCode className="h-4 w-4" />
@@ -218,7 +217,7 @@ export default function TablesPage() {
                         setShowEditModal(true);
                       }}
                       disabled={apiLoading}
-                      className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                      className="p-2 text-black hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50"
                       title="Edit Table"
                     >
                       <Edit className="h-4 w-4" />
@@ -226,7 +225,7 @@ export default function TablesPage() {
                     <button
                       onClick={() => handleDeleteTable(table.id)}
                       disabled={apiLoading}
-                      className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                      className="p-2 text-black hover:text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
                       title="Delete Table"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -247,16 +246,17 @@ export default function TablesPage() {
                   </div>
 
                   <select
-                    value={table.status}
-                    onChange={(e) => handleUpdateTableStatus(table.id, e.target.value)}
-                    disabled={apiLoading}
-                    className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:opacity-50"
-                  >
-                    <option value="available">Available</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="cleaning">Cleaning</option>
-                  </select>
+  value={table.status}
+  onChange={(e) => handleUpdateTableStatus(table.id, e.target.value)}
+  disabled={apiLoading}
+  className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:opacity-50"
+  style={{ color: 'black' }}
+>
+  <option value="available" style={{ color: 'black', backgroundColor: 'white' }}>Available</option>
+  <option value="occupied" style={{ color: 'black', backgroundColor: 'white' }}>Occupied</option>
+  <option value="reserved" style={{ color: 'black', backgroundColor: 'white' }}>Reserved</option>
+  <option value="cleaning" style={{ color: 'black', backgroundColor: 'white' }}>Cleaning</option>
+</select>
                 </div>
               </div>
             </div>
@@ -265,11 +265,11 @@ export default function TablesPage() {
 
         {tables.length === 0 && (
           <div className="text-center py-12">
-            <div className="text-gray-400 mb-4">
+            <div className="text-black mb-4">
               <QrCode className="h-16 w-16 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No tables yet</h3>
-            <p className="text-gray-600 mb-6">Create your first table to get started with QR code ordering</p>
+                    <h3 className="text-lg font-medium text-black mb-2">No tables yet</h3>
+        <p className="text-black mb-6">Create your first table to get started with QR code ordering</p>
             <button
               onClick={() => setShowAddModal(true)}
               className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
@@ -286,12 +286,12 @@ export default function TablesPage() {
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">
+                <h2 className="text-xl font-semibold text-black">
                   QR Code for Table {selectedTableForQR.number}
                 </h2>
                 <button
                   onClick={() => setSelectedTableForQR(null)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-black hover:text-gray-600"
                 >
                   ✕
                 </button>
@@ -362,14 +362,33 @@ function AddTableModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Validate table number
+    if (!formData.number.trim()) {
+      alert('Table number is required');
+      return;
+    }
+    
+    // Remove spaces and convert to URL-safe format
+    const cleanTableNumber = formData.number.trim().replace(/\s+/g, '-');
+    
+    const tableData = {
+      ...formData,
+      number: cleanTableNumber
+    };
+    
+    console.log('📝 Add form data:', formData);
+    console.log('📝 Clean table number:', cleanTableNumber);
+    console.log('📝 API data being sent:', tableData);
+    
+    onSubmit(tableData);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Add New Table</h2>
+          <h2 className="text-xl font-semibold text-black mb-4">Add New Table</h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -380,8 +399,9 @@ function AddTableModal({
                 onChange={(e) => setFormData({ ...formData, number: e.target.value })}
                 className="w-full p-2 border rounded-lg text-black"
                 required
-                placeholder="e.g., 1, A1, VIP-1"
+                placeholder="e.g., 1, A1, VIP-1, Table-2"
               />
+              <p className="text-xs text-black mt-1">Spaces will be automatically converted to hyphens</p>
             </div>
 
             <div>
@@ -471,12 +491,21 @@ function EditTableModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert string number back to number for API
+    
+    // Validate table number
+    if (!formData.number.trim()) {
+      alert('Table number is required');
+      return;
+    }
+    
     const apiData = {
       ...formData,
-      number: parseInt(formData.number) || 0,
       status: formData.status as 'available' | 'occupied' | 'reserved' | 'cleaning'
     };
+    
+    console.log('📝 Edit form data:', formData);
+    console.log('📝 API data being sent:', apiData);
+    
     onSubmit(apiData);
   };
 
@@ -484,7 +513,7 @@ function EditTableModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg max-w-md w-full">
         <div className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Edit Table {table.number}</h2>
+          <h2 className="text-xl font-semibold text-black mb-4">Edit Table {table.number}</h2>
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -524,11 +553,11 @@ function EditTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">Status</label>
+              <label className="block text-sm font-medium !text-black mb-1">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as 'available' | 'occupied' | 'reserved' | 'cleaning' })}
-                className="w-full p-2 border rounded-lg text-black"
+                className="w-full p-2 border rounded-lg text-black "
               >
                 <option value="available">Available</option>
                 <option value="occupied">Occupied</option>

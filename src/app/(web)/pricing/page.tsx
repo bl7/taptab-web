@@ -153,7 +153,7 @@ export default function PricingPage() {
                     </div>
                     <div>
                       <h3 className="text-2xl font-semibold text-black">{plan.name}</h3>
-                      <p className="text-gray-600 text-sm">{plan.description}</p>
+                      <p className="text-black text-sm">{plan.description}</p>
                     </div>
                   </div>
                   
@@ -163,7 +163,7 @@ export default function PricingPage() {
                       <span className="text-gray-500 ml-2">{plan.period}</span>
                     </div>
                     {isYearly && plan.name !== "Starter" && (
-                      <p className="text-sm text-gray-600 mt-1">Save 20% with yearly billing</p>
+                      <p className="text-sm text-black mt-1">Save 20% with yearly billing</p>
                     )}
                     {plan.name === "Starter" && (
                       <p className="text-sm text-green-600 mt-1">Always free</p>
@@ -180,7 +180,7 @@ export default function PricingPage() {
                         transition={{ duration: 0.6, delay: featureIndex * 0.1 }}
                       >
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-gray-600">{feature}</span>
+                        <span className="text-black">{feature}</span>
                       </motion.li>
                     ))}
                   </ul>
@@ -214,7 +214,7 @@ export default function PricingPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl font-semibold text-black mb-6">Frequently Asked Questions</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               Everything you need to know about our pricing and plans.
             </p>
           </motion.div>
@@ -228,7 +228,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold text-black mb-3">Can I change plans anytime?</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 Yes, you can upgrade or downgrade your plan at any time. Changes take effect immediately.
               </p>
             </motion.div>
@@ -241,7 +241,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold text-black mb-3">Is there a setup fee?</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 No setup fees. Start with our free plan and upgrade when you&apos;re ready to scale.
               </p>
             </motion.div>
@@ -254,7 +254,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold text-black mb-3">What payment methods do you accept?</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 We accept all major credit cards, PayPal, and bank transfers for annual plans.
               </p>
             </motion.div>
@@ -267,7 +267,7 @@ export default function PricingPage() {
               viewport={{ once: true }}
             >
               <h3 className="text-lg font-semibold text-black mb-3">Do you offer refunds?</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 We offer a 30-day money-back guarantee. If you&apos;re not satisfied, we&apos;ll refund your payment.
               </p>
             </motion.div>

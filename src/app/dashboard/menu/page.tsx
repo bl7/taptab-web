@@ -52,16 +52,31 @@ export default function MenuPage() {
   }, [router]);
 
   const fetchMenuData = useCallback(async () => {
+    console.log('🍽️ Starting to fetch menu data...');
     try {
       const [menuResponse, categoriesResponse] = await Promise.all([
         api.getMenuItems(),
         api.getMenuCategories()
       ]);
       
+      console.log('🍽️ Menu items response from API:', menuResponse);
+      console.log('🍽️ Number of menu items:', menuResponse.items?.length || 0);
+      console.log('🍽️ Menu items array:', menuResponse.items);
+      if (menuResponse.items && menuResponse.items.length > 0) {
+        console.log('🍽️ First menu item in response:', menuResponse.items[0]);
+      }
+      
+      console.log('📂 Categories response from API:', categoriesResponse);
+      console.log('📂 Number of categories:', categoriesResponse.categories?.length || 0);
+      console.log('📂 Categories array:', categoriesResponse.categories);
+      if (categoriesResponse.categories && categoriesResponse.categories.length > 0) {
+        console.log('📂 First category in response:', categoriesResponse.categories[0]);
+      }
+      
       setMenuItems(menuResponse.items);
       setCategories(categoriesResponse.categories);
     } catch (error) {
-      console.error('Error fetching menu data:', error);
+      console.error('❌ Error fetching menu data:', error);
       if (error instanceof Error && error.message.includes('401')) {
         router.push('/login');
       }
@@ -78,7 +93,7 @@ export default function MenuPage() {
     name: string;
     description: string;
     price: number;
-    categoryId: string;
+    categoryId?: string;
     image?: string;
   }) => {
     setApiLoading(true);
@@ -161,7 +176,7 @@ export default function MenuPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading menu...</p>
+          <p className="mt-4 text-black">Loading menu...</p>
         </div>
       </div>
     );
@@ -174,8 +189,8 @@ export default function MenuPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Menu Management</h1>
-              <p className="text-sm text-gray-600 mt-1">
+                      <h1 className="text-2xl font-bold text-black">Menu Management</h1>
+        <p className="text-sm text-black mt-1">
                 Manage your restaurant menu items and categories
               </p>
             </div>
@@ -208,7 +223,7 @@ export default function MenuPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
                   type="text"
                   placeholder="Search menu items..."
@@ -239,8 +254,8 @@ export default function MenuPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredItems.length === 0 ? (
             <div className="col-span-full text-center py-12">
-              <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No menu items found</p>
+              <FileText className="h-12 w-12 text-black mx-auto mb-4" />
+              <p className="text-black">No menu items found</p>
             </div>
           ) : (
             filteredItems.map((item) => (
@@ -261,13 +276,13 @@ export default function MenuPage() {
                 )}
                 {!item.image && (
                   <div className="h-48 bg-gray-100 flex items-center justify-center">
-                    <ImageIcon className="h-12 w-12 text-gray-400" />
+                    <ImageIcon className="h-12 w-12 text-black" />
                   </div>
                 )}
                 
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-gray-900 text-lg">{item.name}</h3>
+                    <h3 className="font-semibold text-black text-lg">{item.name}</h3>
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => {
@@ -275,24 +290,24 @@ export default function MenuPage() {
                           setShowEditModal(true);
                         }}
                         disabled={apiLoading}
-                        className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                        className="p-1 text-black hover:text-gray-600 disabled:opacity-50"
                       >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDeleteItem(item.id)}
                         disabled={apiLoading}
-                        className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50"
+                        className="p-1 text-black hover:text-red-600 disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
                   
-                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{item.description}</p>
+                  <p className="text-black text-sm mb-3 line-clamp-2">{item.description}</p>
                   
                   <div className="flex items-center justify-between">
-                    <span className="text-lg font-bold text-gray-900">
+                    <span className="text-lg font-bold text-black">
                       ${item.price.toFixed(2)}
                     </span>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -305,7 +320,7 @@ export default function MenuPage() {
                   </div>
                   
                   <div className="mt-3">
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <span className="text-xs text-black bg-gray-100 px-2 py-1 rounded">
                       {categories.find(c => c.id === item.categoryId)?.name || 'Uncategorized'}
                     </span>
                   </div>
@@ -365,7 +380,7 @@ function AddItemModal({
     name: string;
     description: string;
     price: number;
-    categoryId: string;
+    categoryId?: string;
     image?: string;
   }) => void; 
   loading: boolean;
@@ -423,7 +438,7 @@ function AddItemModal({
                 Price
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
                   type="number"
                   step="0.01"
@@ -440,12 +455,11 @@ function AddItemModal({
                 Category
               </label>
               <select
-                required
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
               >
-                <option value="">Select Category</option>
+                <option value="">Select Category (Optional)</option>
                 {categories.map(category => (
                   <option key={category.id} value={category.id}>
                     {category.name}
@@ -559,7 +573,7 @@ function EditItemModal({
                 Price
               </label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
                   type="number"
                   step="0.01"

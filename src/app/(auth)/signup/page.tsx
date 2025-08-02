@@ -108,7 +108,7 @@ export default function SignupPage() {
                     value={formData.restaurantName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="Enter restaurant name"
                   />
                 </div>
@@ -124,7 +124,7 @@ export default function SignupPage() {
                     value={formData.restaurantSlug}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="restaurant-name"
                   />
                 </div>
@@ -139,7 +139,7 @@ export default function SignupPage() {
                     name="restaurantPhone"
                     value={formData.restaurantPhone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="+1234567890"
                   />
                 </div>
@@ -154,7 +154,7 @@ export default function SignupPage() {
                     name="restaurantAddress"
                     value={formData.restaurantAddress}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="123 Main St, City, State 12345"
                   />
                 </div>
@@ -176,7 +176,7 @@ export default function SignupPage() {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="Enter first name"
                   />
                 </div>
@@ -192,7 +192,7 @@ export default function SignupPage() {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="Enter last name"
                   />
                 </div>
@@ -208,7 +208,7 @@ export default function SignupPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                     placeholder="admin@restaurant.com"
                   />
                   <p className="text-xs text-[#4A4A4A] mt-1">

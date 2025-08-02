@@ -151,12 +151,12 @@ export default function FeaturesPage() {
                   <feature.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-3">{feature.title}</h3>
-                <p className="text-gray-600 leading-relaxed mb-6">{feature.description}</p>
+                <p className="text-black leading-relaxed mb-6">{feature.description}</p>
                 <ul className="space-y-2">
                   {feature.benefits.map((benefit, benefitIndex) => (
                     <motion.li 
                       key={benefit} 
-                      className="flex items-center gap-2 text-sm text-gray-600"
+                      className="flex items-center gap-2 text-sm text-black"
                       initial={{ opacity: 0, x: -10 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.6, delay: benefitIndex * 0.1 }}
@@ -184,7 +184,7 @@ export default function FeaturesPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">How It Works</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               Get started in minutes with our simple setup process
             </p>
           </motion.div>
@@ -201,7 +201,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-white">1</span>
               </div>
               <h3 className="text-xl font-semibold text-black mb-3">Set Up Your Menu</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 Upload your menu items, set prices, and customize categories. Add photos and descriptions to make ordering easy for your guests.
               </p>
             </motion.div>
@@ -217,7 +217,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-white">2</span>
               </div>
               <h3 className="text-xl font-semibold text-black mb-3">Print QR Codes</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 Print our QR codes and place them on your tables. Each code is linked to a specific table for easy order management.
               </p>
             </motion.div>
@@ -233,7 +233,7 @@ export default function FeaturesPage() {
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
               <h3 className="text-xl font-semibold text-black mb-3">Start Taking Orders</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <p className="text-black leading-relaxed">
                 Guests scan the QR code and place orders directly from their phones. Orders appear instantly on your tablet and kitchen printer.
               </p>
             </motion.div>
@@ -252,7 +252,7 @@ export default function FeaturesPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Integrations & Add-ons</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               Extend your restaurant&apos;s capabilities with powerful integrations and add-ons
             </p>
           </motion.div>
@@ -272,7 +272,7 @@ export default function FeaturesPage() {
                   <integration.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-black mb-2">{integration.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{integration.description}</p>
+                <p className="text-black text-sm leading-relaxed">{integration.description}</p>
               </motion.div>
             ))}
           </div>

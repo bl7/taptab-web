@@ -150,12 +150,12 @@ export default function HowItWorksPage() {
                     </div>
                     <h3 className="text-2xl font-semibold text-black">{step.title}</h3>
                   </div>
-                  <p className="text-lg text-gray-600 leading-relaxed mb-6">{step.description}</p>
+                  <p className="text-lg text-black leading-relaxed mb-6">{step.description}</p>
                   <ul className="space-y-3">
                     {step.details.map((detail, detailIndex) => (
                       <motion.li 
                         key={detail} 
-                        className="flex items-center gap-3 text-gray-600"
+                        className="flex items-center gap-3 text-black"
                         initial={{ opacity: 0, x: -20 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6, delay: detailIndex * 0.1 }}
@@ -173,7 +173,7 @@ export default function HowItWorksPage() {
                       <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                         <span className="text-2xl font-bold text-white">{index + 1}</span>
                       </div>
-                      <p className="text-gray-600">Step {index + 1} Visualization</p>
+                      <p className="text-black">Step {index + 1} Visualization</p>
                     </div>
                   </div>
                 </div>
@@ -194,7 +194,7 @@ export default function HowItWorksPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Why It Works</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               TapTab delivers measurable results that transform your restaurant operations
             </p>
           </motion.div>
@@ -214,7 +214,7 @@ export default function HowItWorksPage() {
                   <benefit.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-black mb-2">{benefit.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{benefit.description}</p>
+                <p className="text-black text-sm leading-relaxed">{benefit.description}</p>
               </motion.div>
             ))}
           </div>
@@ -232,7 +232,7 @@ export default function HowItWorksPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Getting Started</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               We make it easy to get up and running with TapTab
             </p>
           </motion.div>
@@ -249,7 +249,7 @@ export default function HowItWorksPage() {
                 whileHover={{ y: -5 }}
               >
                 <h3 className="text-lg font-semibold text-black mb-3">{item.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{item.description}</p>
+                <p className="text-black leading-relaxed">{item.description}</p>
               </motion.div>
             ))}
           </div>
@@ -266,7 +266,7 @@ export default function HowItWorksPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-3xl font-semibold text-black mb-6">See It in Action</h2>
-            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+            <p className="text-xl text-black mb-8 leading-relaxed">
               Watch a quick demo to see how TapTab works in a real restaurant environment
             </p>
             <div className="bg-gray-100 rounded-2xl p-8 h-64 flex items-center justify-center">
@@ -274,7 +274,7 @@ export default function HowItWorksPage() {
                 <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl text-white">▶</span>
                 </div>
-                <p className="text-gray-600">Demo Video</p>
+                <p className="text-black">Demo Video</p>
               </div>
             </div>
           </motion.div>

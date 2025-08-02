@@ -8,8 +8,8 @@ import { generateTableQRCode, TableQRData } from '@/lib/qr-generator';
 interface TableQRCodeProps {
   table: {
     id: string;
-    number: number;
-    tenantId: string;
+    number: string;
+    tenantId?: string;
   };
   tenantSlug: string;
   showQR?: boolean;
@@ -29,7 +29,7 @@ export default function TableQRCode({ table, tenantSlug, showQR = false, onToggl
       const data: TableQRData = {
         tableId: table.id,
         tableNumber: table.number,
-        tenantId: table.tenantId,
+        tenantId: table.tenantId || 'default',
         tenantSlug
       };
       
@@ -41,7 +41,7 @@ export default function TableQRCode({ table, tenantSlug, showQR = false, onToggl
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [table.id, table.number, table.tenantId, tenantSlug]);
 
   useEffect(() => {
     if (showQR && !qrCodeDataUrl) {
@@ -80,7 +80,7 @@ export default function TableQRCode({ table, tenantSlug, showQR = false, onToggl
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="text-lg font-semibold text-black">
           Table {table.number} QR Code
         </h3>
         <button
@@ -96,7 +96,7 @@ export default function TableQRCode({ table, tenantSlug, showQR = false, onToggl
           {loading && (
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-              <span className="ml-2 text-gray-600">Generating QR code...</span>
+              <span className="ml-2 text-black">Generating QR code...</span>
             </div>
           )}
 
@@ -134,7 +134,7 @@ export default function TableQRCode({ table, tenantSlug, showQR = false, onToggl
                 </button>
               </div>
               
-              <div className="text-xs text-gray-500 text-center">
+              <div className="text-xs text-black text-center">
                 <p>Scan this QR code to access the ordering page for Table {table.number}</p>
                 <p className="mt-1">
                   URL: {process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/order/{tenantSlug}/{table.number}

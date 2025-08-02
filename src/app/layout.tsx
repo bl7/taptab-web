@@ -1,60 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-
+import { PrintBridgeProvider } from "@/contexts/PrintBridgeContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TapTab POS - Smart Restaurant Point of Sale System",
-  description: "Revolutionize your restaurant with TapTab POS. QR ordering, smart printing, real-time management. Perfect for restaurants, cafes, and food trucks.",
-  keywords: "restaurant POS, point of sale, QR ordering, table service, restaurant management, kitchen printing, waiter app, restaurant software",
-  authors: [{ name: "TapTab POS" }],
-  icons: {
-    icon: [
-      { url: '/icon.png', sizes: '32x32', type: 'image/png' },
-      { url: '/icon.png', sizes: '16x16', type: 'image/png' },
-    ],
-    shortcut: '/icon.png',
-    apple: '/icon.png',
-  },
-  manifest: '/manifest.json',
-  openGraph: {
-    title: "TapTab POS - Smart Restaurant Point of Sale System",
-    description: "Revolutionize your restaurant with TapTab POS. QR ordering, smart printing, real-time management.",
-    url: "https://taptabpos.com",
-    siteName: "TapTab POS",
-    images: [
-      {
-        url: "/logo.png",
-        width: 1200,
-        height: 630,
-        alt: "TapTab POS Logo",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "TapTab POS - Smart Restaurant Point of Sale System",
-    description: "Revolutionize your restaurant with TapTab POS. QR ordering, smart printing, real-time management.",
-    images: ["/logo.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-  verification: {
-    google: "your-google-verification-code",
-  },
+  title: "TapTab POS - Smart Restaurant",
+  description: "Modern restaurant management system",
 };
 
 export default function RootLayout({
@@ -62,30 +15,62 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Debug: Track auth route requests
+  if (typeof window !== 'undefined') {
+    // Monitor for requests to /auth/login and /auth/signup
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      const url = args[0] as string;
+      if (url.includes('/auth/login') || url.includes('/auth/signup')) {
+        console.log('🚨 Detected request to:', url);
+        console.log('📋 Stack trace:', new Error().stack);
+      }
+      return originalFetch.apply(this, args);
+    };
+
+    // Monitor for navigation to auth routes
+    const originalPushState = history.pushState;
+    history.pushState = function(...args) {
+      const url = args[2] as string;
+      if (url && (url.includes('/auth/login') || url.includes('/auth/signup'))) {
+        console.log('🚨 Detected navigation to:', url);
+        console.log('📋 Stack trace:', new Error().stack);
+      }
+      return originalPushState.apply(this, args);
+    };
+  }
+
   return (
     <html lang="en">
-      <head>
-        <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/icon.png" />
-        <link rel="shortcut icon" href="/icon.png" />
-        <link rel="apple-touch-icon" href="/icon.png" />
-      </head>
       <body className={inter.className} suppressHydrationWarning={true}>
-        {children}
+        <PrintBridgeProvider>
+          {children}
+        </PrintBridgeProvider>
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
-                    });
+              // Debug: Track any attempts to access /auth routes
+              (function() {
+                const originalFetch = window.fetch;
+                window.fetch = function(...args) {
+                  const url = args[0];
+                  if (typeof url === 'string' && (url.includes('/auth/login') || url.includes('/auth/signup'))) {
+                    console.log('🚨 External request to auth route:', url);
+                    console.log('📋 Stack trace:', new Error().stack);
+                  }
+                  return originalFetch.apply(this, args);
+                };
+                
+                // Monitor for direct navigation
+                const observer = new PerformanceObserver((list) => {
+                  list.getEntries().forEach((entry) => {
+                    if (entry.name && entry.name.includes('/auth/')) {
+                      console.log('🚨 Performance navigation to auth route:', entry.name);
+                    }
+                  });
                 });
-              }
+                observer.observe({ entryTypes: ['navigation'] });
+              })();
             `,
           }}
         />

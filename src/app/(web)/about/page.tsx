@@ -133,7 +133,7 @@ export default function AboutPage() {
               viewport={{ once: true }}
             >
               <h2 className="text-4xl font-semibold text-black mb-6">Our Story</h2>
-              <div className="space-y-4 text-lg text-gray-600 leading-relaxed">
+              <div className="space-y-4 text-lg text-black leading-relaxed">
                 <p>
                   TapTab was born from frustration. Our founder, Sarah, ran a successful restaurant for 8 years and constantly struggled with clunky, expensive POS systems that made her job harder, not easier.
                 </p>
@@ -160,28 +160,28 @@ export default function AboutPage() {
                       <Coffee className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="font-medium text-black text-sm">Restaurant Experience</h3>
-                    <p className="text-xs text-gray-600">Built by restaurant owners</p>
+                    <p className="text-xs text-black">Built by restaurant owners</p>
                   </div>
                   <div className="text-center">
                     <div className="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mx-auto mb-3">
                       <Utensils className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="font-medium text-black text-sm">Simple & Fast</h3>
-                    <p className="text-xs text-gray-600">Designed for speed</p>
+                    <p className="text-xs text-black">Designed for speed</p>
                   </div>
                   <div className="text-center">
                     <div className="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mx-auto mb-3">
                       <Truck className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="font-medium text-black text-sm">Always Reliable</h3>
-                    <p className="text-xs text-gray-600">Never let you down</p>
+                    <p className="text-xs text-black">Never let you down</p>
                   </div>
                   <div className="text-center">
                     <div className="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mx-auto mb-3">
                       <Globe className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="font-medium text-black text-sm">Growing Fast</h3>
-                    <p className="text-xs text-gray-600">500+ restaurants</p>
+                    <p className="text-xs text-black">500+ restaurants</p>
                   </div>
                 </div>
               </div>
@@ -200,7 +200,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Our Mission</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12 leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto mb-12 leading-relaxed">
               To empower restaurants with technology that makes their lives easier, their service faster, and their business more profitable.
             </p>
           </motion.div>
@@ -219,7 +219,7 @@ export default function AboutPage() {
                   <value.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-3">{value.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{value.description}</p>
+                <p className="text-black leading-relaxed">{value.description}</p>
               </motion.div>
             ))}
           </div>
@@ -237,7 +237,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Meet Our Team</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-black max-w-3xl mx-auto">
               The passionate people behind TapTab who are committed to making restaurant technology work for you.
             </p>
           </motion.div>
@@ -253,11 +253,11 @@ export default function AboutPage() {
                 viewport={{ once: true }}
               >
                 <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 flex items-center justify-center">
-                  <Users className="w-12 h-12 text-gray-600" />
+                  <Users className="w-12 h-12 text-black" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-1">{member.name}</h3>
-                <p className="text-gray-600 mb-3">{member.role}</p>
-                <p className="text-gray-600 text-sm leading-relaxed">{member.bio}</p>
+                <p className="text-black mb-3">{member.role}</p>
+                <p className="text-black text-sm leading-relaxed">{member.bio}</p>
               </motion.div>
             ))}
           </div>
@@ -275,7 +275,7 @@ export default function AboutPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Our Journey</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-black max-w-3xl mx-auto">
               From a simple idea to serving hundreds of restaurants across Europe.
             </p>
           </motion.div>
@@ -300,7 +300,7 @@ export default function AboutPage() {
                           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div className="text-2xl font-bold text-black mb-2">{milestone.year}</div>
                             <h3 className="text-xl font-semibold text-black mb-2">{milestone.title}</h3>
-                            <p className="text-gray-600">{milestone.description}</p>
+                            <p className="text-black">{milestone.description}</p>
                           </div>
                         </div>
                         <div className="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gray-800 rounded-full border-4 border-white shadow-lg"></div>
@@ -314,7 +314,7 @@ export default function AboutPage() {
                           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div className="text-2xl font-bold text-black mb-2">{milestone.year}</div>
                             <h3 className="text-xl font-semibold text-black mb-2">{milestone.title}</h3>
-                            <p className="text-gray-600">{milestone.description}</p>
+                            <p className="text-black">{milestone.description}</p>
                           </div>
                         </div>
                       </>
@@ -325,7 +325,7 @@ export default function AboutPage() {
                     <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                       <div className="text-2xl font-bold text-black mb-2">{milestone.year}</div>
                       <h3 className="text-xl font-semibold text-black mb-2">{milestone.title}</h3>
-                      <p className="text-gray-600">{milestone.description}</p>
+                      <p className="text-black">{milestone.description}</p>
                     </div>
                   </div>
                 </motion.div>

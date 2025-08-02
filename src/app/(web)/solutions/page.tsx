@@ -187,7 +187,7 @@ export default function SolutionsPage() {
                   <solution.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-3">{solution.title}</h3>
-                <p className="text-gray-600 leading-relaxed mb-6">{solution.description}</p>
+                <p className="text-black leading-relaxed mb-6">{solution.description}</p>
                 
                 <div className="mb-6">
                   <h4 className="text-sm font-semibold text-black mb-3 uppercase tracking-wide">Key Features</h4>
@@ -195,7 +195,7 @@ export default function SolutionsPage() {
                     {solution.features.map((feature, featureIndex) => (
                       <motion.li 
                         key={feature} 
-                        className="flex items-center gap-2 text-sm text-gray-600"
+                        className="flex items-center gap-2 text-sm text-black"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6, delay: featureIndex * 0.1 }}
@@ -214,7 +214,7 @@ export default function SolutionsPage() {
                     {solution.benefits.map((benefit, benefitIndex) => (
                       <motion.li 
                         key={benefit} 
-                        className="flex items-center gap-2 text-sm text-gray-600"
+                        className="flex items-center gap-2 text-sm text-black"
                         initial={{ opacity: 0, x: -10 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.6, delay: benefitIndex * 0.1 }}
@@ -243,7 +243,7 @@ export default function SolutionsPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Restaurant Types</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               Whether you&apos;re a small independent restaurant or a large chain, we have solutions that scale with your business.
             </p>
           </motion.div>
@@ -263,7 +263,7 @@ export default function SolutionsPage() {
                   <industry.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-lg font-semibold text-black mb-2">{industry.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{industry.description}</p>
+                <p className="text-black text-sm leading-relaxed">{industry.description}</p>
               </motion.div>
             ))}
           </div>
@@ -281,7 +281,7 @@ export default function SolutionsPage() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl font-semibold text-black mb-6">Success Stories</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
               See how restaurants like yours are transforming their operations with TapTab
             </p>
           </motion.div>
@@ -295,14 +295,14 @@ export default function SolutionsPage() {
               viewport={{ once: true }}
             >
               <h3 className="text-xl font-semibold text-black mb-4">The Coffee Corner</h3>
-              <p className="text-gray-600 leading-relaxed mb-4">
+              <p className="text-black leading-relaxed mb-4">
                 &ldquo;TapTab helped us reduce wait times by 50% and increase our daily orders by 30%. Our customers love the convenience of ordering from their phones.&rdquo;
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                 <div>
                   <p className="text-sm font-semibold text-black">Sarah Johnson</p>
-                  <p className="text-sm text-gray-600">Owner, The Coffee Corner</p>
+                  <p className="text-sm text-black">Owner, The Coffee Corner</p>
                 </div>
               </div>
             </motion.div>
@@ -315,14 +315,14 @@ export default function SolutionsPage() {
               viewport={{ once: true }}
             >
               <h3 className="text-xl font-semibold text-black mb-4">Pizza Palace</h3>
-              <p className="text-gray-600 leading-relaxed mb-4">
+              <p className="text-black leading-relaxed mb-4">
                 &ldquo;Our order processing time went from 8 minutes to 3 minutes. The kitchen printing system eliminated all order errors. TapTab is a game-changer.&rdquo;
               </p>
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
                 <div>
                   <p className="text-sm font-semibold text-black">Mike Chen</p>
-                  <p className="text-sm text-gray-600">Manager, Pizza Palace</p>
+                  <p className="text-sm text-black">Manager, Pizza Palace</p>
                 </div>
               </div>
             </motion.div>

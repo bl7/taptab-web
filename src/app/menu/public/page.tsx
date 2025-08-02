@@ -97,8 +97,8 @@ export default function PublicMenuPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Restaurant Name</h1>
-              <p className="text-sm text-gray-600">Fresh & Delicious Food</p>
+              <h1 className="text-2xl font-bold text-black">Restaurant Name</h1>
+              <p className="text-sm text-black">Fresh & Delicious Food</p>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="outline" size="sm">
@@ -151,14 +151,14 @@ export default function PublicMenuPage() {
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
+                  <h3 className="text-lg font-semibold text-black">{item.name}</h3>
                   {item.description && (
-                    <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                    <p className="text-sm text-black mt-1">{item.description}</p>
                   )}
-                  <p className="text-sm text-gray-500 mt-2">{item.category}</p>
+                  <p className="text-sm text-black mt-2">{item.category}</p>
                 </div>
                 <div className="text-right ml-4">
-                  <p className="text-lg font-bold text-gray-900">${item.price.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-black">${item.price.toFixed(2)}</p>
                 </div>
               </div>
               
@@ -208,10 +208,10 @@ export default function PublicMenuPage() {
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4">
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-black">
                 {cartItemCount} item{cartItemCount !== 1 ? 's' : ''} in cart
               </p>
-              <p className="text-lg font-bold text-gray-900">
+              <p className="text-lg font-bold text-black">
                 Total: ${cartTotal.toFixed(2)}
               </p>
             </div>

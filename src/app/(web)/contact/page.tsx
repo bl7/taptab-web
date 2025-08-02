@@ -75,7 +75,7 @@ export default function ContactPage() {
               >
                 <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h3 className="text-2xl font-semibold text-black mb-2">Message Sent!</h3>
-                <p className="text-gray-600">We&apos;ll get back to you within 24 hours.</p>
+                <p className="text-black">We&apos;ll get back to you within 24 hours.</p>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -201,7 +201,7 @@ export default function ContactPage() {
           >
             <div>
               <h3 className="text-2xl font-semibold text-black mb-6">Get in Touch</h3>
-              <p className="text-lg text-gray-600 leading-relaxed">
+              <p className="text-lg text-black leading-relaxed">
                 Ready to transform your restaurant? Our team is here to help you get started with TapTab POS.
               </p>
             </div>
@@ -218,7 +218,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-black mb-1">Email Support</h4>
-                  <p className="text-gray-600">support@taptab.com</p>
+                  <p className="text-black">support@taptab.com</p>
                   <p className="text-sm text-gray-500">We&apos;ll respond within 24 hours</p>
                 </div>
               </motion.div>
@@ -234,7 +234,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-black mb-1">Phone Support</h4>
-                  <p className="text-gray-600">+44 20 1234 5678</p>
+                  <p className="text-black">+44 20 1234 5678</p>
                   <p className="text-sm text-gray-500">Mon-Fri, 9AM-6PM GMT</p>
                 </div>
               </motion.div>
@@ -250,8 +250,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-black mb-1">Office</h4>
-                  <p className="text-gray-600">123 Restaurant Street</p>
-                  <p className="text-gray-600">London, UK SW1A 1AA</p>
+                  <p className="text-black">123 Restaurant Street</p>
+                  <p className="text-black">London, UK SW1A 1AA</p>
                 </div>
               </motion.div>
 
@@ -266,8 +266,8 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold text-black mb-1">Business Hours</h4>
-                  <p className="text-gray-600">Monday - Friday: 9AM - 6PM</p>
-                  <p className="text-gray-600">Saturday: 10AM - 4PM</p>
+                  <p className="text-black">Monday - Friday: 9AM - 6PM</p>
+                  <p className="text-black">Saturday: 10AM - 4PM</p>
                 </div>
               </motion.div>
             </div>
@@ -279,7 +279,7 @@ export default function ContactPage() {
               transition={{ duration: 0.8, delay: 0.7 }}
             >
               <h4 className="text-lg font-semibold text-black mb-3">Need Immediate Help?</h4>
-              <p className="text-gray-600 mb-4">
+              <p className="text-black mb-4">
                 Check out our comprehensive documentation and FAQ section for quick answers to common questions.
               </p>
               <motion.button 

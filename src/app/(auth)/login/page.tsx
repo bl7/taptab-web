@@ -152,7 +152,7 @@ function LoginForm() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-[#1A1A1A] placeholder-[#4A4A4A]"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
                   placeholder="Enter your email"
                   disabled={showOtpInput}
                 />
@@ -180,7 +180,7 @@ function LoginForm() {
                       type="text"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-center text-lg tracking-widest text-[#1A1A1A] placeholder-[#4A4A4A]"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-center text-lg tracking-widest text-black placeholder-[#4A4A4A]"
                       placeholder="000000"
                       maxLength={6}
                     />
@@ -206,7 +206,7 @@ function LoginForm() {
                       setError('');
                     }}
                     variant="outline"
-                    className="w-full border-gray-400 text-gray-600 hover:bg-gray-50"
+                    className="w-full border-gray-400 text-black hover:bg-gray-50"
                   >
                     Back to Email
                   </Button>

@@ -286,7 +286,7 @@ export default function StaffPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading users...</p>
+          <p className="mt-4 text-black">Loading users...</p>
         </div>
       </div>
     );
@@ -297,9 +297,9 @@ export default function StaffPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-                        <p className="text-gray-600">You don&apos;t have permission to access staff management.</p>
+          <Shield className="h-12 w-12 text-black mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-black mb-2">Access Denied</h2>
+                        <p className="text-black">You don&apos;t have permission to access staff management.</p>
         </div>
       </div>
     );
@@ -312,8 +312,8 @@ export default function StaffPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-2xl font-bold text-black">Staff Management</h1>
+              <p className="text-sm text-black mt-1">
                 Manage your restaurant staff and their roles
               </p>
             </div>
@@ -336,7 +336,7 @@ export default function StaffPage() {
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
                   type="text"
                   placeholder="Search users..."
@@ -367,7 +367,7 @@ export default function StaffPage() {
         {/* Users List */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-black">
               Staff Members ({filteredStaff.length})
             </h2>
           </div>
@@ -375,8 +375,8 @@ export default function StaffPage() {
           <div className="divide-y divide-gray-200">
             {filteredStaff.length === 0 ? (
               <div className="p-8 text-center">
-                <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No users found</p>
+                <User className="h-12 w-12 text-black mx-auto mb-4" />
+                <p className="text-black">No users found</p>
               </div>
             ) : (
               filteredStaff.map((user) => (
@@ -387,10 +387,10 @@ export default function StaffPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                       <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                        <User className="h-5 w-5 text-gray-600" />
+                        <User className="h-5 w-5 text-black" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-900">
+                        <h3 className="font-medium text-black">
                           {user.firstName} {user.lastName}
                           {user.id === currentUser?.id && (
                             <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
@@ -399,11 +399,11 @@ export default function StaffPage() {
                           )}
                         </h3>
                         <div className="flex items-center space-x-2 mt-1">
-                          <Mail className="h-3 w-3 text-gray-400" />
-                          <p className="text-sm text-gray-600">{user.email}</p>
+                          <Mail className="h-3 w-3 text-black" />
+                          <p className="text-sm text-black">{user.email}</p>
                         </div>
                         {user.tenantName && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-black mt-1">
                             {user.tenantName}
                           </p>
                         )}
@@ -432,24 +432,24 @@ export default function StaffPage() {
                               setShowEditModal(true);
                             }}
                             disabled={apiLoading}
-                            className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                            className="p-1 text-black hover:text-black disabled:opacity-50"
                           >
                             <Edit className="h-4 w-4" />
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">Cannot edit</span>
+                          <span className="text-xs text-black">Cannot edit</span>
                         )}
                         
                         {canDeleteUser(user) ? (
                           <button
                             onClick={() => handleDeleteUser(user.id)}
                             disabled={apiLoading}
-                            className="p-1 text-gray-400 hover:text-red-600 disabled:opacity-50"
+                            className="p-1 text-black hover:text-red-600 disabled:opacity-50"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
                         ) : (
-                          <span className="text-xs text-gray-400">Cannot delete</span>
+                          <span className="text-xs text-black">Cannot delete</span>
                         )}
                       </div>
                     </div>
@@ -508,7 +508,7 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
         <h2 className="text-xl  text-black font-semibold mb-4">Add New Staff Member</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-black mb-1">
               Email
             </label>
             <input
@@ -521,7 +521,7 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 First Name
               </label>
               <input
@@ -533,7 +533,7 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Last Name
               </label>
               <input
@@ -546,7 +546,7 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-black mb-1">
               Role
             </label>
             <select
@@ -606,7 +606,7 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
         <h2 className="text-xl font-semibold mb-4">Edit Staff Member</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-black mb-1">
               Email
             </label>
             <input
@@ -619,7 +619,7 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 First Name
               </label>
               <input
@@ -631,7 +631,7 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-black mb-1">
                 Last Name
               </label>
               <input
@@ -644,7 +644,7 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-black mb-1">
               Role
             </label>
             <select
@@ -660,7 +660,7 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
               <option value="READONLY">Read Only</option>
             </select>
             {isCurrentUser && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-black mt-1">
                 You cannot change your own role
               </p>
             )}
@@ -675,11 +675,11 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
               className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
               disabled={isCurrentUser}
             />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-700">
+            <label htmlFor="isActive" className="ml-2 block text-sm text-black">
               Active
             </label>
             {isCurrentUser && (
-              <span className="ml-2 text-xs text-gray-500">
+              <span className="ml-2 text-xs text-black">
                 (You cannot deactivate yourself)
               </span>
             )}

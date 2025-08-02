@@ -236,7 +236,7 @@ export default function FAQPage() {
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
                         >
-                          <p className="text-gray-600 leading-relaxed">
+                          <p className="text-black leading-relaxed">
                             {item.answer}
                           </p>
                         </motion.div>
@@ -255,7 +255,7 @@ export default function FAQPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <p className="text-gray-600 text-lg mb-4">
+              <p className="text-black text-lg mb-4">
                 No questions found for &ldquo;{searchQuery}&rdquo;
               </p>
               <motion.button
@@ -283,7 +283,7 @@ export default function FAQPage() {
             <h2 className="text-3xl font-semibold text-black mb-6">
               Still Have Questions?
             </h2>
-            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl text-black mb-8 max-w-3xl mx-auto leading-relaxed">
               Our support team is here to help. Get in touch and we&apos;ll get back to you within 24 hours.
             </p>
             
@@ -299,7 +299,7 @@ export default function FAQPage() {
                   <Clock className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-2">24/7 Email Support</h3>
-                <p className="text-gray-600">Get help anytime via email</p>
+                <p className="text-black">Get help anytime via email</p>
               </motion.div>
               
               <motion.div 
@@ -313,7 +313,7 @@ export default function FAQPage() {
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-2">Live Chat</h3>
-                <p className="text-gray-600">Chat with us during business hours</p>
+                <p className="text-black">Chat with us during business hours</p>
               </motion.div>
               
               <motion.div 
@@ -327,7 +327,7 @@ export default function FAQPage() {
                   <Globe className="w-8 h-8 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-black mb-2">Video Calls</h3>
-                <p className="text-gray-600">Screen share for complex issues</p>
+                <p className="text-black">Screen share for complex issues</p>
               </motion.div>
             </div>
             

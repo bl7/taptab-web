@@ -19,3 +19,45 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+select option {
+  color: black !important;
+  background-color: white !important;
+}
+
+select option:checked {
+  color: black !important;
+}
+
+/* Order Source Badge Styles */
+.badge {
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  display: inline-block !important;
+}
+
+.badge-internal { 
+  background: #e9ecef !important; 
+  color: #495057 !important; 
+}
+.badge-qr-ordering { 
+  background: #d4edda !important; 
+  color: #155724 !important; 
+}
+.badge-waiter-ordering { 
+  background: #cce5ff !important; 
+  color: #004085 !important; 
+}
+.badge-cashier-ordering { 
+  background: #fff3cd !important; 
+  color: #856404 !important; 
+}
+.badge-manager-ordering { 
+  background: #f8d7da !important; 
+  color: #721c24 !important; 
+}
+.badge-deliveroo { 
+  background: #e2e3e5 !important; 
+  color: #383d41 !important; 
+}
