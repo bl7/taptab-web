@@ -1,36 +1,169 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Taptab POS - Multi-tenant SaaS Restaurant POS System
 
-## Getting Started
+A modern, cloud-based Point of Sale system designed for small to medium restaurants, cafes, and food trucks.
 
-First, run the development server:
+## 🏗️ Architecture
 
+- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Backend**: Next.js API Routes + tRPC + PostgreSQL + Prisma
+- **Authentication**: JWT + Redis sessions + OTP email verification
+- **Database**: PostgreSQL with Row-Level Security (RLS)
+- **Cache**: Redis for sessions, rate limiting, and queues
+- **Mobile**: Capacitor Android app + PWA support
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- PostgreSQL database
+- Redis server
+- Resend account for email (OTP, password reset)
+
+### Environment Setup
+
+1. Copy the environment variables:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Update `.env.local` with your configuration:
+```env
+# Database
+DATABASE_URL="postgresql://username:password@localhost:5432/taptab"
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+# Redis
+REDIS_URL="redis://localhost:6379"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Authentication
+JWT_SECRET="your-super-secret-jwt-key-here"
+JWT_REFRESH_SECRET="your-super-secret-refresh-key-here"
 
-## Learn More
+# Email (Resend)
+RESEND_API_KEY="your-resend-api-key"
 
-To learn more about Next.js, take a look at the following resources:
+# App Configuration
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="your-nextauth-secret"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Install dependencies:
+```bash
+npm install
+```
 
-## Deploy on Vercel
+2. Generate Prisma client:
+```bash
+npm run db:generate
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Push database schema:
+```bash
+npm run db:push
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. Start development server:
+```bash
+npm run dev
+```
+
+## 📱 Features
+
+### ✅ Implemented
+- Multi-tenant authentication with OTP
+- JWT token management with refresh tokens
+- Role-based access control
+- Basic dashboard with navigation
+- Modern UI with Tailwind CSS
+- tRPC API with type safety
+
+### 🚧 In Progress
+- Menu management system
+- Order processing and state management
+- Payment integration
+- Bluetooth printer support
+- QR code ordering
+- Real-time order updates
+
+### 📋 Planned
+- Delivery platform integration
+- Advanced reporting and analytics
+- Mobile app with Capacitor
+- Offline support
+- Multi-location management
+
+## 🏛️ Project Structure
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── dashboard/         # Dashboard pages
+│   ├── login/            # Authentication pages
+│   └── pos/              # POS terminal
+├── components/            # Reusable UI components
+│   └── ui/               # Base UI components
+├── lib/                  # Utilities and configurations
+│   ├── trpc/             # tRPC setup
+│   ├── auth.ts           # Authentication utilities
+│   ├── db.ts             # Database connection
+│   ├── redis.ts          # Redis connection
+│   └── email.ts          # Email utilities
+└── server/               # Server-side code
+    └── api/              # tRPC routers
+```
+
+## 🔐 Authentication Flow
+
+1. **OTP Login**: User enters email → receives 6-digit code → verifies code
+2. **Session Management**: JWT tokens with Redis blacklisting
+3. **Role-based Access**: SUPER_ADMIN, TENANT_ADMIN, MANAGER, CASHIER, WAITER, KITCHEN, READONLY
+4. **Multi-tenant Isolation**: Row-level security with tenant_id
+
+## 🎨 Design System
+
+- **Framework**: Tailwind CSS
+- **Components**: shadcn/ui + Radix UI
+- **Icons**: Lucide React
+- **Animations**: Framer Motion
+- **Theme**: Minimalist, modern, mobile-first
+
+## 🗄️ Database Schema
+
+Key tables with tenant isolation:
+- `tenants` - Multi-tenant configuration
+- `users` - Staff accounts with roles
+- `categories` - Menu categories
+- `menu_items` - Food/drink items
+- `orders` - Order management
+- `order_items` - Order line items
+- `payments` - Payment tracking
+- `printers` - Bluetooth printer config
+- `audit_logs` - Security audit trail
+
+## 🚀 Development Commands
+
+```bash
+# Development
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run start            # Start production server
+
+# Database
+npm run db:generate      # Generate Prisma client
+npm run db:push          # Push schema to database
+npm run db:studio        # Open Prisma Studio
+
+# Linting
+npm run lint             # Run ESLint
+```
+
+## 📄 License
+
+This project is proprietary software. All rights reserved.
+
+## 🤝 Contributing
+
+Please refer to `truth.md` for the complete system specification and development guidelines.
