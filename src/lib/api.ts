@@ -326,7 +326,9 @@ class APIClient {
 
   // Tables endpoints
   async getTables(): Promise<{ tables: Table[] }> {
+    console.log('🔍 Fetching tables from:', `${this.baseURL}/tables`);
     const response = await this.request<{ data: { tables: Table[] } }>('/tables');
+    console.log('📋 Tables response:', response);
     return { tables: response.data.tables };
   }
 
@@ -336,10 +338,13 @@ class APIClient {
     location?: string;
     status?: string;
   }): Promise<{ table: Table }> {
+    console.log('➕ Creating table with data:', data);
+    console.log('🔗 POST request to:', `${this.baseURL}/tables`);
     const response = await this.request<{ data: { table: Table } }>('/tables', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    console.log('✅ Create table response:', response);
     return { table: response.data.table };
   }
 

@@ -48,11 +48,14 @@ export default function TablesPage() {
   }, [router]);
 
   const fetchTables = useCallback(async () => {
+    console.log('🔄 Starting to fetch tables...');
     try {
       const response = await api.getTables();
-      setTables(response.tables);
+      console.log('📋 Tables response:', response);
+      console.log('📊 Number of tables:', response.tables?.length || 0);
+      setTables(response.tables || []);
     } catch (error) {
-      console.error('Error fetching tables:', error);
+      console.error('❌ Error fetching tables:', error);
       if (error instanceof Error && error.message.includes('401')) {
         router.push('/login');
       }
@@ -66,14 +69,20 @@ export default function TablesPage() {
   }, [fetchTables]);
 
   const handleCreateTable = async (tableData: {
-    number: number;
+    number: string;
     capacity: number;
     location?: string;
     status?: string;
   }) => {
     setApiLoading(true);
     try {
-      const response = await api.createTable(tableData);
+      // Convert string number to actual number for API
+      const apiData = {
+        ...tableData,
+        number: parseInt(tableData.number) || 0
+      };
+      console.log('📝 Sending table data to API:', apiData);
+      const response = await api.createTable(apiData);
       setTables(prev => [response.table, ...prev]);
       setShowAddModal(false);
     } catch (error) {
@@ -332,15 +341,20 @@ function AddTableModal({
 }: { 
   onClose: () => void; 
   onSubmit: (data: {
-    number: number;
+    number: string;
     capacity: number;
     location?: string;
     status?: string;
   }) => void; 
   loading: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    number: 0,
+  const [formData, setFormData] = useState<{
+    number: string;
+    capacity: number;
+    location: string;
+    status: string;
+  }>({
+    number: '',
     capacity: 4,
     location: '',
     status: 'available'
@@ -359,24 +373,24 @@ function AddTableModal({
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Table Number</label>
+              <label className="block text-sm font-medium text-black mb-1">Table Number</label>
               <input
-                type="number"
+                type="text"
                 value={formData.number}
-                onChange={(e) => setFormData({ ...formData, number: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded-lg"
+                onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                className="w-full p-2 border rounded-lg text-black"
                 required
-                min="1"
+                placeholder="e.g., 1, A1, VIP-1"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Capacity</label>
+              <label className="block text-sm font-medium text-black mb-1">Capacity</label>
               <input
                 type="number"
                 value={formData.capacity}
                 onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg text-black"
                 required
                 min="1"
                 max="20"
@@ -384,22 +398,22 @@ function AddTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Location (Optional)</label>
+              <label className="block text-sm font-medium text-black mb-1">Location (Optional)</label>
               <input
                 type="text"
                 placeholder="e.g., Main Floor, Patio, Bar"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg text-black"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Initial Status</label>
+              <label className="block text-sm font-medium text-black mb-1">Initial Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as 'available' | 'occupied' | 'reserved' | 'cleaning' })}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg text-black"
               >
                 <option value="available">Available</option>
                 <option value="occupied">Occupied</option>
@@ -443,8 +457,13 @@ function EditTableModal({
   onSubmit: (data: Partial<Table>) => void; 
   loading: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    number: table.number,
+  const [formData, setFormData] = useState<{
+    number: string;
+    capacity: number;
+    location: string;
+    status: string;
+  }>({
+    number: table.number.toString(),
     capacity: table.capacity,
     location: table.location || '',
     status: table.status
@@ -452,7 +471,13 @@ function EditTableModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    // Convert string number back to number for API
+    const apiData = {
+      ...formData,
+      number: parseInt(formData.number) || 0,
+      status: formData.status as 'available' | 'occupied' | 'reserved' | 'cleaning'
+    };
+    onSubmit(apiData);
   };
 
   return (
@@ -463,24 +488,24 @@ function EditTableModal({
           
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1">Table Number</label>
+              <label className="block text-sm font-medium text-black mb-1">Table Number</label>
               <input
-                type="number"
+                type="text"
                 value={formData.number}
-                onChange={(e) => setFormData({ ...formData, number: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded-lg"
+                onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                className="w-full p-2 border rounded-lg text-black"
                 required
-                min="1"
+                placeholder="e.g., 1, A1, VIP-1"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Capacity</label>
+              <label className="block text-sm font-medium text-black mb-1">Capacity</label>
               <input
                 type="number"
                 value={formData.capacity}
                 onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) })}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg text-black"
                 required
                 min="1"
                 max="20"
@@ -488,22 +513,22 @@ function EditTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Location (Optional)</label>
+              <label className="block text-sm font-medium text-black mb-1">Location (Optional)</label>
               <input
                 type="text"
                 placeholder="e.g., Main Floor, Patio, Bar"
                 value={formData.location}
                 onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg text-black"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Status</label>
+              <label className="block text-sm font-medium text-black mb-1">Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as 'available' | 'occupied' | 'reserved' | 'cleaning' })}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border rounded-lg text-black"
               >
                 <option value="available">Available</option>
                 <option value="occupied">Occupied</option>
