@@ -84,9 +84,12 @@ export class ReceiptPrinter {
     this.jwtToken = jwtToken;
     this.connectionAttempts++;
     
-    console.log(`🔌 Creating new WebSocket connection... (attempt ${this.connectionAttempts}/${this.maxConnectionAttempts})`);
+    // Get WebSocket URL from environment or fallback to localhost
+    const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:5050';
+    
+    console.log(`🔌 Creating new WebSocket connection to ${wsUrl}... (attempt ${this.connectionAttempts}/${this.maxConnectionAttempts})`);
     // Connect to WebSocket server
-    this.socket = io('http://localhost:5050', {
+    this.socket = io(wsUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: true,
       reconnection: true,
