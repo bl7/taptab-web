@@ -80,7 +80,7 @@ export const usePrintBridge = () => {
         console.log('💡 To enable printing, start the PrintBridge server');
         setIsConnected(false);
       };
-    } catch (error) {
+    } catch {
       console.warn('⚠️ PrintBridge server not available');
       console.log('💡 To enable printing, start the PrintBridge server');
       setIsConnected(false);

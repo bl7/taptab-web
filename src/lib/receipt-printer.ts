@@ -143,7 +143,7 @@ export class ReceiptPrinter {
         console.warn('⚠️ PrintBridge server not running on localhost:8080');
         console.log('💡 To enable receipt printing, start the PrintBridge server');
       };
-    } catch (error) {
+    } catch {
       console.warn('⚠️ PrintBridge server not available');
       console.log('💡 To enable receipt printing, start the PrintBridge server');
     }

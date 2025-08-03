@@ -77,7 +77,7 @@ export const useOrders = (): UseOrdersReturn => {
     }
   }, []);
 
-  const updateOrder = useCallback(async (orderId: string, updateData: UpdateOrderRequest): Promise<Order> => {
+  const updateOrder = useCallback(async (orderId: string, _updateData: UpdateOrderRequest): Promise<Order> => {
     try {
       const response = await OrdersApi.updateOrder();
       if (response.success) {
@@ -109,7 +109,7 @@ export const useOrders = (): UseOrdersReturn => {
     }
   }, []);
 
-  const getOrder = useCallback(async (orderId: string): Promise<Order> => {
+  const getOrder = useCallback(async (_orderId: string): Promise<Order> => {
     try {
       const response = await OrdersApi.getOrder();
       if (response.success) {

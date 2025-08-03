@@ -65,7 +65,7 @@ export default function OrdersPage() {
 
 
   // Get orders for a specific table
-  const getTableOrders = (tableId: string) => {
+  const getTableOrders = useCallback((tableId: string) => {
     // Try to find the table by ID to get its number
     const table = tables.find(t => t.id === tableId);
     const tableNumber = table?.number;
@@ -84,7 +84,7 @@ export default function OrdersPage() {
     });
     
     return tableOrders;
-  };
+  }, [tables, orders]);
 
   // Get table status based on orders
   const getTableStatus = useCallback((table: Table) => {
