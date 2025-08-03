@@ -79,7 +79,7 @@ export const useOrders = (): UseOrdersReturn => {
 
   const updateOrder = useCallback(async (orderId: string, updateData: UpdateOrderRequest): Promise<Order> => {
     try {
-      const response = await OrdersApi.updateOrder(orderId, updateData);
+      const response = await OrdersApi.updateOrder();
       if (response.success) {
         const updatedOrder = response.data.order;
         setOrders(prev => prev.map(order => 
@@ -101,7 +101,7 @@ export const useOrders = (): UseOrdersReturn => {
 
   const deleteOrder = useCallback(async (orderId: string): Promise<void> => {
     try {
-      await OrdersApi.deleteOrder(orderId);
+      await OrdersApi.cancelOrder(orderId, 'Admin deletion');
       setOrders(prev => prev.filter(order => order.id !== orderId));
     } catch (err) {
       console.error('Error deleting order:', err);
@@ -111,7 +111,7 @@ export const useOrders = (): UseOrdersReturn => {
 
   const getOrder = useCallback(async (orderId: string): Promise<Order> => {
     try {
-      const response = await OrdersApi.getOrder(orderId);
+      const response = await OrdersApi.getOrder();
       if (response.success) {
         return response.data.order;
       } else {

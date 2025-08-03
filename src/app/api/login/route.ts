@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/pg';
-import { generateOTP, storeOTP, verifyOTP, generateToken } from '@/lib/auth';
+import { generateOTP, storeOTP, verifyOTP, generateToken, generateRefreshToken } from '@/lib/auth';
 import { sendOTPEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
@@ -58,6 +58,7 @@ export async function POST(request: NextRequest) {
       };
 
       const token = generateToken(payload);
+      const refreshToken = generateRefreshToken(payload);
 
       const response = {
         user: {
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
           },
         },
         token,
+        refreshToken,
       };
 
       // Console log the token and entire response when logged in

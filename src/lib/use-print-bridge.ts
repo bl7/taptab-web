@@ -1,5 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
+// Simple OS detection for PrintBridge connection
+const getPrintBridgeURL = (): string => {
+  const platform = navigator.platform.toLowerCase();
+  const userAgent = navigator.userAgent.toLowerCase();
+  
+  if (platform.includes('mac') || userAgent.includes('mac')) {
+    console.log('🖥️ Mac detected - using ws://localhost:8080');
+    return 'ws://localhost:8080';
+  } else {
+    console.log('🖥️ Windows/Linux detected - using ws://localhost:8080/ws');
+    return 'ws://localhost:8080/ws';
+  }
+};
+
 interface PrintBridgeMessage {
   type?: string;
   status?: string;
@@ -21,8 +35,9 @@ export const usePrintBridge = () => {
 
   const connect = useCallback(() => {
     try {
+      const printBridgeURL = getPrintBridgeURL();
       console.log('🔌 Connecting to PrintBridge server...');
-      const ws = new WebSocket('ws://localhost:8080/ws');
+      const ws = new WebSocket(printBridgeURL);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -60,12 +75,14 @@ export const usePrintBridge = () => {
         reconnectTimeoutRef.current = setTimeout(connect, 3000);
       };
 
-      ws.onerror = (error) => {
-        console.error('❌ PrintBridge WebSocket error:', error);
+      ws.onerror = () => {
+        console.warn('⚠️ PrintBridge server not running on localhost:8080');
+        console.log('💡 To enable printing, start the PrintBridge server');
         setIsConnected(false);
       };
     } catch (error) {
-      console.error('❌ PrintBridge connection error:', error);
+      console.warn('⚠️ PrintBridge server not available');
+      console.log('💡 To enable printing, start the PrintBridge server');
       setIsConnected(false);
     }
   }, []);
@@ -85,7 +102,7 @@ export const usePrintBridge = () => {
       wsRef.current.send(base64Image);
       return true;
     } else {
-      console.error('❌ PrintBridge WebSocket not connected');
+      console.warn('⚠️ PrintBridge not connected - print job skipped');
       return false;
     }
   };

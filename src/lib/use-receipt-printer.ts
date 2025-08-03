@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ReceiptPrinter, OrderNotification } from './receipt-printer';
 
+// Global singleton instance
+let globalPrinter: ReceiptPrinter | null = null;
+let globalConnectionCount = 0;
+
 export function useReceiptPrinter() {
   const printerRef = useRef<ReceiptPrinter | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -15,55 +19,58 @@ export function useReceiptPrinter() {
       return;
     }
 
-    // Prevent multiple connections
-    if (printerRef.current && isConnected) {
-      console.log('🔄 Already connected, skipping connection attempt');
-      return;
+    // Use global singleton instance
+    if (!globalPrinter) {
+      console.log('🔌 Creating global WebSocket connection...');
+      globalPrinter = new ReceiptPrinter();
+      globalConnectionCount = 0;
     }
 
-    console.log('🔌 Initializing WebSocket connection...');
-    setConnectionStatus('connecting');
-    
-    try {
-      // Clean up existing connection first
-      if (printerRef.current) {
-        printerRef.current.disconnect();
-        printerRef.current = null;
-      }
+    // Increment connection count
+    globalConnectionCount++;
+    console.log(`🔌 WebSocket connection count: ${globalConnectionCount}`);
 
-      printerRef.current = new ReceiptPrinter();
-      
-      // Set up notification callback
-      printerRef.current.onNotification((notification: OrderNotification) => {
+    // Use the global instance
+    printerRef.current = globalPrinter;
+    
+    // Set up notification callback only if not already set
+    if (globalPrinter) {
+      globalPrinter.onNotification((notification: OrderNotification) => {
         console.log('🎯 React hook received notification:', notification.order.orderNumber);
         setNotifications(prev => [notification, ...prev.slice(0, 9)]); // Keep last 10
       });
       
-      printerRef.current.connect(jwtToken);
-      
-      // Check connection status periodically
-      const checkConnection = () => {
-        if (printerRef.current) {
-          const connected = printerRef.current.getConnectionStatus();
-          setIsConnected(connected);
-          setConnectionStatus(connected ? 'connected' : 'disconnected');
-        }
-      };
-
-      // Clear existing interval
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      // Connect only if not already connected
+      if (!globalPrinter.getConnectionStatus()) {
+        console.log('🔌 Connecting to WebSocket...');
+        setConnectionStatus('connecting');
+        globalPrinter.connect(jwtToken);
+      } else {
+        console.log('🔄 WebSocket already connected, skipping connection');
+        setConnectionStatus('connected');
+        setIsConnected(true);
       }
-
-      // Check immediately and then every 5 seconds (reduced frequency)
-      checkConnection();
-      intervalRef.current = setInterval(checkConnection, 5000);
-
-    } catch (error) {
-      console.error('❌ Failed to initialize WebSocket connection:', error);
-      setConnectionStatus('error');
     }
-  }, [isConnected]);
+    
+    // Check connection status periodically
+    const checkConnection = () => {
+      if (globalPrinter) {
+        const connected = globalPrinter.getConnectionStatus();
+        setIsConnected(connected);
+        setConnectionStatus(connected ? 'connected' : 'disconnected');
+      }
+    };
+
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Check immediately and then every 5 seconds
+    checkConnection();
+    intervalRef.current = setInterval(checkConnection, 5000);
+
+  }, []);
 
   // Disconnect printer
   const disconnect = useCallback(() => {
@@ -75,9 +82,15 @@ export function useReceiptPrinter() {
       intervalRef.current = null;
     }
     
-    if (printerRef.current) {
-      printerRef.current.disconnect();
-      printerRef.current = null;
+    // Decrement connection count
+    globalConnectionCount = Math.max(0, globalConnectionCount - 1);
+    console.log(`🔌 WebSocket connection count: ${globalConnectionCount}`);
+    
+    // Only disconnect if no more components are using it
+    if (globalConnectionCount === 0 && globalPrinter) {
+      console.log('🔌 No more components using WebSocket, disconnecting...');
+      globalPrinter.disconnect();
+      globalPrinter = null;
     }
     
     setIsConnected(false);

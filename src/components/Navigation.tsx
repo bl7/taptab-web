@@ -32,29 +32,15 @@ export default function Navigation() {
     { name: 'Features', href: '/features' },
     { name: 'Solutions', href: '/solutions' },
     { name: 'How It Works', href: '/how-it-works' },
+    { name: 'PrintBridge', href: '/printbridge' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'About', href: '/about' },
-    { name: 'FAQ', href: '/faq' },
     { name: 'Contact', href: '/contact' },
-  ];
-
-  const dashboardItems = [
-    { name: 'Staff', href: '/dashboard/staff', icon: User },
   ];
 
   const bossItems = [
     { name: 'Boss Panel', href: '/bossdashboard', icon: Shield }
   ];
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('bossToken');
-    localStorage.removeItem('user');
-    localStorage.removeItem('bossUser');
-    setIsAuthenticated(false);
-    setUserRole('');
-    window.location.href = '/';
-  };
 
   return (
     <nav className="bg-black text-white shadow-sm sticky top-0 z-50">
@@ -77,7 +63,7 @@ export default function Navigation() {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-white hover:text-[#FF4B30] transition-colors duration-150"
+                className="text-white hover:text-gray-300 transition-colors duration-150"
               >
                 {item.name}
               </Link>
@@ -90,35 +76,26 @@ export default function Navigation() {
                     <Link
                       key={item.name}
                       href={item.href}
-                      className="text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-1"
+                      className="text-white hover:text-gray-300 transition-colors duration-150 flex items-center space-x-1"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.name}</span>
                     </Link>
                   ))
                 ) : (
-                  dashboardItems.map((item) => (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className="text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-1"
-                    >
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.name}</span>
-                    </Link>
-                  ))
+                  <Link
+                    href="/dashboard"
+                    className="text-white hover:text-gray-300 transition-colors duration-150 flex items-center space-x-1"
+                  >
+                    <User className="h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
                 )}
-                <button
-                  onClick={handleLogout}
-                  className="text-white hover:text-[#FF4B30] transition-colors duration-150"
-                >
-                  Logout
-                </button>
               </div>
             ) : (
               <Link
                 href="/login"
-                className="bg-[#FF4B30] hover:bg-[#E63E29] text-white px-4 py-2 rounded-full hover:shadow-md transition-all duration-150 text-sm"
+                className="bg-white hover:bg-gray-100 text-black px-4 py-2 rounded-full hover:shadow-md transition-all duration-150 text-sm"
               >
                 Login
               </Link>
@@ -129,7 +106,7 @@ export default function Navigation() {
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="text-white hover:text-[#FF4B30] transition-colors duration-150"
+              className="text-white hover:text-gray-300 transition-colors duration-150"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -139,12 +116,12 @@ export default function Navigation() {
         {/* Mobile Navigation */}
         {isOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 bg-black border-t border-[#333]">
+            <div className="px-2 pt-2 pb-3 space-y-1 bg-black border-t border-gray-700">
               {navItems.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="block px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150"
+                  className="block px-3 py-2 text-white hover:text-gray-300 transition-colors duration-150"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.name}
@@ -158,7 +135,7 @@ export default function Navigation() {
                       <Link
                         key={item.name}
                         href={item.href}
-                        className="block px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-2"
+                        className="block px-3 py-2 text-white hover:text-gray-300 transition-colors duration-150 flex items-center space-x-2"
                         onClick={() => setIsOpen(false)}
                       >
                         <item.icon className="h-4 w-4" />
@@ -166,32 +143,20 @@ export default function Navigation() {
                       </Link>
                     ))
                   ) : (
-                    dashboardItems.map((item) => (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className="block px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150 flex items-center space-x-2"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.name}</span>
-                      </Link>
-                    ))
+                    <Link
+                      href="/dashboard"
+                      className="block px-3 py-2 text-white hover:text-gray-300 transition-colors duration-150 flex items-center space-x-2"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <User className="h-4 w-4" />
+                      <span>Dashboard</span>
+                    </Link>
                   )}
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsOpen(false);
-                    }}
-                    className="block w-full text-left px-3 py-2 text-white hover:text-[#FF4B30] transition-colors duration-150"
-                  >
-                    Logout
-                  </button>
                 </>
               ) : (
                 <Link
                   href="/login"
-                  className="block px-3 py-2 bg-[#FF4B30] hover:bg-[#E63E29] text-white rounded-lg mx-3 mt-4 text-center text-sm transition-all duration-150"
+                  className="block px-3 py-2 bg-white hover:bg-gray-100 text-black rounded-lg mx-3 mt-4 text-center text-sm transition-all duration-150"
                   onClick={() => setIsOpen(false)}
                 >
                   Login

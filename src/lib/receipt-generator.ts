@@ -196,4 +196,14 @@ export class ReceiptGenerator {
   static getBase64FromDataURL(dataURL: string): string {
     return dataURL.replace('data:image/png;base64,', '');
   }
+
+  // Get receipt width
+  getWidth(): number {
+    return this.options.width!;
+  }
+
+  // Get receipt height for a specific order
+  getHeight(orderData: OrderData): number {
+    return this.calculateContentHeight(orderData);
+  }
 } 

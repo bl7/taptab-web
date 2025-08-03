@@ -62,7 +62,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50">
       <div className="w-full max-w-2xl">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header with Logo and Text */}
@@ -77,18 +77,18 @@ export default function SignupPage() {
               />
             </div>
             <div className="text-right">
-              <h1 className="text-2xl font-bold text-[#1A1A1A]">TapTab</h1>
+              <h1 className="text-2xl font-bold text-black">TapTab</h1>
             </div>
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-[#1A1A1A] mb-2">Create Restaurant Account</h2>
-            <p className="text-[#4A4A4A]">Set up your restaurant on TapTab POS</p>
+            <h2 className="text-3xl font-bold text-black mb-2">Create Restaurant Account</h2>
+            <p className="text-gray-600">Set up your restaurant on TapTab POS</p>
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="mb-6 p-4 bg-gray-100 border border-gray-200 rounded-lg">
+              <p className="text-black text-sm">{error}</p>
             </div>
           )}
 
@@ -98,7 +98,7 @@ export default function SignupPage() {
               <h3 className="text-xl font-semibold text-black mb-4">Restaurant Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="restaurantName" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="restaurantName" className="block text-sm font-medium text-black mb-2">
                     Restaurant Name *
                   </label>
                   <input
@@ -108,13 +108,13 @@ export default function SignupPage() {
                     value={formData.restaurantName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="Enter restaurant name"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="restaurantSlug" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="restaurantSlug" className="block text-sm font-medium text-black mb-2">
                     Restaurant Slug *
                   </label>
                   <input
@@ -124,13 +124,13 @@ export default function SignupPage() {
                     value={formData.restaurantSlug}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="restaurant-name"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="restaurantPhone" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="restaurantPhone" className="block text-sm font-medium text-black mb-2">
                     Restaurant Phone
                   </label>
                   <input
@@ -139,13 +139,13 @@ export default function SignupPage() {
                     name="restaurantPhone"
                     value={formData.restaurantPhone}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="+1234567890"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label htmlFor="restaurantAddress" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="restaurantAddress" className="block text-sm font-medium text-black mb-2">
                     Restaurant Address
                   </label>
                   <input
@@ -154,7 +154,7 @@ export default function SignupPage() {
                     name="restaurantAddress"
                     value={formData.restaurantAddress}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="123 Main St, City, State 12345"
                   />
                 </div>
@@ -166,7 +166,7 @@ export default function SignupPage() {
               <h3 className="text-xl font-semibold text-black mb-4">Admin Account</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-black mb-2">
                     First Name *
                   </label>
                   <input
@@ -176,13 +176,13 @@ export default function SignupPage() {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="Enter first name"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-black mb-2">
                     Last Name *
                   </label>
                   <input
@@ -192,13 +192,13 @@ export default function SignupPage() {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="Enter last name"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-[#1A1A1A] mb-2">
+                  <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
                     Email Address *
                   </label>
                   <input
@@ -208,10 +208,10 @@ export default function SignupPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF4B30] focus:border-transparent text-black placeholder-[#4A4A4A]"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="admin@restaurant.com"
                   />
-                  <p className="text-xs text-[#4A4A4A] mt-1">
+                  <p className="text-xs text-gray-500 mt-1">
                     This email will be used for login and receiving OTP codes
                   </p>
                 </div>
@@ -221,16 +221,16 @@ export default function SignupPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-[#FF4B30] hover:bg-[#E63E29] text-white py-3 rounded-lg font-medium"
+              className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
             >
               {isLoading ? 'Creating Account...' : 'Create Restaurant Account'}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
-            <p className="text-sm text-[#4A4A4A]">
+            <p className="text-sm text-gray-600">
               Already have an account?{' '}
-              <a href="/login" className="text-[#267DF4] hover:text-[#1E90FF] font-medium">
+              <a href="/login" className="text-black hover:text-gray-700 font-medium">
                 Sign in
               </a>
             </p>

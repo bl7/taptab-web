@@ -20,6 +20,7 @@ export default function Footer() {
     product: [
       { name: 'Features', href: '/features' },
       { name: 'How It Works', href: '/how-it-works' },
+      { name: 'PrintBridge', href: '/printbridge' },
       { name: 'Pricing', href: '/pricing' },
       { name: 'Demo', href: '/demo' },
     ],
@@ -57,16 +58,16 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h3 className="text-2xl font-semibold mb-4">Stay Updated</h3>
-            <p className="text-[#6A6A6A] mb-6 max-w-md mx-auto">
+            <p className="text-gray-400 mb-6 max-w-md mx-auto">
               Get the latest updates on new features, restaurant tips, and industry insights.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
               <input
                 type="email"
                 placeholder="Enter your email"
-                className="flex-1 px-4 py-3 rounded-lg bg-[#1A1A1A] text-white placeholder-[#6A6A6A] focus:outline-none focus:ring-2 focus:ring-[#FF4B30] border border-[#333]"
+                className="flex-1 px-4 py-3 rounded-lg bg-gray-900 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white border border-gray-700"
               />
-              <button className="bg-[#FF4B30] hover:bg-[#E63E29] text-white px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200 flex items-center gap-2">
+              <button className="bg-white hover:bg-gray-100 text-black px-6 py-3 rounded-lg font-medium hover:shadow-lg transition-all duration-200 flex items-center gap-2">
                 Subscribe
                 <ArrowRight className="w-4 h-4" />
               </button>
@@ -89,7 +90,7 @@ export default function Footer() {
                 className="rounded-lg"
               />
             </div>
-            <p className="text-[#6A6A6A] mb-6 max-w-md">
+            <p className="text-gray-400 mb-6 max-w-md">
               Revolutionize your restaurant operations with smart QR ordering, 
               real-time management, and seamless kitchen communication.
             </p>
@@ -98,7 +99,7 @@ export default function Footer() {
                 <Link
                   key={social.name}
                   href={social.href}
-                  className="w-10 h-10 bg-[#1A1A1A] rounded-full flex items-center justify-center hover:bg-[#FF4B30] transition-colors duration-200"
+                  className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-colors duration-200"
                   aria-label={social.name}
                 >
                   <social.icon className="w-5 h-5" />
@@ -115,7 +116,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link 
                     href={link.href}
-                    className="text-[#6A6A6A] hover:text-[#FF4B30] transition-colors duration-200"
+                    className="text-gray-400 hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -132,7 +133,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link 
                     href={link.href}
-                    className="text-[#6A6A6A] hover:text-[#FF4B30] transition-colors duration-200"
+                    className="text-gray-400 hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -149,7 +150,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link 
                     href={link.href}
-                    className="text-[#6A6A6A] hover:text-[#FF4B30] transition-colors duration-200"
+                    className="text-gray-400 hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -166,7 +167,7 @@ export default function Footer() {
                 <li key={link.name}>
                   <Link 
                     href={link.href}
-                    className="text-[#6A6A6A] hover:text-[#FF4B30] transition-colors duration-200"
+                    className="text-gray-400 hover:text-white transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -177,26 +178,26 @@ export default function Footer() {
         </div>
 
         {/* Contact Section */}
-        <div className="mt-12 pt-8 border-t border-[#333]">
+        <div className="mt-12 pt-8 border-t border-gray-700">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="flex items-center space-x-3">
-              <Mail className="w-5 h-5 text-[#FF4B30]" />
+              <Mail className="w-5 h-5 text-white" />
               <div>
-                <p className="text-sm text-[#6A6A6A]">Email</p>
+                <p className="text-sm text-gray-400">Email</p>
                 <p className="text-white">hello@taptabpos.com</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <Phone className="w-5 h-5 text-[#FF4B30]" />
+              <Phone className="w-5 h-5 text-white" />
               <div>
-                <p className="text-sm text-[#6A6A6A]">Phone</p>
+                <p className="text-sm text-gray-400">Phone</p>
                 <p className="text-white">+44 20 1234 5678</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
-              <MapPin className="w-5 h-5 text-[#FF4B30]" />
+              <MapPin className="w-5 h-5 text-white" />
               <div>
-                <p className="text-sm text-[#6A6A6A]">Address</p>
+                <p className="text-sm text-gray-400">Address</p>
                 <p className="text-white">London, UK</p>
               </div>
             </div>
@@ -205,20 +206,20 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="bg-[#1A1A1A] py-6">
+      <div className="bg-gray-900 py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-[#6A6A6A] text-sm">
+            <p className="text-gray-400 text-sm">
               © {currentYear} TapTab POS. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
-              <Link href="/privacy" className="text-[#6A6A6A] hover:text-[#FF4B30] text-sm transition-colors duration-200">
+              <Link href="/privacy" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-[#6A6A6A] hover:text-[#FF4B30] text-sm transition-colors duration-200">
+              <Link href="/terms" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
                 Terms of Service
               </Link>
-              <Link href="/cookies" className="text-[#6A6A6A] hover:text-[#FF4B30] text-sm transition-colors duration-200">
+              <Link href="/cookies" className="text-gray-400 hover:text-white text-sm transition-colors duration-200">
                 Cookie Policy
               </Link>
             </div>

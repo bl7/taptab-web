@@ -1,26 +1,27 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
-  X,
-  CheckCircle,
-  AlertCircle,
-  Clock,
   Search,
-  Filter
+  Filter,
+  Heart,
+  Star,
+  Plus,
+  Minus,
+  Trash2,
+  X,
+  ShoppingCart,
+  CheckCircle,
+  Users
 } from 'lucide-react';
-
+import { api } from '@/lib/api';
 
 interface MenuItem {
   id: string;
   name: string;
   description: string;
   price: number;
-  categoryId?: string;
+  categoryId: string;
   image?: string;
   isActive: boolean;
 }
@@ -32,84 +33,67 @@ interface MenuCategory {
   isActive: boolean;
 }
 
+interface Table {
+  id: string;
+  number: string;
+  capacity: number;
+  status: 'available' | 'occupied' | 'reserved' | 'cleaning';
+  location?: string;
+  currentOrderId?: string;
+  tenantId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface CartItem {
   menuItem: MenuItem;
   quantity: number;
   notes: string;
 }
 
-interface OrderStatus {
-  orderId: string;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered';
-  total: number;
-  items: CartItem[];
-}
-
-export default function QROrderPage() {
-  const params = useParams();
-  const tenantSlug = params.tenantSlug as string;
-  const tableNumber = (params.tableNumber as string).replace(/\s+/g, '-'); // Remove spaces, replace with hyphens
-
+export default function OrderTakingPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
+  const [selectedTable, setSelectedTable] = useState<string>('');
+  const [showTableSelector, setShowTableSelector] = useState(false);
   const [orderLoading, setOrderLoading] = useState(false);
-  const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
-  const [error, setError] = useState<string>('');
-  const [availableTables, setAvailableTables] = useState<string[]>([]);
-
-
 
   // Load menu data
-  const loadMenuData = useCallback(async () => {
-    console.log('🔄 Loading menu data for:', tenantSlug);
-    setLoading(true);
-    setError('');
-
-    try {
-      // Fetch menu items and categories using public API
-      const [menuResponse, categoriesResponse, tablesResponse] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/menu/items?tenant=${tenantSlug}`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/menu/categories?tenant=${tenantSlug}`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/tables?tenant=${tenantSlug}`)
-      ]);
-
-      if (!menuResponse.ok) {
-        throw new Error(`Failed to load menu items: ${menuResponse.status}`);
-      }
-      if (!categoriesResponse.ok) {
-        throw new Error(`Failed to load categories: ${categoriesResponse.status}`);
-      }
-
-      const menuData = await menuResponse.json();
-      const categoriesData = await categoriesResponse.json();
-      const tablesData = await tablesResponse.json();
-
-      console.log('✅ Menu data loaded:', menuData);
-      console.log('✅ Categories loaded:', categoriesData);
-      console.log('✅ Tables loaded:', tablesData);
-
-      setMenuItems(menuData.data?.items || []);
-      setCategories(categoriesData.data?.categories || []);
-      
-      // Extract table numbers for reference
-      const tableNumbers = (tablesData.data?.tables || []).map((table: { number: string }) => table.number);
-      setAvailableTables(tableNumbers);
-      
-      console.log('📋 Available tables:', tableNumbers);
-    } catch (error) {
-      console.error('❌ Error loading menu:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load menu');
-    } finally {
-      setLoading(false);
-    }
-  }, [tenantSlug]);
-
   useEffect(() => {
+    const loadMenuData = async () => {
+      try {
+        setLoading(true);
+        const [menuResponse, categoriesResponse, tablesResponse] = await Promise.all([
+          api.getMenuItems(),
+          api.getMenuCategories(),
+          api.getTables()
+        ]);
+
+        setMenuItems(menuResponse.items || []);
+        setCategories(categoriesResponse.categories || []);
+        setTables(tablesResponse.tables || []);
+      } catch (error) {
+        console.error('Error loading menu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadMenuData();
-  }, [loadMenuData]);
+  }, []);
+
+  // Filter menu items based on search and category
+  const filteredItems = menuItems.filter(item => {
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || item.categoryId === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   // Cart management functions
   const addToCart = (menuItem: MenuItem) => {
@@ -152,186 +136,76 @@ export default function QROrderPage() {
     ));
   };
 
+  const clearCart = () => {
+    setCart([]);
+  };
+
   const getCartTotal = () => {
     return cart.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0);
   };
 
-  // Submit order
   const submitOrder = async () => {
-    if (cart.length === 0) return;
+    if (!selectedTable || cart.length === 0) return;
     
     setOrderLoading(true);
-    setError('');
-
     try {
       const orderData = {
-        tableNumber: tableNumber, // Keep as string, don't parseInt
+        tableId: selectedTable,
         items: cart.map(item => ({
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
           notes: item.notes
         })),
+        orderSource: 'WAITER',
         customerName: "Walk-in Customer",
-        customerPhone: ""
+        customerPhone: "",
+        specialInstructions: ""
       };
 
-      console.log('📦 Submitting order:', orderData);
-      console.log('🌐 API URL:', `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`);
-      console.log('📦 Order data being sent:', JSON.stringify(orderData, null, 2));
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-      });
-
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response status text:', response.statusText);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ Error response body:', errorText);
-        
-        // Try to parse the error response as JSON
-        let errorMessage = `Order submission failed: ${response.status}`;
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.error && errorData.error.message) {
-            errorMessage = errorData.error.message;
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch {
-          // If JSON parsing fails, use the raw error text
-          errorMessage = errorText || `Order submission failed: ${response.status}`;
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      const orderResult = await response.json();
-      console.log('✅ Order submitted:', orderResult);
-
-      setOrderStatus({
-        orderId: orderResult.data?.orderId || 'unknown',
-        status: 'pending',
-        total: getCartTotal(),
-        items: [...cart]
-      });
-
+      console.log('📦 Submitting order data:', JSON.stringify(orderData, null, 2));
+      await api.createOrder(orderData);
       setCart([]);
+      setSelectedTable('');
+      
+      // Use setTimeout to delay the alert and prevent any potential race conditions
+      setTimeout(() => {
+        try {
+          alert('Order placed successfully!');
+        } catch (error) {
+          console.warn('Alert failed:', error);
+        }
+      }, 100);
     } catch (error) {
-      console.error('❌ Error submitting order:', error);
-      setError(error instanceof Error ? error.message : 'Failed to submit order');
+      console.error('Error placing order:', error);
+      
+      // Extract error message from the error object
+      let errorMessage = 'Failed to place order. Please try again.';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // Try to extract message from API error response
+        const apiError = error as { message?: string; error?: { message?: string }; data?: { message?: string } };
+        if (apiError.message) {
+          errorMessage = apiError.message;
+        } else if (apiError.error?.message) {
+          errorMessage = apiError.error.message;
+        } else if (apiError.data?.message) {
+          errorMessage = apiError.data.message;
+        }
+      }
+      
+      alert(`Order Error: ${errorMessage}`);
     } finally {
       setOrderLoading(false);
     }
   };
 
-  const filteredItems = selectedCategory === 'all' 
-    ? menuItems 
-    : menuItems.filter(item => item.categoryId === selectedCategory);
-
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-black">Loading menu...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                  <h1 className="text-2xl font-bold text-black mb-2">Error Loading Menu</h1>
-        <p className="text-black mb-6">{error}</p>
-          
-          {error.includes('Table not found') && availableTables.length > 0 && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-black mb-2">Available tables for this restaurant:</p>
-              <div className="flex flex-wrap gap-2 justify-center">
-                {availableTables.map((tableNum) => (
-                  <a
-                    key={tableNum}
-                    href={`/order/${tenantSlug}/${tableNum}`}
-                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200"
-                  >
-                    {tableNum}
-                  </a>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <button
-            onClick={loadMenuData}
-            className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Order confirmation state
-  if (orderStatus) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-          <div className="text-center mb-6">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-black mb-2">Order Placed!</h1>
-        <p className="text-black">Your order has been successfully submitted.</p>
-          </div>
-
-          <div className="bg-gray-50 rounded-lg p-4 mb-6">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-black">Order ID:</span>
-              <span className="font-mono text-sm">{orderStatus.orderId}</span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-black">Table:</span>
-              <span className="font-medium">{tableNumber}</span>
-            </div>
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-black">Total:</span>
-              <span className="font-bold">${orderStatus.total.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-black">Status:</span>
-              <span className="flex items-center text-sm">
-                <Clock className="h-4 w-4 mr-1" />
-                {orderStatus.status}
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-2 mb-6">
-            <h3 className="font-semibold text-black">Order Items:</h3>
-            {orderStatus.items.map((item, index) => (
-              <div key={index} className="flex justify-between text-sm">
-                <span>{item.menuItem.name} x{item.quantity}</span>
-                <span>${(item.menuItem.price * item.quantity).toFixed(2)}</span>
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800"
-          >
-            Place Another Order
-          </button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading menu...</p>
         </div>
       </div>
     );
@@ -345,10 +219,8 @@ export default function QROrderPage() {
         <div className="bg-white shadow-sm px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-black">
-                {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
-              </h1>
-              <p className="text-sm text-gray-600">Table {tableNumber}</p>
+              <h1 className="text-2xl font-bold text-black">Take Orders</h1>
+              <p className="text-sm text-gray-600">Select table and add items to order</p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -356,6 +228,8 @@ export default function QROrderPage() {
                 <input
                   type="text"
                   placeholder="Search menu items..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
                 />
               </div>
@@ -364,6 +238,56 @@ export default function QROrderPage() {
               </button>
             </div>
           </div>
+
+          {/* Table Selector */}
+          <div className="mt-4 flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Users className="w-5 h-5 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">Table:</span>
+              {selectedTable ? (
+                <span className="px-3 py-1 bg-black text-white rounded-lg text-sm">
+                  Table {tables.find(t => t.id === selectedTable)?.number || selectedTable}
+                </span>
+              ) : (
+                <button
+                  onClick={() => setShowTableSelector(!showTableSelector)}
+                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200"
+                >
+                  Select Table
+                </button>
+              )}
+            </div>
+            
+            {selectedTable && (
+              <button
+                onClick={() => setSelectedTable('')}
+                className="text-sm text-gray-500 hover:text-gray-700"
+              >
+                Change Table
+              </button>
+            )}
+          </div>
+
+          {/* Table Selector Dropdown */}
+          {showTableSelector && (
+            <div className="mt-2 p-4 bg-white border border-gray-200 rounded-lg shadow-lg">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Select a table:</h3>
+              <div className="grid grid-cols-4 gap-2">
+                {tables.map(table => (
+                  <button
+                    key={table.id}
+                    onClick={() => {
+                      setSelectedTable(table.id);
+                      setShowTableSelector(false);
+                    }}
+                    className="p-2 text-sm border border-gray-300 rounded hover:bg-gray-50"
+                  >
+                    Table {table.number}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Category Filters */}
           <div className="mt-4 flex items-center space-x-2">
@@ -411,7 +335,7 @@ export default function QROrderPage() {
                     </div>
                   )}
                   <button className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-50">
-                    {/* Removed Heart icon */}
+                    <Heart className="w-4 h-4 text-gray-400" />
                   </button>
                 </div>
                 
@@ -427,12 +351,13 @@ export default function QROrderPage() {
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-1">
-                      {/* Removed Star icon */}
+                      <Star className="w-3 h-3 text-yellow-400 fill-current" />
                       <span className="text-xs text-gray-600">5.0</span>
                     </div>
                                          <button
                        onClick={() => addToCart(item)}
-                       className="bg-black text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors"
+                       disabled={!selectedTable}
+                       className="bg-black text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                      >
                        Add to cart
                      </button>
@@ -448,9 +373,9 @@ export default function QROrderPage() {
       <div className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-black">My Order</h2>
+            <h2 className="text-xl font-bold text-black">Order for Table {tables.find(t => t.id === selectedTable)?.number || selectedTable || '?'}</h2>
             <button
-              onClick={() => setCart([])}
+              onClick={clearCart}
               className="p-2 text-gray-400 hover:text-gray-600"
             >
               <X className="w-5 h-5" />
@@ -512,7 +437,7 @@ export default function QROrderPage() {
                           onClick={() => removeFromCart(item.menuItem.id)}
                           className="p-1 text-gray-400 hover:text-red-500"
                         >
-                          {/* Removed Trash2 icon */}
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
@@ -542,28 +467,28 @@ export default function QROrderPage() {
                   <span className="font-semibold">${getCartTotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                  <span className="font-bold text-gray-900">Total Amount:</span>
-                  <span className="font-bold text-green-600">${getCartTotal().toFixed(2)}</span>
+                  <span className="font-bold text-black">Total:</span>
+                  <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
                 </div>
               </div>
 
-                             <button
-                 onClick={submitOrder}
-                 disabled={orderLoading}
-                 className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-               >
-                 {orderLoading ? (
-                   <>
-                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                     Placing Order...
-                   </>
-                 ) : (
-                   <>
-                     <CheckCircle className="h-4 w-4" />
-                     Place Order
-                   </>
-                 )}
-               </button>
+              <button
+                onClick={submitOrder}
+                disabled={orderLoading || !selectedTable}
+                className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {orderLoading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Placing Order...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4" />
+                    Place Order
+                  </>
+                )}
+              </button>
             </div>
           )}
         </div>

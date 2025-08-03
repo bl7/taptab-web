@@ -17,6 +17,8 @@ export default function PublicMenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [cart, setCart] = useState<{[key: string]: number}>({});
+  
+
 
   useEffect(() => {
     // Mock menu data - in real app, this would come from API
@@ -199,9 +201,9 @@ export default function PublicMenuPage() {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
-      </main>
+                      ))}
+          </div>
+        </main>
 
       {/* Cart Summary */}
       {cartItemCount > 0 && (

@@ -69,7 +69,7 @@ export function OrderNotificationPopup({
     <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 transition-all duration-300 ${
       isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
     }`}>
-      <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-[80vh]">
         {/* Header */}
         <div className="bg-green-500 text-white px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
@@ -98,22 +98,22 @@ export function OrderNotificationPopup({
               </span>
             </div>
             
-            <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
               <div className="flex items-center">
-                <MapPin className="h-3 w-3 mr-1" />
-                Table {notification.order.tableNumber}
+                <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">Table {notification.order.tableNumber}</span>
               </div>
               <div className="flex items-center">
-                <User className="h-3 w-3 mr-1" />
-                {notification.order.customerName}
+                <User className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">{notification.order.customerName}</span>
               </div>
               <div className="flex items-center">
-                <Phone className="h-3 w-3 mr-1" />
-                {notification.order.customerPhone}
+                <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
+                <span className="truncate">{notification.order.customerPhone || 'No phone'}</span>
               </div>
               {notification.order.orderSource && (
                 <div className="flex items-center">
-                  <span className={`badge badge-${notification.order.orderSource.toLowerCase().replace('_', '-')}`}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate`}>
                     {notification.order.orderSource}
                   </span>
                 </div>
@@ -124,29 +124,29 @@ export function OrderNotificationPopup({
           {/* Items */}
           <div className="mb-4">
             <h4 className="font-semibold text-black mb-2">Items:</h4>
-            <div className="space-y-1">
+            <div className="space-y-1 max-h-32 overflow-y-auto">
               {notification.order.items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
-                  <span className="text-gray-700">
-                    {item.menuItemName} x{item.quantity}
+                  <span className="text-gray-700 flex-1 min-w-0 mr-2">
+                    <span className="truncate block">{item.menuItemName} x{item.quantity}</span>
                   </span>
-                  <span className="font-medium text-black">
-                    ${item.total.toFixed(2)}
+                  <span className="font-medium text-black flex-shrink-0">
+                    ${(item.total || (item.price * item.quantity)).toFixed(2)}
                   </span>
                 </div>
               ))}
-              {notification.order.items.some(item => item.notes) && (
-                <div className="mt-2 pt-2 border-t border-gray-200">
-                  {notification.order.items.map((item, index) => 
-                    item.notes ? (
-                      <div key={index} className="text-xs text-gray-500 italic">
-                        {item.menuItemName}: {item.notes}
-                      </div>
-                    ) : null
-                  )}
-                </div>
-              )}
             </div>
+            {notification.order.items.some(item => item.notes) && (
+              <div className="mt-2 pt-2 border-t border-gray-200 max-h-20 overflow-y-auto">
+                {notification.order.items.map((item, index) => 
+                  item.notes ? (
+                    <div key={index} className="text-xs text-gray-500 italic mb-1">
+                      <span className="font-medium">{item.menuItemName}:</span> {item.notes}
+                    </div>
+                  ) : null
+                )}
+              </div>
+            )}
           </div>
 
           {/* Total */}
@@ -154,7 +154,7 @@ export function OrderNotificationPopup({
             <div className="flex justify-between items-center">
               <span className="font-semibold text-black">Total:</span>
               <span className="text-lg font-bold text-green-600">
-                ${notification.order.finalAmount.toFixed(2)}
+                ${notification.order.items.reduce((sum, item) => sum + (item.total || (item.price * item.quantity)), 0).toFixed(2)}
               </span>
             </div>
           </div>

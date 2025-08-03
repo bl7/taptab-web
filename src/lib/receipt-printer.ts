@@ -1,3 +1,4 @@
+
 import { io, Socket } from 'socket.io-client';
 import { ReceiptGenerator } from './receipt-generator';
 
@@ -69,7 +70,7 @@ export class ReceiptPrinter {
 
     // Check connection attempts limit
     if (this.connectionAttempts >= this.maxConnectionAttempts) {
-      console.error('❌ Maximum connection attempts reached, stopping connection attempts');
+              console.warn('⚠️ Maximum connection attempts reached, stopping connection attempts');
       return;
     }
 
@@ -101,8 +102,21 @@ export class ReceiptPrinter {
   // Connect to PrintBridge server
   private connectToPrintBridge() {
     try {
+      // OS detection for PrintBridge connection
+      const platform = navigator.platform.toLowerCase();
+      const userAgent = navigator.userAgent.toLowerCase();
+      
+      let printBridgeURL: string;
+      if (platform.includes('mac') || userAgent.includes('mac')) {
+        console.log('🖥️ Mac detected - using ws://localhost:8080');
+        printBridgeURL = 'ws://localhost:8080';
+      } else {
+        console.log('🖥️ Windows/Linux detected - using ws://localhost:8080/ws');
+        printBridgeURL = 'ws://localhost:8080/ws';
+      }
+      
       console.log('🔌 Connecting to PrintBridge server...');
-      this.printBridgeWebSocket = new WebSocket('ws://localhost:8080/ws');
+      this.printBridgeWebSocket = new WebSocket(printBridgeURL);
 
       this.printBridgeWebSocket.onopen = () => {
         console.log('✅ Connected to PrintBridge server');
@@ -113,7 +127,7 @@ export class ReceiptPrinter {
           const data = JSON.parse(event.data);
           console.log('📨 PrintBridge received:', data);
         } catch (error) {
-          console.error('❌ Error parsing PrintBridge message:', error);
+          console.warn('⚠️ Error parsing PrintBridge message:', error);
         }
       };
 
@@ -122,11 +136,13 @@ export class ReceiptPrinter {
         this.printBridgeWebSocket = null;
       };
 
-      this.printBridgeWebSocket.onerror = (error) => {
-        console.error('❌ PrintBridge WebSocket error:', error);
+      this.printBridgeWebSocket.onerror = () => {
+        console.warn('⚠️ PrintBridge server not running on localhost:8080');
+        console.log('💡 To enable receipt printing, start the PrintBridge server');
       };
     } catch (error) {
-      console.error('❌ PrintBridge connection error:', error);
+      console.warn('⚠️ PrintBridge server not available');
+      console.log('💡 To enable receipt printing, start the PrintBridge server');
     }
   }
 
@@ -152,7 +168,7 @@ export class ReceiptPrinter {
 
     // Authentication error
     this.socket.on('authentication_error', (error) => {
-      console.error('❌ WebSocket authentication failed:', error);
+      console.warn('⚠️ WebSocket authentication failed:', error);
       this.isConnected = false;
     });
 
@@ -187,7 +203,7 @@ export class ReceiptPrinter {
 
     // Connection error with retry logic
     this.socket.on('connect_error', (error) => {
-      console.error('❌ WebSocket connection error:', error);
+      console.warn('⚠️ WebSocket connection error:', error);
       this.isConnected = false;
       
       if (this.retryAttempts < this.maxRetries) {
@@ -233,10 +249,18 @@ export class ReceiptPrinter {
     }
 
     // Show browser notification if supported
-    this.showBrowserNotification(orderData);
+    try {
+      this.showBrowserNotification(orderData);
+    } catch (error) {
+      console.warn('⚠️ Browser notification failed:', error);
+    }
 
-    // Print receipt via PrintBridge
-    await this.printReceipt(orderData);
+    // Print receipt via PrintBridge (with error handling)
+    try {
+      await this.printReceipt(orderData);
+    } catch (error) {
+      console.warn('⚠️ Receipt printing failed, but order was successful:', error);
+    }
   }
 
   // Show browser notification
@@ -257,7 +281,13 @@ export class ReceiptPrinter {
 
   // Set notification callback
   onNotification(callback: (notification: OrderNotification) => void) {
-    this.onNotificationCallback = callback;
+    // Only set callback if not already set to prevent duplicates
+    if (!this.onNotificationCallback) {
+      console.log('🎯 Setting notification callback');
+      this.onNotificationCallback = callback;
+    } else {
+      console.log('⚠️ Notification callback already set, skipping');
+    }
   }
 
   // Get all notifications
@@ -328,16 +358,52 @@ export class ReceiptPrinter {
       const receiptDataURL = await this.receiptGenerator.generateReceiptPNG(orderData);
       console.log('✅ Receipt PNG generated');
       
+      // Get dimensions in millimeters (56mm width is standard receipt width)
+      const labelWidth = 56; // 56mm receipt width
+      const actualHeightPixels = this.receiptGenerator.getHeight(orderData);
+      const labelHeight = Math.ceil(actualHeightPixels * 25.4 / 120); // Convert pixels to mm at 120 DPI
+      
+      console.log('📏 Receipt dimensions:', {
+        width: labelWidth + 'mm',
+        height: labelHeight + 'mm',
+        heightPixels: actualHeightPixels + 'px'
+      });
+      
+      // OS-specific data format
+      const platform = navigator.platform.toLowerCase();
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isMac = platform.includes('mac') || userAgent.includes('mac');
+      
+      let printData: { type?: string; images?: string[]; labelWidth?: number; labelHeight?: number; image?: string; selectedPrinter: string };
+      if (isMac) {
+        // Mac format: base64-only image
+        const base64Only = receiptDataURL.replace('data:image/png;base64,', '');
+        printData = {
+          type: 'print',
+          images: [base64Only],
+          selectedPrinter: "Receipt Printer"
+        };
+        console.log('🖨️ Sending Mac-format receipt to PrintBridge');
+      } else {
+        // Windows/Linux format: full data URL with dimensions
+        printData = {
+          labelWidth: labelWidth,
+          labelHeight: labelHeight,
+          image: receiptDataURL,
+          selectedPrinter: "Receipt Printer"
+        };
+        console.log('🖨️ Sending Windows/Linux-format receipt to PrintBridge:', { labelWidth: printData.labelWidth, labelHeight: printData.labelHeight });
+      }
+      
       // Send to PrintBridge if connected
       if (this.printBridgeWebSocket && this.printBridgeWebSocket.readyState === WebSocket.OPEN) {
-        console.log('🖨️ Sending receipt to PrintBridge...');
-        this.printBridgeWebSocket.send(receiptDataURL);
+        this.printBridgeWebSocket.send(JSON.stringify(printData));
         console.log('✅ Receipt sent to PrintBridge');
       } else {
         console.warn('⚠️ PrintBridge not connected, receipt not printed');
       }
     } catch (error) {
-      console.error('❌ Error printing receipt:', error);
+      console.warn('⚠️ Error printing receipt:', error);
     }
   }
 

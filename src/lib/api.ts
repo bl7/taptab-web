@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+import { tokenManager } from './token-manager';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5050/api/v1';
 
 export interface APIResponse<T = unknown> {
   success: boolean;
@@ -39,19 +41,27 @@ export interface OrderItem {
   menuItemName: string;
   quantity: number;
   price: number;
+  total?: number;
   notes?: string;
   status: 'pending' | 'preparing' | 'ready' | 'served';
 }
 
 export interface Order {
   id: string;
+  orderNumber?: string;
   tableId: string;
   tableNumber: string;
   items: OrderItem[];
   total: number;
-  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  totalAmount?: number;
+  finalAmount?: number;
+  status: 'active' | 'paid' | 'cancelled';
   waiterId: string;
   waiterName: string;
+  orderSource?: string;
+  sourceDetails?: string;
+  customerName?: string;
+  customerPhone?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -141,7 +151,8 @@ class APIClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = localStorage.getItem('token') || localStorage.getItem('bossToken');
+    // Get valid token (auto-refresh if needed)
+    const token = await tokenManager.getValidToken();
     
     console.log('🔗 API Request Details:');
     console.log('  Base URL:', this.baseURL);
@@ -159,8 +170,8 @@ class APIClient {
       ...options,
     };
 
-    console.log('  Request headers:', config.headers);
     console.log('  Request method:', config.method || 'GET');
+    console.log('  Request headers:', config.headers);
 
     const response = await fetch(`${this.baseURL}${endpoint}`, config);
     const data: APIResponse<T> = await response.json();
@@ -169,6 +180,8 @@ class APIClient {
     console.log('  Status:', response.status);
     console.log('  Status text:', response.statusText);
     console.log('  Response data:', data);
+    console.log('  Response data type:', typeof data);
+    console.log('  Response data keys:', Object.keys(data || {}));
 
     if (!response.ok) {
       console.error('❌ API Error:', response.status, data);
@@ -302,11 +315,50 @@ class APIClient {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.tableId) queryParams.append('tableId', params.tableId);
     
-    const queryString = queryParams.toString();
-    const endpoint = queryString ? `/orders?${queryString}` : '/orders';
+    const endpoint = `/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
-    const response = await this.request<{ data: { orders: Order[] } }>(endpoint);
-    return { orders: response.data.orders };
+    console.log('🌐 Fetching orders from:', `${this.baseURL}${endpoint}`);
+    const response = await this.request<{ data?: { orders: Order[] }; orders?: Order[] }>(endpoint);
+    
+    console.log('📡 Raw API response for orders:', response);
+    console.log('📡 Response structure:', {
+      hasData: !!response.data,
+      hasOrders: !!response.data?.orders,
+      ordersLength: response.data?.orders?.length || 0,
+      directOrders: !!response.orders,
+      directOrdersLength: response.orders?.length || 0
+    });
+    
+    // Try different response structures
+    let orders: Order[] = [];
+    
+    if (response.data && response.data.orders) {
+      // Expected structure: { data: { orders: [...] } }
+      orders = response.data.orders;
+      console.log('✅ Using response.data.orders structure');
+    } else if (response.orders) {
+      // Alternative structure: { orders: [...] }
+      orders = response.orders;
+      console.log('✅ Using response.orders structure');
+    } else {
+      console.error('❌ Unexpected API response structure:', response);
+      throw new Error('API response does not contain orders data in expected format');
+    }
+    
+    console.log('📡 Orders array:', orders);
+    
+    // Log each order's structure
+    orders.forEach((order, index) => {
+      console.log(`📡 Order ${index + 1} total fields:`, {
+        id: order.id,
+        totalAmount: order.totalAmount,
+        finalAmount: order.finalAmount,
+        total: order.total,
+        calculatedTotal: order.items?.reduce((sum, item) => sum + (item.total || 0), 0) || 0
+      });
+    });
+    
+    return { orders };
   }
 
   async createOrder(data: {
@@ -316,42 +368,110 @@ class APIClient {
       quantity: number;
       notes?: string;
     }>;
+    orderSource?: string;
+    customerName?: string;
+    customerPhone?: string;
+    specialInstructions?: string;
+    taxAmount?: number;
+    discountAmount?: number;
   }): Promise<{ order: Order }> {
-    const response = await this.request<{ data: { order: Order } }>('/orders', {
+    const response = await this.request<{ data?: { order: Order }; order?: Order }>('/orders', {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    return { order: response.data.order };
+    
+    // Handle different response structures
+    const order = response.data?.order || response.order;
+    if (!order) {
+      throw new Error('API response does not contain order data');
+    }
+    
+    return { order };
   }
 
   async updateOrderStatus(
     id: string,
-    status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled'
+    status: 'active' | 'paid' | 'cancelled'
   ): Promise<{ order: Order }> {
-    const response = await this.request<{ data: { order: Order } }>(`/orders/${id}`, {
+    const response = await this.request<{ data?: { order: Order }; order?: Order }>(`/orders/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
     });
-    return { order: response.data.order };
+    
+    // Handle different response structures
+    const order = response.data?.order || response.order;
+    if (!order) {
+      throw new Error('API response does not contain order data');
+    }
+    
+    return { order };
   }
 
-  async updateOrderItemStatus(
-    orderId: string,
-    itemId: string,
-    status: 'pending' | 'preparing' | 'ready' | 'served'
-  ): Promise<{ item: OrderItem }> {
-    const response = await this.request<{ data: { item: OrderItem } }>(`/orders/${orderId}/items/${itemId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-    return { item: response.data.item };
-  }
-
-  async cancelOrder(id: string): Promise<{ success: boolean }> {
-    const response = await this.request<{ data: { success: boolean } }>(`/orders/${id}`, {
+  async cancelOrder(id: string, reason: string = 'Admin decision'): Promise<{ success: boolean }> {
+    const response = await this.request<{ data?: { success: boolean }; success?: boolean }>(`/orders/${id}`, {
       method: 'DELETE',
+      body: JSON.stringify({ reason })
     });
-    return { success: response.data.success };
+    
+    // Handle different response structures
+    const success = response.data?.success || response.success;
+    if (success === undefined) {
+      throw new Error('API response does not contain success status');
+    }
+    
+    return { success };
+  }
+
+  async markOrderAsPaid(id: string, paymentMethod: 'CASH' | 'CARD' | 'QR' | 'ONLINE'): Promise<{ success: boolean }> {
+    const response = await this.request<{ data?: { success: boolean }; success?: boolean }>(`/orders/${id}/pay`, {
+      method: 'PUT',
+      body: JSON.stringify({ paymentMethod }),
+    });
+    
+    // Handle different response structures
+    const success = response.data?.success || response.success;
+    if (success === undefined) {
+      throw new Error('API response does not contain success data');
+    }
+    
+    return { success };
+  }
+
+  async modifyOrder(
+    id: string, 
+    action: 'add_item' | 'remove_item' | 'change_quantity',
+    itemId: string,
+    quantity: number,
+    notes?: string
+  ): Promise<{ success: boolean; action: string; itemId: string; quantity: number }> {
+    const response = await this.request<{ 
+      data?: { 
+        success: boolean; 
+        action: string; 
+        itemId: string; 
+        quantity: number 
+      }; 
+      success?: boolean; 
+      action?: string; 
+      itemId?: string; 
+      quantity?: number 
+    }>(`/orders/${id}/modify`, {
+      method: 'PUT',
+      body: JSON.stringify({ action, itemId, quantity, notes }),
+    });
+    
+    // Handle different response structures
+    const result = response.data || response;
+    if (result.success === undefined) {
+      throw new Error('API response does not contain success data');
+    }
+    
+    return {
+      success: result.success,
+      action: result.action || action,
+      itemId: result.itemId || itemId,
+      quantity: result.quantity || quantity
+    };
   }
 
   // Tables endpoints
@@ -464,45 +584,8 @@ class APIClient {
     return response.data;
   }
 
-  // Deliveroo Configuration endpoints
-  async getDeliverooConfig(): Promise<{ config: {
-    restaurantId: string;
-    clientId: string;
-    isActive: boolean;
-  } }> {
-    const response = await this.request<{ config: {
-      restaurantId: string;
-      clientId: string;
-      isActive: boolean;
-    } }>('/deliveroo-config');
-    return { config: response.config };
-  }
 
-  async saveDeliverooConfig(data: {
-    restaurantId: string;
-    clientId: string;
-    clientSecret: string;
-  }): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<{ success: boolean; message: string }>('/deliveroo-config', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    return { success: response.success, message: response.message };
-  }
 
-  async deleteDeliverooConfig(): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<{ success: boolean; message: string }>('/deliveroo-config', {
-      method: 'DELETE',
-    });
-    return { success: response.success, message: response.message };
-  }
-
-  async testDeliverooConnection(): Promise<{ success: boolean; message: string }> {
-    const response = await this.request<{ success: boolean; message: string }>('/deliveroo-config/test', {
-      method: 'POST',
-    });
-    return { success: response.success, message: response.message };
-  }
 }
 
 // Export singleton instance
@@ -613,6 +696,12 @@ export class PublicAPIClient {
       quantity: number;
       notes?: string;
     }>;
+    orderSource?: string;
+    customerName?: string;
+    customerPhone?: string;
+    specialInstructions?: string;
+    taxAmount?: number;
+    discountAmount?: number;
   }, tenantSlug: string): Promise<{ order: Order }> {
     console.log('📝 Creating public order:', data);
     const response = await this.request<{ order: Order }>('/orders', tenantSlug, {
