@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import { 
   Plus, 
   Minus, 
@@ -400,9 +401,11 @@ export default function QROrderPage() {
               <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
                 <div className="relative">
                   {item.image ? (
-                    <img
+                    <Image
                       src={item.image}
                       alt={item.name}
+                      width={256}
+                      height={128}
                       className="w-full h-32 object-cover rounded-lg mb-3"
                     />
                   ) : (
@@ -471,9 +474,11 @@ export default function QROrderPage() {
                   <div key={item.menuItem.id} className="bg-white rounded-lg p-3 shadow-sm">
                     <div className="flex items-center space-x-3">
                       {item.menuItem.image ? (
-                        <img
+                        <Image
                           src={item.menuItem.image}
                           alt={item.menuItem.name}
+                          width={48}
+                          height={48}
                           className="w-12 h-12 rounded-full object-cover"
                         />
                       ) : (

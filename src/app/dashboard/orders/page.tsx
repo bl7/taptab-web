@@ -890,16 +890,16 @@ export default function OrdersPage() {
 
   // Main tables view
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-black">Orders</h1>
-          <p className="text-gray-600">View and manage all restaurant orders by table</p>
+          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+          <p className="text-gray-600 mt-1">View and manage all restaurant orders by table</p>
         </div>
         <button
           onClick={refreshOrders}
-          className="bg-black hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center space-x-2"
+          className="px-6 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-medium flex items-center space-x-2"
         >
           <Eye className="h-4 w-4" />
           <span>Refresh</span>
@@ -907,12 +907,12 @@ export default function OrdersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-black">Filters</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Filters</h2>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="bg-gray-100 hover:bg-gray-200 text-black px-4 py-2 rounded-lg flex items-center space-x-2"
+            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl flex items-center space-x-2 transition-colors"
           >
             <Filter className="h-4 w-4" />
             <span>{showFilters ? 'Hide' : 'Show'} Filters</span>
@@ -928,40 +928,57 @@ export default function OrdersPage() {
                 placeholder="Search tables, locations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
             </div>
           </div>
         )}
       </div>
 
-            {/* Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Tables</p>
-              <p className="text-2xl font-bold text-black">{orderStats.totalTables}</p>
+              <p className="text-sm font-medium text-gray-600">Total Tables</p>
+              <p className="text-2xl font-bold text-gray-900">{orderStats.totalTables}</p>
             </div>
-            <Coffee className="h-8 w-8 text-blue-500" />
+            <div className="p-3 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
+              <Coffee className="h-6 w-6" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Occupied Tables</p>
-              <p className="text-2xl font-bold text-black">{orderStats.occupiedTables}</p>
+              <p className="text-sm font-medium text-gray-600">Occupied Tables</p>
+              <p className="text-2xl font-bold text-gray-900">{orderStats.occupiedTables}</p>
             </div>
-            <Users className="h-8 w-8 text-red-500" />
+            <div className="p-3 rounded-xl bg-red-50 text-red-600 border border-red-200">
+              <Users className="h-6 w-6" />
+            </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Active Orders</p>
-              <p className="text-2xl font-bold text-black">{orderStats.total}</p>
+              <p className="text-sm font-medium text-gray-600">Active Orders</p>
+              <p className="text-2xl font-bold text-gray-900">{orderStats.total}</p>
             </div>
-            <Clock className="h-8 w-8 text-green-500" />
+            <div className="p-3 rounded-xl bg-green-50 text-green-600 border border-green-200">
+              <Clock className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+              <p className="text-2xl font-bold text-gray-900">${orderStats.totalRevenue.toFixed(2)}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-purple-50 text-purple-600 border border-purple-200">
+              <DollarSign className="h-6 w-6" />
+            </div>
           </div>
         </div>
       </div>

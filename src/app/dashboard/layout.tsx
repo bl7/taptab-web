@@ -1,157 +1,340 @@
 'use client';
 
-import { ReactNode, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { ReactNode, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { 
+  Home, 
+  ShoppingCart, 
+  Users, 
+  Settings, 
+  BarChart3, 
+  Menu, 
+  Table,
+  Plus,
+  LogOut,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+import { PrintBridgeProvider } from '@/contexts/PrintBridgeContext';
 import { UnifiedStatusPanel } from '@/components/UnifiedStatusPanel';
 import { useAuth } from '@/lib/use-auth';
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
-  const [userRole, setUserRole] = useState<string>('');
-  const [jwtToken, setJwtToken] = useState<string | null>(null);
-  const router = useRouter();
-  
-  // Use new auth system
-  const { isAuthenticated, user, logout } = useAuth();
+interface DashboardLayoutProps {
+  children: ReactNode;
+}
 
+export default function DashboardLayout({ children }: DashboardLayoutProps) {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [jwtToken, setJwtToken] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string>('');
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isAuthenticated, isLoading, user, logout } = useAuth();
+
+  // Get JWT token and user role from localStorage
   useEffect(() => {
-    setIsMounted(true);
+    const token = localStorage.getItem('token') || localStorage.getItem('bossToken');
     const userData = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
+    
+    if (token) {
+      setJwtToken(token);
+    }
     
     if (userData) {
       try {
         const user = JSON.parse(userData);
-        setUserRole(user.role);
-        if (user.role === 'TENANT_ADMIN' || user.role === 'SUPER_ADMIN' || user.role === 'MANAGER') {
-          setIsAdmin(true);
-        }
+        setUserRole(user.role || '');
       } catch (e) {
         console.error('Error parsing user data:', e);
       }
-    }
-    
-    if (token) {
-      setJwtToken(token);
     }
   }, []);
 
   // Check authentication and redirect if needed
   useEffect(() => {
-    if (isMounted && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       console.log('🔐 User not authenticated, redirecting to login');
       router.push('/login');
     }
-  }, [isMounted, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
+  // Check if a link is active
+  const isActiveLink = (href: string) => {
+    if (href === '/dashboard') {
+      return pathname === '/dashboard';
+    }
+    return pathname.startsWith(href);
+  };
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="flex h-screen bg-gray-50 items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render dashboard if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        {/* Sidebar - starts from very top */}
-        <div className="w-64 bg-white border-r border-gray-200 h-screen sticky top-0 flex flex-col">
-          <div className="p-6">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">T</span>
-              </div>
-              <span className="text-lg font-semibold text-black">TapTab</span>
-            </div>
+    <PrintBridgeProvider>
+      <div className="flex h-screen bg-gray-50">
+        {/* Left Sidebar - Black Navigation */}
+        <div className={`${sidebarCollapsed ? 'w-24' : 'w-64'} bg-black flex flex-col items-center py-6 space-y-8 transition-all duration-300 relative`}>
+          {/* Logo */}
+          <div className="flex items-center justify-center">
+            {sidebarCollapsed ? (
+              <Image
+                src="/icon.png"
+                alt="TapTab Icon"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            ) : (
+              <Image
+                src="/logo.png"
+                alt="TapTab Logo"
+                width={120}
+                height={40}
+                className="object-contain"
+              />
+            )}
           </div>
 
-          <nav className="flex-1 px-4 flex flex-col">
-            <div className="space-y-2">
-              <a href="/dashboard" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                <span className="text-sm">Dashboard</span>
-              </a>
-              <a href="/dashboard/orders" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                <span className="text-sm">Orders</span>
-              </a>
-              <a href="/dashboard/order-taking" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                <span className="text-sm">Take Orders</span>
-              </a>
-              
-              {/* Admin-only items - only render after mounting to prevent hydration issues */}
-              {isMounted && isAdmin && (
-                <>
-                  <a href="/dashboard/staff" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                    <span className="text-sm">Staff Management</span>
-                  </a>
-                  <a href="/dashboard/menu" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                    <span className="text-sm">Menu Management</span>
-                  </a>
-                  <a href="/dashboard/tables" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                    <span className="text-sm">Table Management</span>
-                  </a>
-                  <a href="/dashboard/analytics" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                    <span className="text-sm">Analytics</span>
-                  </a>
-                  <a href="/dashboard/settings" className="flex items-center px-4 py-2 text-black hover:text-black hover:bg-gray-100 rounded-lg">
-                    <span className="text-sm">Settings</span>
-                  </a>
-                </>
+          {/* Navigation Icons */}
+          <nav className="flex flex-col items-center space-y-6 flex-1 w-full px-4">
+            <Link 
+              href="/dashboard" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Dashboard"
+            >
+              <Home className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Dashboard
+                </div>
               )}
-            </div>
+            </Link>
             
-            {/* User profile section at bottom */}
-            <div className="mt-auto border-t border-gray-200 pt-4 pb-4">
-              <div className="flex items-center px-4 py-2">
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <span className="text-xs text-black">
-                    {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                  </span>
+            <Link 
+              href="/dashboard/orders" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/orders') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Orders"
+            >
+              <ShoppingCart className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Orders</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Orders
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-black">
-                    {user?.firstName ? `${user.firstName} ${user.lastName}` : 'User'}
-                  </p>
-                  <p className="text-xs text-black">
-                    {user?.role?.replace('_', ' ') || 'User'}
-                  </p>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/order-taking" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/order-taking') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Take Orders"
+            >
+              <Plus className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Take Orders</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Take Orders
                 </div>
-              </div>
-            </div>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/staff" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/staff') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Staff"
+            >
+              <Users className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Staff</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Staff
+                </div>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/menu" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/menu') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Menu"
+            >
+              <Menu className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Menu</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Menu
+                </div>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/tables" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/tables') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Tables"
+            >
+              <Table className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Tables</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Tables
+                </div>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/analytics" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/analytics') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Analytics"
+            >
+              <BarChart3 className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Analytics</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Analytics
+                </div>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/settings" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/settings') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Settings"
+            >
+              <Settings className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Settings</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Settings
+                </div>
+              )}
+            </Link>
           </nav>
+
+          {/* Bottom Actions */}
+          <div className="flex flex-col items-center space-y-4 w-full px-4">
+            <button 
+              onClick={handleLogout}
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} text-white hover:bg-gray-800`}
+              title="Logout"
+            >
+              <LogOut className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Logout</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Logout
+                </div>
+              )}
+            </button>
+          </div>
+
+          {/* Collapse Handle */}
+          <button
+            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+            className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-12 bg-gray-800 hover:bg-gray-700 rounded-r-lg flex items-center justify-center transition-colors"
+            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {sidebarCollapsed ? (
+              <ChevronRight className="w-4 h-4 text-white" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 text-white" />
+            )}
+          </button>
         </div>
-        
-        {/* Main content */}
-        <div className="flex-1 bg-gray-50">
-          {/* Secondary Header for Logged-in Users */}
-          {isAuthenticated && (
-            <div className="bg-gray-200 border-b border-gray-300 px-6 py-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <span className="text-sm font-medium text-gray-700">Welcome back, {user?.firstName || 'User'}</span>
-                  <a 
-                    href="/dashboard" 
-                    className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md hover:bg-gray-300 transition-colors"
-                  >
-                    Dashboard
-                  </a>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">{user?.role?.replace('_', ' ') || 'User'}</span>
-                  <button
-                    onClick={logout}
-                    className="text-sm text-gray-600 hover:text-gray-800 px-3 py-1 rounded-md hover:bg-gray-300 transition-colors"
-                  >
-                    Logout
-                  </button>
-                </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Top Header Bar */}
+          <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+            {/* Left - Brand */}
+            <div className="flex items-center space-x-3">
+             
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">
+                  {user?.firstName ? `${user.firstName}` : 'Restaurant'}
+                </h1>
               </div>
             </div>
-          )}
-          
-          <main className="p-8">
+
+            {/* Right - User Info */}
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <span className="text-white font-bold text-sm">
+                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+                </span>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-900">
+                  {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin User'}
+                </p>
+                <p className="text-xs text-gray-600">
+                  {user?.role?.replace('_', ' ') || 'Restaurant Manager'}
+                </p>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 overflow-auto bg-gray-50 p-8">
             {children}
           </main>
         </div>
       </div>
-      
-      {/* WebSocket Status Component */}
-      {isMounted && (
-        <UnifiedStatusPanel jwtToken={jwtToken} userRole={userRole} />
-      )}
-    </div>
+
+      {/* WebSocket Status Panel */}
+      <UnifiedStatusPanel jwtToken={jwtToken} userRole={userRole} />
+    </PrintBridgeProvider>
   );
 } 
