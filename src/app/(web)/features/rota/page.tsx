@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Calendar, Users, Mail, Move, Clock, Shield, Zap } from 'lucide-react';
+import { Calendar, Users, Mail, Move, Clock, Shield } from 'lucide-react';
 
 export default function RotaFeaturePage() {
   const benefits = [
@@ -50,28 +50,28 @@ export default function RotaFeaturePage() {
     }
   ];
 
-  const howItWorks = [
-    {
-      step: "1",
-      title: "Add Your Staff",
-      description: "Import your staff members with their roles and contact information"
-    },
-    {
-      step: "2", 
-      title: "Create Shifts",
-      description: "Set up shift templates with start/end times and required roles"
-    },
-    {
-      step: "3",
-      title: "Drag & Drop Scheduling", 
-      description: "Visually assign staff to shifts with automatic hour calculations"
-    },
-    {
-      step: "4",
-      title: "Publish & Notify",
-      description: "Publish the rota and automatically email all staff their schedules"
-    }
-  ];
+  // const howItWorks = [
+  //   {
+  //     step: "1",
+  //     title: "Add Your Staff",
+  //     description: "Import your staff members with their roles and contact information"
+  //   },
+  //   {
+  //     step: "2", 
+  //     title: "Create Shifts",
+  //     description: "Set up shift templates with start/end times and required roles"
+  //   },
+  //   {
+  //     step: "3",
+  //     title: "Drag & Drop Scheduling", 
+  //     description: "Visually assign staff to shifts with automatic hour calculations"
+  //   },
+  //   {
+  //     step: "4",
+  //     title: "Publish & Notify",
+  //     description: "Publish the rota and automatically email all staff their schedules"
+  //   }
+  // ];
 
   const advantages = [
     "Integrated with POS Data",

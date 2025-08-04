@@ -146,6 +146,17 @@ export function WebSocketStatus({ jwtToken, userRole }: WebSocketStatusProps) {
         <NotificationManager
           notifications={notifications}
           onMarkAsRead={markAsRead}
+          onMarkAllAsRead={() => {
+            notifications.forEach(notification => {
+              markAsRead(notification.id);
+            });
+          }}
+          onClearAll={() => {
+            // Clear all notifications
+            notifications.forEach(notification => {
+              markAsRead(notification.id);
+            });
+          }}
         />
       )}
     </>

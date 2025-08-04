@@ -199,7 +199,7 @@ export async function sendRotaEmail(
     });
 
     const shiftsHtml = Array.from(shiftsByDay.entries()).map(([day, dayShifts]) => {
-      const dayShiftsHtml = dayShifts.map((shift, index) => `
+      const dayShiftsHtml = dayShifts.map((shift: { day: string; startTime: string; endTime: string; shiftHours: number; breakDuration: number; notes?: string; shiftLabel?: string }, index: number) => `
         <div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #667eea;">
           ${dayShifts.length > 1 ? `<div style="font-size: 12px; color: #667eea; margin-bottom: 5px; font-weight: bold;">Shift ${index + 1}${shift.shiftLabel ? ` - ${shift.shiftLabel}` : ''}</div>` : ''}
           <p style="color: #666; margin: 5px 0;">
@@ -213,7 +213,7 @@ export async function sendRotaEmail(
         </div>
       `).join('');
 
-      const dayTotalHours = dayShifts.reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
+      const dayTotalHours = dayShifts.reduce((sum: number, shift: { day: string; startTime: string; endTime: string; shiftHours: number; breakDuration: number; notes?: string; shiftLabel?: string }) => sum + (Number(shift.shiftHours) || 0), 0);
       
       return `
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">

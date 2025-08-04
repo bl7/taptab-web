@@ -6,13 +6,8 @@ import {
   Coffee, 
   Utensils, 
   Pizza, 
-  IceCream,
-  Beer,
-  Wine,
   Users,
-  Clock,
-  Zap,
-  Shield
+  Zap
 } from 'lucide-react';
 
 export default function SolutionsPage() {

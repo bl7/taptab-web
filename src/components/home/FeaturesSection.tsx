@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { QrCode, Users, Printer, Truck, Zap, Shield, Clock, BarChart3 } from 'lucide-react';
+import { QrCode, Users, Printer, Truck } from 'lucide-react';
 
 export default function FeaturesSection() {
   const features = [

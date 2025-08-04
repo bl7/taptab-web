@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { AlertTriangle, X, Check } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
 export default function ProblemSection() {
   const problems = [

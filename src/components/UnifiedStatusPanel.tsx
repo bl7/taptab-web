@@ -19,7 +19,6 @@ export function UnifiedStatusPanel({ jwtToken, userRole }: UnifiedStatusPanelPro
     disconnect, 
     testNotification, 
     markAsRead, 
-    clearNotifications,
     notifications, 
     isConnected: wsConnected, 
     connectionStatus: wsStatus,

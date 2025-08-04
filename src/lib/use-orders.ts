@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { OrdersApi, Order, CreateOrderRequest, OrderStatus } from './orders-api';
+import { OrdersApi, Order, CreateOrderRequest } from './orders-api';
 
 interface UseOrdersReturn {
   orders: Order[];

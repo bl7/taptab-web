@@ -4,28 +4,28 @@ import { motion } from 'framer-motion';
 import { QrCode, Smartphone, Tablet, Zap, Shield, Users, Clock } from 'lucide-react';
 
 export default function QROrderingFeaturePage() {
-  const benefits = [
-    {
-      icon: Zap,
-      title: "Instant Ordering",
-      description: "Guests order in seconds, no app download required"
-    },
-    {
-      icon: Shield,
-      title: "No App Required",
-      description: "Works on any smartphone with a camera"
-    },
-    {
-      icon: Clock,
-      title: "Faster Service",
-      description: "Reduce order processing time by up to 70%"
-    },
-    {
-      icon: Users,
-      title: "Better Experience",
-      description: "Guests enjoy ordering from their own phones"
-    }
-  ];
+  // const benefits = [
+  //   {
+  //     icon: Zap,
+  //     title: "Instant Ordering",
+  //     description: "Guests order in seconds, no app download required"
+  //   },
+  //   {
+  //     icon: Shield,
+  //     title: "No App Required",
+  //     description: "Works on any smartphone with a camera"
+  //   },
+  //   {
+  //     icon: Clock,
+  //     title: "Faster Service",
+  //     description: "Reduce order processing time by up to 70%"
+  //   },
+  //   {
+  //     icon: Users,
+  //     title: "Better Experience",
+  //     description: "Guests enjoy ordering from their own phones"
+  //   }
+  // ];
 
   const features = [
     {
@@ -50,28 +50,28 @@ export default function QROrderingFeaturePage() {
     }
   ];
 
-  const howItWorks = [
-    {
-      step: "1",
-      title: "Print QR Codes",
-      description: "Generate and print QR codes for each table"
-    },
-    {
-      step: "2", 
-      title: "Place on Tables",
-      description: "Attach QR codes to tables or table tents"
-    },
-    {
-      step: "3",
-      title: "Guests Scan & Order", 
-      description: "Customers scan with their phone camera"
-    },
-    {
-      step: "4",
-      title: "Instant Processing",
-      description: "Orders appear immediately on your system"
-    }
-  ];
+  // const howItWorks = [
+  //   {
+  //     step: "1",
+  //     title: "Print QR Codes",
+  //     description: "Generate and print QR codes for each table"
+  //   },
+  //   {
+  //     step: "2", 
+  //     title: "Place on Tables",
+  //     description: "Attach QR codes to tables or table tents"
+  //   },
+  //   {
+  //     step: "3",
+  //     title: "Guests Scan & Order", 
+  //     description: "Customers scan with their phone camera"
+  //   },
+  //   {
+  //     step: "4",
+  //     title: "Instant Processing",
+  //     description: "Orders appear immediately on your system"
+  //   }
+  // ];
 
   const successMetrics = [
     { metric: "40%", label: "faster table turnover" },

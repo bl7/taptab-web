@@ -356,8 +356,8 @@ export class ReceiptPrinter {
       id: orderData.id,
       orderNumber: orderData.orderNumber || orderData.id, // Use id as orderNumber if not provided
       tableNumber: orderData.tableNumber,
-      totalAmount: orderData.totalAmount || (orderData as any).total || 0, // Map 'total' to 'totalAmount'
-      finalAmount: orderData.finalAmount || (orderData as any).total || 0, // Map 'total' to 'finalAmount'
+      totalAmount: orderData.totalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'totalAmount'
+      finalAmount: orderData.finalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'finalAmount'
       status: orderData.status,
       customerName: orderData.customerName || 'Walk-in Customer', // Default customer name
       customerPhone: orderData.customerPhone || 'No phone', // Default phone
@@ -467,8 +467,8 @@ export class ReceiptPrinter {
       id: orderData.id,
       orderNumber: orderData.orderNumber || orderData.id, // Use id as orderNumber if not provided
       tableNumber: orderData.tableNumber,
-      totalAmount: orderData.totalAmount || (orderData as any).total || 0, // Map 'total' to 'totalAmount'
-      finalAmount: orderData.finalAmount || (orderData as any).total || 0, // Map 'total' to 'finalAmount'
+      totalAmount: orderData.totalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'totalAmount'
+      finalAmount: orderData.finalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'finalAmount'
       status: orderData.status,
       customerName: orderData.customerName || 'Walk-in Customer', // Default customer name
       customerPhone: orderData.customerPhone || 'No phone', // Default phone
