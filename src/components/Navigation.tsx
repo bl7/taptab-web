@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Menu, X, User, Shield } from 'lucide-react';
+import { Menu, X, User, Shield, ChevronDown } from 'lucide-react';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string>('');
+  const [featuresDropdownOpen, setFeaturesDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -29,13 +30,16 @@ export default function Navigation() {
   }, []);
 
   const navItems = [
-    { name: 'Features', href: '/features' },
     { name: 'Solutions', href: '/solutions' },
-    { name: 'How It Works', href: '/how-it-works' },
     { name: 'PrintBridge', href: '/printbridge' },
     { name: 'Pricing', href: '/pricing' },
     { name: 'About', href: '/about' },
     { name: 'Contact', href: '/contact' },
+  ];
+
+  const featuresItems = [
+    { name: 'QR Code Ordering', href: '/features/qr-ordering' },
+    { name: 'Smart Rota System', href: '/features/rota' },
   ];
 
   const bossItems = [
@@ -59,6 +63,32 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
+            {/* Features Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setFeaturesDropdownOpen(!featuresDropdownOpen)}
+                className="text-white hover:text-gray-300 transition-colors duration-150 flex items-center space-x-1"
+              >
+                <span>Features</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${featuresDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {featuresDropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                  {featuresItems.map((item) => (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className="block px-4 py-2 text-black hover:bg-gray-100 transition-colors duration-150"
+                      onClick={() => setFeaturesDropdownOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {navItems.map((item) => (
               <Link
                 key={item.name}
@@ -117,6 +147,35 @@ export default function Navigation() {
         {isOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 bg-black border-t border-gray-700">
+              {/* Features Dropdown for Mobile */}
+              <div>
+                <button
+                  onClick={() => setFeaturesDropdownOpen(!featuresDropdownOpen)}
+                  className="w-full text-left px-3 py-2 text-white hover:text-gray-300 transition-colors duration-150 flex items-center justify-between"
+                >
+                  <span>Features</span>
+                  <ChevronDown className={`h-4 w-4 transition-transform ${featuresDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {featuresDropdownOpen && (
+                  <div className="pl-4 space-y-1">
+                    {featuresItems.map((item) => (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        className="block px-3 py-2 text-gray-300 hover:text-white transition-colors duration-150"
+                        onClick={() => {
+                          setIsOpen(false);
+                          setFeaturesDropdownOpen(false);
+                        }}
+                      >
+                        {item.name}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {navItems.map((item) => (
                 <Link
                   key={item.name}
