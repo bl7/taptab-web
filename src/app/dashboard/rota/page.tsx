@@ -270,14 +270,14 @@ export default function RotaPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Staff Rota</h1>
+              <h1 className="text-3xl font-bold text-black">Staff Rota</h1>
               <p className="text-gray-600 mt-2">Manage weekly staff schedules</p>
             </div>
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleSaveRota}
                 disabled={saving}
-                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? 'Saving...' : 'Save Draft'}
@@ -285,7 +285,7 @@ export default function RotaPage() {
               <button
                 onClick={handlePublishRota}
                 disabled={publishing || rotaWeek?.status === 'published'}
-                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+                className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
                 <Send className="w-4 h-4 mr-2" />
                 {publishing ? 'Publishing...' : 'Publish & Send Emails'}
@@ -296,16 +296,16 @@ export default function RotaPage() {
 
         {/* Week Navigation */}
         <div className="mb-6">
-          <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
+          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <button
               onClick={handlePreviousWeek}
-              className="flex items-center text-gray-600 hover:text-gray-900"
+              className="flex items-center text-black hover:text-gray-600 transition-colors"
             >
               <ChevronLeft className="w-5 h-5 mr-2" />
               Previous Week
             </button>
             <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-900">
+              <h2 className="text-2xl font-bold text-black">
                 Week of {format(currentWeek, 'MMMM d, yyyy')}
               </h2>
               <p className="text-gray-600">
@@ -314,7 +314,7 @@ export default function RotaPage() {
             </div>
             <button
               onClick={handleNextWeek}
-              className="flex items-center text-gray-600 hover:text-gray-900"
+              className="flex items-center text-black hover:text-gray-600 transition-colors"
             >
               Next Week
               <ChevronRight className="w-5 h-5 ml-2" />
@@ -325,24 +325,24 @@ export default function RotaPage() {
         {/* Status Bar */}
         {rotaWeek && (
           <div className="mb-6">
-            <div className="bg-white rounded-lg shadow p-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-8">
                   <div className="flex items-center">
-                    <Clock className="w-5 h-5 text-gray-500 mr-2" />
-                    <span className="text-gray-700">
-                      Total Hours: <strong>{getTotalHours()}</strong>
+                    <Clock className="w-5 h-5 text-black mr-2" />
+                    <span className="text-black">
+                      Total Hours: <strong className="font-semibold">{getTotalHours()}</strong>
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <Users className="w-5 h-5 text-gray-500 mr-2" />
-                    <span className="text-gray-700">
-                      Staff: <strong>{staff.length}</strong>
+                    <Users className="w-5 h-5 text-black mr-2" />
+                    <span className="text-black">
+                      Staff: <strong className="font-semibold">{staff.length}</strong>
                     </span>
                   </div>
                   <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-gray-500 mr-2" />
-                    <span className="text-gray-700">
+                    <Calendar className="w-5 h-5 text-black mr-2" />
+                    <span className="text-black">
                       Status: <strong className={rotaWeek.status === 'published' ? 'text-green-600' : 'text-yellow-600'}>
                         {rotaWeek.status.charAt(0).toUpperCase() + rotaWeek.status.slice(1)}
                       </strong>
@@ -365,6 +365,7 @@ export default function RotaPage() {
           <div className="lg:col-span-1">
             <StaffPanel 
               staff={staff}
+              shifts={shifts}
             />
           </div>
 
