@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/pg';
-import { comparePassword, generateToken } from '@/lib/auth';
+import { comparePassword, generateToken, generateRefreshToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, rememberMe } = body;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -48,17 +48,22 @@ export async function POST(request: NextRequest) {
     const tenantResult = await pool.query('SELECT * FROM tenants WHERE id = $1', [user.tenantId]);
     const tenant = tenantResult.rows[0];
 
-    // Generate token
-    const token = generateToken({
+    // Generate tokens with remember me option
+    const payload = {
       id: user.id,
       email: user.email,
       role: user.role,
       tenantId: user.tenantId,
-    });
+    };
+
+    const token = generateToken(payload, rememberMe);
+    const refreshToken = generateRefreshToken(payload, rememberMe);
 
     return NextResponse.json({
       message: 'Login successful',
       token,
+      refreshToken,
+      rememberMe,
       user: {
         id: user.id,
         email: user.email,

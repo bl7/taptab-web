@@ -14,6 +14,9 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [isResending, setIsResending] = useState(false);
   
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -48,6 +51,48 @@ function LoginForm() {
     checkAuth();
   }, [searchParams, router]);
 
+  // Countdown timer for resend OTP
+  useEffect(() => {
+    if (resendCountdown > 0) {
+      const timer = setTimeout(() => {
+        setResendCountdown(resendCountdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCountdown]);
+
+  const handleResendOTP = async () => {
+    if (resendCountdown > 0) return;
+    
+    setIsResending(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'requestOTP', email }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend OTP');
+      }
+      
+      // Start countdown timer (60 seconds)
+      setResendCountdown(60);
+      setMessage('OTP resent successfully!');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to resend OTP';
+      setError(errorMessage);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const handleRequestOTP = async () => {
     if (!email) {
       setError('Please enter your email');
@@ -73,6 +118,8 @@ function LoginForm() {
       }
       
       setShowOtpInput(true);
+      // Start countdown timer (60 seconds)
+      setResendCountdown(60);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to send OTP';
       setError(errorMessage);
@@ -96,7 +143,7 @@ function LoginForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ action: 'verifyOTP', email, otp }),
+        body: JSON.stringify({ action: 'verifyOTP', email, otp, rememberMe }),
       });
 
       const data = await response.json();
@@ -212,7 +259,26 @@ function LoginForm() {
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     We&apos;ve sent a 6-digit code to {email}
+                    {resendCountdown > 0 && (
+                      <span className="block mt-1 text-blue-600">
+                        Resend available in {resendCountdown}s
+                      </span>
+                    )}
                   </p>
+                </div>
+
+                {/* Remember Me Checkbox */}
+                <div className="flex items-center">
+                  <input
+                    id="rememberMe"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
+                  />
+                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                    Remember me
+                  </label>
                 </div>
 
                 <div className="space-y-3">
@@ -225,16 +291,30 @@ function LoginForm() {
                   </Button>
                   
                   <Button
-                    onClick={() => {
-                      setShowOtpInput(false);
-                      setOtp('');
-                      setError('');
-                    }}
+                    onClick={handleResendOTP}
+                    disabled={resendCountdown > 0 || isResending}
                     variant="outline"
-                    className="w-full border-gray-400 text-black hover:bg-gray-50"
+                    className="w-full !text-white border-gray-400 text-black hover:bg-gray-50 hover:!text-black disabled:opacity-50"
                   >
-                    Back to Email
+                    {isResending ? 'Resending...' : 
+                     resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend OTP'}
                   </Button>
+                  
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowOtpInput(false);
+                        setOtp('');
+                        setError('');
+                        setMessage('');
+                        setResendCountdown(0);
+                      }}
+                      className="text-sm text-gray-600 hover:text-black underline"
+                    >
+                      Back to Email
+                    </button>
+                  </div>
                 </div>
               </>
             )}

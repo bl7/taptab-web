@@ -8,6 +8,7 @@ export default function BossLoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,7 +22,7 @@ export default function BossLoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }),
       });
 
       const data = await response.json();
@@ -29,6 +30,7 @@ export default function BossLoginPage() {
       if (response.ok) {
         // Store boss token separately
         localStorage.setItem('bossToken', data.token);
+        localStorage.setItem('refreshToken', data.refreshToken || '');
         localStorage.setItem('bossUser', JSON.stringify(data.user));
         
         // Console log the boss token for debugging
@@ -37,6 +39,7 @@ export default function BossLoginPage() {
         console.log('👤 Boss role:', data.user.role);
         console.log('🔑 Boss token:', data.token);
         console.log('📝 Full boss data:', data.user);
+        console.log('💾 Remember Me:', data.rememberMe);
         
         router.push('/bossdashboard');
       } else {
@@ -97,6 +100,21 @@ export default function BossLoginPage() {
               className="mt-1 block w-full px-3 py-2 border border-gray-600 rounded-md shadow-sm bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"
               placeholder="••••••••"
             />
+          </div>
+
+          {/* Remember Me Checkbox */}
+          <div className="flex items-center">
+            <input
+              id="rememberMe"
+              name="rememberMe"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 text-red-600 border-gray-600 rounded focus:ring-red-500 bg-gray-800"
+            />
+            <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-300">
+             Remember me
+            </label>
           </div>
 
           <button

@@ -59,7 +59,7 @@ class TokenManager {
     }
   }
 
-  // Check if token is expired or about to expire (within 5 minutes)
+  // Check if token is expired or about to expire (within 1 hour for normal, 1 day for remember me)
   private isTokenExpiringSoon(token: string): boolean {
     const decoded = this.decodeToken(token);
     if (!decoded) return true;
@@ -67,8 +67,12 @@ class TokenManager {
     const now = Math.floor(Date.now() / 1000);
     const expiresIn = decoded.exp - now;
     
-    // Return true if token expires in less than 5 minutes
-    return expiresIn < 300; // 5 minutes = 300 seconds
+    // Check if this is a remember me token (longer duration)
+    const isRememberMeToken = expiresIn > 24 * 3600; // If token lasts more than 24 hours
+    
+    // Return true if token expires in less than 1 day for remember me, 1 hour for normal
+    const bufferTime = isRememberMeToken ? 24 * 3600 : 3600; // 1 day vs 1 hour
+    return expiresIn < bufferTime;
   }
 
   // Check if token is expired
@@ -181,8 +185,12 @@ class TokenManager {
     const now = Math.floor(Date.now() / 1000);
     const expiresIn = decoded.exp - now;
     
-    // Refresh 5 minutes before expiry
-    const refreshIn = Math.max(expiresIn - 300, 60) * 1000; // At least 1 minute
+    // Check if this is a remember me token (longer duration)
+    const isRememberMeToken = expiresIn > 24 * 3600; // If token lasts more than 24 hours
+    
+    // Refresh 1 day before expiry for remember me, 1 hour for normal
+    const refreshBuffer = isRememberMeToken ? 24 * 3600 : 3600; // 1 day vs 1 hour
+    const refreshIn = Math.max(expiresIn - refreshBuffer, 300) * 1000; // At least 5 minutes
 
     this.refreshTimeout = setTimeout(async () => {
       await this.performTokenRefresh();

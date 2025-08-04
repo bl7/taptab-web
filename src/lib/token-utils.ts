@@ -16,9 +16,9 @@ export const isTokenExpired = (token: string): boolean => {
       return true;
     }
     
-    // Check if token is expired (with 5 minute buffer)
+    // Check if token is expired (with 1 hour buffer)
     const currentTime = Math.floor(Date.now() / 1000);
-    const bufferTime = 5 * 60; // 5 minutes in seconds
+    const bufferTime = 60 * 60; // 1 hour in seconds
     return decoded.exp < (currentTime + bufferTime);
   } catch {
     return true;

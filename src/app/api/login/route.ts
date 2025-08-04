@@ -6,7 +6,7 @@ import { sendOTPEmail } from '@/lib/email';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { action, email, otp } = body;
+    const { action, email, otp, rememberMe } = body;
 
     if (action === 'requestOTP') {
       // Request OTP
@@ -57,8 +57,9 @@ export async function POST(request: NextRequest) {
         tenantId: user.tenantId,
       };
 
-      const token = generateToken(payload);
-      const refreshToken = generateRefreshToken(payload);
+      // Generate tokens with remember me option
+      const token = generateToken(payload, rememberMe);
+      const refreshToken = generateRefreshToken(payload, rememberMe);
 
       const response = {
         user: {
@@ -78,10 +79,12 @@ export async function POST(request: NextRequest) {
         },
         token,
         refreshToken,
+        rememberMe,
       };
 
       // Console log the token and entire response when logged in
       console.log('=== LOGIN SUCCESS ===');
+      console.log('Remember Me:', rememberMe);
       console.log('Token:', token);
       console.log('Full Response:', JSON.stringify(response, null, 2));
       console.log('=====================');

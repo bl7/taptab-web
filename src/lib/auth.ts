@@ -23,12 +23,16 @@ export const comparePassword = async (password: string, hashedPassword: string):
   return bcrypt.compare(password, hashedPassword);
 };
 
-export const generateToken = (payload: JWTPayload): string => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+export const generateToken = (payload: JWTPayload, rememberMe: boolean = false): string => {
+  // If remember me is enabled, extend token to 30 days, otherwise 24 hours
+  const expiresIn = rememberMe ? '30d' : '24h';
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
-export const generateRefreshToken = (payload: JWTPayload): string => {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: '7d' });
+export const generateRefreshToken = (payload: JWTPayload, rememberMe: boolean = false): string => {
+  // If remember me is enabled, make refresh token last 1 year, otherwise 7 days
+  const expiresIn = rememberMe ? '365d' : '7d';
+  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn });
 };
 
 export const verifyToken = async (token: string): Promise<JWTPayload> => {
