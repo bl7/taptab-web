@@ -148,4 +148,111 @@ export async function sendWelcomeEmail(email: string, name: string) {
     console.error('Error sending welcome email: ', error);
     throw new Error('Failed to send welcome email');
   }
+}
+
+export async function sendRotaEmail(
+  email: string, 
+  firstName: string, 
+  lastName: string, 
+  restaurantName: string, 
+  weekStartDate: string, 
+  shifts: Array<{
+    day: string;
+    startTime: string;
+    endTime: string;
+    shiftHours: number;
+    breakDuration: number;
+    notes?: string;
+  }>
+) {
+  try {
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    
+    const formatDate = (date: string) => {
+      return new Date(date).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const formatTime = (time: string) => {
+      return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+    };
+
+    const totalHours = shifts.reduce((sum, shift) => sum + shift.shiftHours, 0);
+
+    const shiftsHtml = shifts.map(shift => `
+      <div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #667eea;">
+        <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">${shift.day}</h3>
+        <p style="color: #666; margin: 5px 0;">
+          <strong>Time:</strong> ${formatTime(shift.startTime)} - ${formatTime(shift.endTime)}
+        </p>
+        <p style="color: #666; margin: 5px 0;">
+          <strong>Hours:</strong> ${shift.shiftHours} hours
+        </p>
+        ${shift.breakDuration > 0 ? `<p style="color: #666; margin: 5px 0;"><strong>Break:</strong> ${shift.breakDuration} minutes</p>` : ''}
+        ${shift.notes ? `<p style="color: #666; margin: 5px 0;"><strong>Notes:</strong> ${shift.notes}</p>` : ''}
+      </div>
+    `).join('');
+
+    const mailOptions = {
+      from: process.env.SMTP_EMAIL,
+      to: email,
+      subject: `${restaurantName} - Your Weekly Schedule`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
+            <h1 style="color: white; margin: 0;">${restaurantName}</h1>
+          </div>
+          <div style="padding: 30px; background: #f9f9f9;">
+            <h2 style="color: #333; margin-bottom: 20px;">Your Weekly Schedule</h2>
+            <p style="color: #666; margin-bottom: 20px;">
+              Hi ${firstName} ${lastName},
+            </p>
+            <p style="color: #666; margin-bottom: 30px;">
+              Your schedule for the week of <strong>${formatDate(weekStartDate)}</strong> has been published.
+            </p>
+            <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+              <h3 style="color: #333; margin-bottom: 15px;">Schedule Summary</h3>
+              <p style="color: #666; margin-bottom: 10px;">
+                <strong>Week:</strong> ${formatDate(weekStartDate)} - ${formatDate(weekEndDate.toISOString().split('T')[0])}
+              </p>
+              <p style="color: #666; margin-bottom: 10px;">
+                <strong>Total Hours:</strong> ${totalHours} hours
+              </p>
+              <p style="color: #666; margin-bottom: 10px;">
+                <strong>Shifts:</strong> ${shifts.length} shifts
+              </p>
+            </div>
+            <div style="margin: 20px 0;">
+              <h3 style="color: #333; margin-bottom: 15px;">Your Shifts</h3>
+              ${shiftsHtml}
+            </div>
+            <p style="color: #666; font-size: 14px;">
+              If you have any questions about your schedule, please contact your manager.
+            </p>
+          </div>
+          <div style="background: #333; padding: 20px; text-align: center;">
+            <p style="color: #999; margin: 0; font-size: 12px;">
+              © 2024 ${restaurantName}. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Rota email sent: ', info.messageId);
+    return true;
+  } catch (error) {
+    console.error('Error sending rota email: ', error);
+    throw new Error('Failed to send rota email');
+  }
 } 

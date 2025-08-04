@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Gift, Plug, MessageCircle } from 'lucide-react';
+
 
 export default function PrintBridgeGetStartedSection() {
   return (

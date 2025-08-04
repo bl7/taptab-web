@@ -15,7 +15,8 @@ import {
   Plus,
   LogOut,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar
 } from 'lucide-react';
 import { PrintBridgeProvider } from '@/contexts/PrintBridgeContext';
 import { UnifiedStatusPanel } from '@/components/UnifiedStatusPanel';
@@ -186,6 +187,24 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Staff
+                </div>
+              )}
+            </Link>
+            
+            <Link 
+              href="/dashboard/rota" 
+              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
+                isActiveLink('/dashboard/rota') 
+                  ? 'bg-green-600 text-white' 
+                  : 'text-white hover:bg-gray-800'
+              }`}
+              title="Rota"
+            >
+              <Calendar className="w-6 h-6 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium">Rota</span>}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  Rota
                 </div>
               )}
             </Link>

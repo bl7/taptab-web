@@ -149,7 +149,7 @@ export default function PrintBridgeIntegrationSection() {
               <h3 className="text-xl font-semibold text-gray-900">Seamless Integration</h3>
             </div>
             <p className="text-gray-600 mb-4">
-              PrintBridge integrates transparently with TapTab. Your staff won't notice any difference - just faster, more reliable printing.
+              PrintBridge integrates transparently with TapTab. Your staff won&apos;t notice any difference - just faster, more reliable printing.
             </p>
             <ul className="space-y-2">
               <li className="flex items-center text-sm text-gray-600">

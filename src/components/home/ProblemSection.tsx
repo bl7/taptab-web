@@ -15,10 +15,10 @@ export default function ProblemSection() {
           viewport={{ once: true }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Traditional systems weren't built for restaurants
+            Traditional systems weren&apos;t built for restaurants
           </h2>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Legacy POS systems are slow, expensive, and make your staff's job harder.
+            Legacy POS systems are slow, expensive, and make your staff&apos;s job harder.
           </p>
         </motion.div>
 

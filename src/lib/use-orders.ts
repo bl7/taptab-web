@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { OrdersApi, Order, CreateOrderRequest, UpdateOrderRequest, OrderStatus } from './orders-api';
+import { OrdersApi, Order, CreateOrderRequest, OrderStatus } from './orders-api';
 
 interface UseOrdersReturn {
   orders: Order[];
   loading: boolean;
   error: string | null;
   createOrder: (data: CreateOrderRequest) => Promise<Order>;
-  updateOrder: (id: string, data: UpdateOrderRequest) => Promise<Order>;
-  updateOrderStatus: (id: string, status: OrderStatus) => Promise<Order>;
+  updateOrder: (id: string) => Promise<Order>;
+  updateOrderStatus: (id: string) => Promise<Order>;
   deleteOrder: (id: string) => Promise<void>;
   refreshOrders: () => Promise<void>;
-  getOrder: (id: string) => Promise<Order>;
+  getOrder: () => Promise<Order>;
 }
 
 export const useOrders = (): UseOrdersReturn => {
@@ -77,7 +77,7 @@ export const useOrders = (): UseOrdersReturn => {
     }
   }, []);
 
-  const updateOrder = useCallback(async (orderId: string, _updateData: UpdateOrderRequest): Promise<Order> => {
+  const updateOrder = useCallback(async (orderId: string): Promise<Order> => {
     try {
       const response = await OrdersApi.updateOrder();
       if (response.success) {
@@ -95,8 +95,8 @@ export const useOrders = (): UseOrdersReturn => {
     }
   }, []);
 
-  const updateOrderStatus = useCallback(async (orderId: string, status: OrderStatus): Promise<Order> => {
-    return updateOrder(orderId, { status });
+  const updateOrderStatus = useCallback(async (orderId: string): Promise<Order> => {
+    return updateOrder(orderId);
   }, [updateOrder]);
 
   const deleteOrder = useCallback(async (orderId: string): Promise<void> => {
@@ -109,7 +109,7 @@ export const useOrders = (): UseOrdersReturn => {
     }
   }, []);
 
-  const getOrder = useCallback(async (_orderId: string): Promise<Order> => {
+  const getOrder = useCallback(async (): Promise<Order> => {
     try {
       const response = await OrdersApi.getOrder();
       if (response.success) {
