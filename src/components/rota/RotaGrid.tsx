@@ -22,6 +22,7 @@ interface Shift {
   shiftHours: number;
   notes?: string;
   status?: string;
+  shiftLabel?: string; // Added shiftLabel
 }
 
 interface RotaGridProps {
@@ -173,52 +174,71 @@ export default function RotaGrid({
                       onDrop={!readOnly ? (e) => handleDrop(e, member.id, dayIndex) : undefined}
                     >
                       {cellShifts.length > 0 ? (
-                        cellShifts.map((shift) => (
-                          <div
-                            key={shift.id}
-                            className={`mb-1 p-1.5 bg-black text-white rounded shadow-sm ${
-                              !readOnly ? 'cursor-move' : 'cursor-default'
-                            }`}
-                            draggable={!readOnly}
-                            onDragStart={!readOnly ? (e) => handleDragStart(e, shift) : undefined}
-                          >
-                            {/* Top row - Time and Hours */}
-                            <div className="mb-1">
-                              <div className="text-xs font-semibold text-white leading-tight">
-                                {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                        <div className="space-y-1">
+                          {cellShifts.map((shift, shiftIndex) => (
+                            <div
+                              key={shift.id}
+                              className={`p-1.5 bg-black text-white rounded shadow-sm ${
+                                !readOnly ? 'cursor-move' : 'cursor-default'
+                              } ${cellShifts.length > 1 ? 'border-l-2 border-blue-400' : ''}`}
+                              draggable={!readOnly}
+                              onDragStart={!readOnly ? (e) => handleDragStart(e, shift) : undefined}
+                            >
+                              {/* Top row - Time and Hours */}
+                              <div className="mb-1">
+                                <div className="text-xs font-semibold text-white leading-tight">
+                                  {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
+                                </div>
+                                <div className="text-xs text-gray-200">
+                                  {Number(shift.shiftHours)} hrs
+                                </div>
+                                {shift.shiftLabel && (
+                                  <div className="text-xs text-blue-200 font-medium">
+                                    {shift.shiftLabel}
+                                  </div>
+                                )}
+                                {cellShifts.length > 1 && !shift.shiftLabel && (
+                                  <div className="text-xs text-blue-200">
+                                    Shift {shiftIndex + 1}
+                                  </div>
+                                )}
                               </div>
-                              <div className="text-xs text-gray-200">
-                                {Number(shift.shiftHours)} hrs
-                              </div>
+                              {/* Bottom row - Action buttons */}
+                              {!readOnly && (
+                                <div className="flex justify-end space-x-0.5">
+                                  <button
+                                    onClick={() => onEditShift(shift)}
+                                    className="p-0.5 text-white hover:text-gray-300"
+                                  >
+                                    <Edit className="w-2.5 h-2.5" />
+                                  </button>
+                                  <button
+                                    onClick={() => shift.id && onDeleteShift(shift.id)}
+                                    className="p-0.5 text-red-300 hover:text-red-200"
+                                  >
+                                    <Trash2 className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
-                            {/* Bottom row - Action buttons */}
-                            {!readOnly && (
-                              <div className="flex justify-end space-x-0.5">
-                                <button
-                                  onClick={() => onEditShift(shift)}
-                                  className="p-0.5 text-white hover:text-gray-300"
-                                >
-                                  <Edit className="w-2.5 h-2.5" />
-                                </button>
-                                <button
-                                  onClick={() => shift.id && onDeleteShift(shift.id)}
-                                  className="p-0.5 text-red-300 hover:text-red-200"
-                                >
-                                  <Trash2 className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        ))
-                      ) : (
-                        !readOnly && (
-                          <button
-                            onClick={() => onAddShift(member.id, dayIndex)}
-                            className="w-full h-16 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-50 rounded border border-dashed border-gray-300 hover:border-gray-400 transition-colors"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        )
+                          ))}
+                          {/* Show total hours for the day if multiple shifts */}
+                          {cellShifts.length > 1 && (
+                            <div className="text-xs text-gray-600 font-semibold text-center mt-1">
+                              Total: {cellShifts.reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0)} hrs
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                      
+                      {/* Always show add button if not read-only */}
+                      {!readOnly && (
+                        <button
+                          onClick={() => onAddShift(member.id, dayIndex)}
+                          className="w-full h-8 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-50 rounded border border-dashed border-gray-300 hover:border-gray-400 transition-colors mt-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                       )}
                     </td>
                   );

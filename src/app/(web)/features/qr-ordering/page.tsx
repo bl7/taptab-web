@@ -34,18 +34,18 @@ export default function QROrderingFeaturePage() {
       icon: QrCode
     },
     {
-      title: "Mobile-Optimized Menu",
-      description: "Your menu displays beautifully on any smartphone. High-quality photos, detailed descriptions, and easy customization options make ordering a pleasure.",
+      title: "Mobile-First Design",
+      description: "Menus look stunning on any phone. Easy to navigate, easy to customize orders.",
       icon: Smartphone
     },
     {
-      title: "Real-Time Order Updates",
-      description: "Guests can track their order status in real-time. From 'preparing' to 'ready for pickup', they always know what's happening with their order.",
+      title: "Kitchen Integration",
+      description: "Orders flow directly to your kitchen display and printers. No middleware, no delays.",
       icon: Tablet
     },
     {
-      title: "Instant Kitchen Notifications",
-      description: "Orders appear instantly on your tablet and kitchen printer. No more lost tickets or misheard orders - everything is digital and accurate.",
+      title: "Payment Processing",
+      description: "Secure checkout with all major cards. Guests pay when they order, reducing table turnover time.",
       icon: Clock
     }
   ];
@@ -73,6 +73,14 @@ export default function QROrderingFeaturePage() {
     }
   ];
 
+  const successMetrics = [
+    { metric: "40%", label: "faster table turnover" },
+    { metric: "95%", label: "guest satisfaction with ordering experience" },
+    { metric: "60%", label: "reduction in order errors" },
+    { metric: "3 min", label: "average order completion time" },
+    { metric: "18%", label: "increase in average order value" }
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -90,12 +98,12 @@ export default function QROrderingFeaturePage() {
                   <span className="text-sm text-gray-300 uppercase tracking-wide">Digital Ordering</span>
                 </div>
                 <h1 className="text-5xl md:text-6xl font-light text-white mb-6">
-                  <div className="block mb-2">QR Code</div>
-                  <div className="block">Ordering</div>
+                  <div className="block mb-2">QR Ordering</div>
+                  <div className="block">Built for Modern Dining</div>
                 </h1>
                 <p className="text-xl text-gray-300 leading-relaxed mb-8">
-                  Transform your restaurant with instant QR code ordering. Guests scan and order from their phones - 
-                  no app download required. Faster service, happier customers.
+                  Transform how guests order with QR technology that actually enhances the dining experience.
+                  No apps to download. No friction. Just modern convenience.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <motion.button 
@@ -160,7 +168,7 @@ export default function QROrderingFeaturePage() {
         </div>
       </section>
 
-      {/* Key Benefits */}
+      {/* The Modern QR Experience */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -170,35 +178,70 @@ export default function QROrderingFeaturePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-semibold text-black mb-6">Why QR Code Ordering?</h2>
-            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
-              The most efficient way to take orders in your restaurant
-            </p>
+            <h2 className="text-4xl font-semibold text-black mb-6">How Modern QR Ordering Should Work</h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.title}
-                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -5 }}
-              >
-                <div className="w-12 h-12 bg-gray-800 rounded-lg flex items-center justify-center mx-auto mb-4">
-                  <benefit.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-semibold text-black mb-2">{benefit.title}</h3>
-                <p className="text-black text-sm leading-relaxed">{benefit.description}</p>
-              </motion.div>
-            ))}
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-white">1</span>
+              </div>
+              <h3 className="text-xl font-semibold text-black mb-3">Guests Scan & Order</h3>
+              <p className="text-black leading-relaxed">Beautiful mobile menus that load instantly. Clear photos, easy customization, smooth checkout.</p>
+            </motion.div>
+
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-white">2</span>
+              </div>
+              <h3 className="text-xl font-semibold text-black mb-3">Kitchen Gets Orders Instantly</h3>
+              <p className="text-black leading-relaxed">No delays, no transcription errors. Orders appear on kitchen screens and print automatically.</p>
+            </motion.div>
+
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-white">3</span>
+              </div>
+              <h3 className="text-xl font-semibold text-black mb-3">Real-Time Order Tracking</h3>
+              <p className="text-black leading-relaxed">Guests see exactly when their food is being prepared and when it's ready.</p>
+            </motion.div>
+
+            <motion.div
+              className="text-center"
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              viewport={{ once: true }}
+            >
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-white">4</span>
+              </div>
+              <h3 className="text-xl font-semibold text-black mb-3">Staff Stay Focused</h3>
+              <p className="text-black leading-relaxed">No more taking orders during busy periods. Staff focus on food and service, not order-taking.</p>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Features Detail */}
+      {/* Features That Matter */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -208,10 +251,7 @@ export default function QROrderingFeaturePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-semibold text-black mb-6">Powerful Features</h2>
-            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
-              Everything you need for seamless QR code ordering
-            </p>
+            <h2 className="text-4xl font-semibold text-black mb-6">Built for Real Restaurant Operations</h2>
           </motion.div>
 
           <div className="space-y-12">
@@ -251,7 +291,7 @@ export default function QROrderingFeaturePage() {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* Success Metrics */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -261,27 +301,21 @@ export default function QROrderingFeaturePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-semibold text-black mb-6">How It Works</h2>
-            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
-              Get QR code ordering up and running in just four simple steps
-            </p>
+            <h2 className="text-4xl font-semibold text-black mb-6">What Modern Restaurants See with TapTab QR Ordering</h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {howItWorks.map((step, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+            {successMetrics.map((metric, index) => (
               <motion.div
-                key={step.step}
+                key={metric.metric}
                 className="text-center"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-white">{step.step}</span>
-                </div>
-                <h3 className="text-xl font-semibold text-black mb-3">{step.title}</h3>
-                <p className="text-black leading-relaxed">{step.description}</p>
+                <div className="text-4xl font-bold text-black mb-2">{metric.metric}</div>
+                <p className="text-black text-sm leading-relaxed">{metric.label}</p>
               </motion.div>
             ))}
           </div>

@@ -7,46 +7,46 @@ export default function RotaFeaturePage() {
   const benefits = [
     {
       icon: Move,
-      title: "Drag & Drop Interface",
-      description: "Intuitive visual scheduling that anyone can use in minutes"
+      title: "Data-Driven Scheduling",
+      description: "Your rota system learns from your POS data. Schedule more staff when you're actually busy."
     },
     {
       icon: Mail,
-      title: "Automatic Email Notifications",
-      description: "Staff receive their schedules instantly via email"
+      title: "Intelligent Shift Planning",
+      description: "See historical sales patterns. Know exactly when you need more kitchen staff vs front-of-house."
     },
     {
       icon: Clock,
-      title: "Weekly Schedule Management",
-      description: "Plan entire weeks with total hours tracking"
+      title: "Automatic Cost Calculations",
+      description: "Track labor costs in real-time. Stay profitable while ensuring proper staffing levels."
     },
     {
       icon: Shield,
-      title: "Role-Based Access",
-      description: "Only managers can edit schedules, staff can view only"
+      title: "Seamless Communication",
+      description: "Staff get schedules instantly via email. Changes notify everyone automatically."
     }
   ];
 
   const features = [
     {
-      title: "Visual Scheduling",
-      description: "Drag and drop staff members to different shifts with real-time updates. See total hours calculated automatically for each staff member and day.",
+      title: "Visual Drag & Drop",
+      description: "Create schedules in minutes with intuitive visual planning.",
       icon: Calendar
     },
     {
-      title: "Email Notifications",
-      description: "When you publish a rota, all staff automatically receive an email with their complete weekly schedule. No more manual communication.",
-      icon: Mail
+      title: "Sales Integration",
+      description: "See yesterday's sales alongside tomorrow's schedule. Make informed staffing decisions.",
+      icon: Users
     },
     {
-      title: "Past Week Protection",
-      description: "Prevent accidental changes to completed schedules. Past weeks become read-only automatically.",
+      title: "Role-Based Scheduling",
+      description: "Different access levels for managers vs staff. Everyone sees what they need to see.",
       icon: Shield
     },
     {
-      title: "Saved Rota History",
-      description: "Access all your previous rotas through a dropdown menu. Switch between different weeks instantly.",
-      icon: Users
+      title: "Mobile Access",
+      description: "Staff check schedules on their phones. Managers can update schedules from anywhere.",
+      icon: Clock
     }
   ];
 
@@ -73,6 +73,20 @@ export default function RotaFeaturePage() {
     }
   ];
 
+  const advantages = [
+    "Integrated with POS Data",
+    "No Double Data Entry",
+    "Cost Awareness",
+    "One System to Learn"
+  ];
+
+  const advantagesDescriptions = [
+    "Other apps guess at busy periods. TapTab knows from your actual sales.",
+    "Staff info, roles, and hours sync automatically with your POS system.",
+    "See labor costs update in real-time as you build schedules.",
+    "Staff already know TapTab for orders. Same system for schedules means less training."
+  ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -90,12 +104,11 @@ export default function RotaFeaturePage() {
                   <span className="text-sm text-gray-300 uppercase tracking-wide">Staff Management</span>
                 </div>
                 <h1 className="text-5xl md:text-6xl font-light text-white mb-6">
-                  <div className="block mb-2">Smart Rota</div>
-                  <div className="block">System</div>
+                  <div className="block mb-2">Smart Staff Scheduling</div>
+                  <div className="block">Your rota system that actually understands your business</div>
                 </h1>
                 <p className="text-xl text-gray-300 leading-relaxed mb-8">
-                  Transform how you manage staff schedules with our intuitive drag-and-drop rota system. 
-                  Create schedules in minutes and automatically notify your team via email.
+                  Modern restaurants need scheduling that adapts to real sales data, not guesswork.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <motion.button 
@@ -157,7 +170,7 @@ export default function RotaFeaturePage() {
         </div>
       </section>
 
-      {/* Key Benefits */}
+      {/* Why Modern Scheduling Matters */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -167,10 +180,7 @@ export default function RotaFeaturePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-semibold text-black mb-6">Why Choose Our Rota System?</h2>
-            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
-              Designed specifically for restaurants to make staff scheduling effortless and efficient
-            </p>
+            <h2 className="text-4xl font-semibold text-black mb-6">Beyond Basic Rota Management</h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -195,7 +205,7 @@ export default function RotaFeaturePage() {
         </div>
       </section>
 
-      {/* Features Detail */}
+      {/* Smart Features */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -205,10 +215,7 @@ export default function RotaFeaturePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-semibold text-black mb-6">Powerful Features</h2>
-            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
-              Everything you need to manage your staff schedules effectively
-            </p>
+            <h2 className="text-4xl font-semibold text-black mb-6">Scheduling That Thinks Ahead</h2>
           </motion.div>
 
           <div className="space-y-12">
@@ -248,7 +255,7 @@ export default function RotaFeaturePage() {
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* The Modern Advantage */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -258,27 +265,21 @@ export default function RotaFeaturePage() {
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl font-semibold text-black mb-6">How It Works</h2>
-            <p className="text-xl text-black max-w-3xl mx-auto leading-relaxed">
-              Get your rota system up and running in just four simple steps
-            </p>
+            <h2 className="text-4xl font-semibold text-black mb-6">Why This Beats Traditional Scheduling Apps</h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {howItWorks.map((step, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {advantages.map((advantage, index) => (
               <motion.div
-                key={step.step}
-                className="text-center"
+                key={advantage}
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <span className="text-2xl font-bold text-white">{step.step}</span>
-                </div>
-                <h3 className="text-xl font-semibold text-black mb-3">{step.title}</h3>
-                <p className="text-black leading-relaxed">{step.description}</p>
+                <h3 className="text-lg font-semibold text-black mb-3">{advantage}</h3>
+                <p className="text-black leading-relaxed">{advantagesDescriptions[index]}</p>
               </motion.div>
             ))}
           </div>

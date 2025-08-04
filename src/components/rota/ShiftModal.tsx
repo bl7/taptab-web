@@ -21,6 +21,7 @@ interface Shift {
   shiftHours: number;
   notes?: string;
   status?: string;
+  shiftLabel?: string;
 }
 
 interface ShiftModalProps {
@@ -189,6 +190,23 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Shift Label */}
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-black mb-2">
+              Shift Label (optional)
+            </label>
+            <input
+              type="text"
+              value={formData.shiftLabel || ''}
+              onChange={(e) => setFormData(prev => ({ ...prev, shiftLabel: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
+              placeholder="e.g., Morning, Evening, Split, etc."
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Helpful when staff have multiple shifts in a day
+            </p>
           </div>
 
           {/* Time Selection */}

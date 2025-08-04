@@ -35,6 +35,7 @@ interface Shift {
   shiftHours: number;
   notes?: string;
   status?: string;
+  shiftLabel?: string;
 }
 
 interface RotaWeek {

@@ -115,14 +115,14 @@ export async function POST(request: NextRequest) {
       // Insert new shifts
       let totalHours = 0;
       for (const shift of shifts) {
-        const { staffId, dayOfWeek, startTime, endTime, breakDuration = 0, shiftHours, notes } = shift;
+        const { staffId, dayOfWeek, startTime, endTime, breakDuration = 0, shiftHours, notes, shiftLabel } = shift;
         
         await client.query(
           `INSERT INTO rota_shifts (
             "tenantId", "staffId", "weekStartDate", "dayOfWeek", 
-            "startTime", "endTime", "breakDuration", "shiftHours", "notes"
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-          [decoded.tenantId, staffId, weekStartDate, dayOfWeek, startTime, endTime, breakDuration, shiftHours, notes]
+            "startTime", "endTime", "breakDuration", "shiftHours", "notes", "shiftLabel"
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [decoded.tenantId, staffId, weekStartDate, dayOfWeek, startTime, endTime, breakDuration, shiftHours, notes, shiftLabel]
         );
         
         totalHours += parseFloat(shiftHours);
