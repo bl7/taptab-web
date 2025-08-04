@@ -25,15 +25,20 @@ export function NotificationManager({
   // Handle new notifications
   useEffect(() => {
     if (notifications.length > 0) {
-      const latestNotification = notifications[0];
+      // Only show unread notifications
+      const unreadNotifications = notifications.filter(n => !n.isRead);
       
-      // If no notification is currently showing, show the latest one
-      if (!isShowing && !currentNotification) {
-        setCurrentNotification(latestNotification);
-        setIsShowing(true);
-      } else if (isShowing && currentNotification) {
-        // Add to queue if another notification is already showing
-        setNotificationQueue(prev => [...prev, latestNotification]);
+      if (unreadNotifications.length > 0) {
+        const latestUnreadNotification = unreadNotifications[0];
+        
+        // If no notification is currently showing, show the latest unread one
+        if (!isShowing && !currentNotification) {
+          setCurrentNotification(latestUnreadNotification);
+          setIsShowing(true);
+        } else if (isShowing && currentNotification) {
+          // Add to queue if another notification is already showing
+          setNotificationQueue(prev => [...prev, latestUnreadNotification]);
+        }
       }
     }
   }, [notifications, isShowing, currentNotification]);
@@ -59,25 +64,38 @@ export function NotificationManager({
     setIsShowing(false);
     setCurrentNotification(null);
     
-    // Show next notification in queue after a short delay
+    // Show next unread notification in queue after a short delay
     setTimeout(() => {
       if (notificationQueue.length > 0) {
         const nextNotification = notificationQueue[0];
         setNotificationQueue(prev => prev.slice(1));
-        setCurrentNotification(nextNotification);
-        setIsShowing(true);
+        
+        // Only show if it's still unread
+        if (!nextNotification.isRead) {
+          setCurrentNotification(nextNotification);
+          setIsShowing(true);
+        }
       }
     }, 500);
   };
 
   const handleMarkAsRead = (id: string) => {
     onMarkAsRead(id);
-    handleCloseNotification();
+    // Immediately close the current notification
+    setIsShowing(false);
+    setCurrentNotification(null);
+    
+    // Clear the queue and don't show any more notifications for this ID
+    setNotificationQueue(prev => prev.filter(n => n.id !== id));
   };
 
   const handleMarkAllAsRead = () => {
     onMarkAllAsRead();
     setShowNotificationPanel(false);
+    // Clear the current notification and queue
+    setIsShowing(false);
+    setCurrentNotification(null);
+    setNotificationQueue([]);
   };
 
   const handleClearAll = () => {

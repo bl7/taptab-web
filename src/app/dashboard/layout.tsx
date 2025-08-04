@@ -256,6 +256,37 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </Link>
           </nav>
 
+          {/* User Info */}
+          <div className="flex flex-col items-center w-full px-2">
+            <div className={`w-full p-3 transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} text-white`}>
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm">
+                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'A'}
+                </span>
+              </div>
+              {!sidebarCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white truncate">
+                    {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin User'}
+                  </p>
+                  <p className="text-xs text-gray-300 truncate">
+                    {user?.role?.replace('_', ' ') || 'Restaurant Manager'}
+                  </p>
+                </div>
+              )}
+              {sidebarCollapsed && (
+                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                  <div className="font-semibold">
+                    {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin User'}
+                  </div>
+                  <div className="text-xs text-gray-300">
+                    {user?.role?.replace('_', ' ') || 'Restaurant Manager'}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Bottom Actions */}
           <div className="flex flex-col items-center w-full">
             <button 
@@ -289,36 +320,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
-          {/* Top Header Bar */}
-          <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-            {/* Left - Brand */}
-            <div className="flex items-center space-x-3">
-             
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  {user?.firstName ? `${user.firstName}` : 'Restaurant'}
-                </h1>
-              </div>
-            </div>
-
-            {/* Right - User Info */}
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">
-                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || 'A'}
-                </span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">
-                  {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin User'}
-                </p>
-                <p className="text-xs text-gray-600">
-                  {user?.role?.replace('_', ' ') || 'Restaurant Manager'}
-                </p>
-              </div>
-            </div>
-          </header>
-
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-gray-50 p-8">
             {children}

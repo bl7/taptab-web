@@ -328,17 +328,12 @@ export default function OrdersPage() {
               updatedAt: editingOrder.updatedAt
             };
 
-            // Use the global printer instance
-            const { getGlobalPrinter } = await import('@/lib/use-receipt-printer');
-            const globalPrinter = getGlobalPrinter();
-            
-            if (globalPrinter) {
-              await globalPrinter.showOrderNotification(orderData);
-              console.log('🖨️ Updated receipt printed for modified order');
-            }
+            // Note: Receipt printing is handled automatically by the WebSocket notification system
+            // when the backend sends the orderModified event. No manual printing needed here.
+            console.log('✅ Order modification completed - receipt will be printed via WebSocket notification');
             
           } catch (printError) {
-            console.warn('⚠️ Failed to print updated receipt:', printError);
+            console.warn('⚠️ Error in order modification process:', printError);
           }
         }
         
@@ -620,6 +615,12 @@ export default function OrdersPage() {
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-600 font-medium">
+                      {order.waiterName || order.sourceDetails || 'Unknown Waiter'}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-600">
                       {new Date(order.createdAt).toLocaleString()}
@@ -705,6 +706,12 @@ export default function OrdersPage() {
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <span className="text-sm text-gray-600">
                       {new Date(selectedOrder.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="text-sm text-gray-600 font-medium">
+                      Waiter: {selectedOrder.waiterName || selectedOrder.sourceDetails || 'Unknown Waiter'}
                     </span>
                   </div>
                 </div>

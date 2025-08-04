@@ -58,6 +58,7 @@ export default function OrderTakingPage() {
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [showTableSelector, setShowTableSelector] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -82,12 +83,18 @@ export default function OrderTakingPage() {
     loadData();
   }, []);
 
-  const filteredItems = menuItems.filter(item => {
-    const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch && item.isActive;
-  });
+  const filteredItems = selectedCategory === 'all' 
+    ? menuItems.filter(item => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             item.description.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesSearch && item.isActive;
+      })
+    : menuItems.filter(item => {
+        const matchesCategory = item.category === selectedCategory;
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                             item.description.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCategory && matchesSearch && item.isActive;
+      });
 
   const addToCart = (item: MenuItem) => {
     if (!selectedTable) {
@@ -115,7 +122,7 @@ export default function OrderTakingPage() {
       return;
     }
 
-    setCart(prev =>
+    setCart((prev: CartItem[]) =>
       prev.map(item =>
         item.menuItem.id === itemId
           ? { ...item, quantity: newQuantity }
@@ -125,11 +132,11 @@ export default function OrderTakingPage() {
   };
 
   const removeFromCart = (itemId: string) => {
-    setCart(prev => prev.filter(item => item.menuItem.id !== itemId));
+    setCart((prev: CartItem[]) => prev.filter(item => item.menuItem.id !== itemId));
   };
 
   const updateNotes = (itemId: string, notes: string) => {
-    setCart(prev =>
+    setCart((prev: CartItem[]) =>
       prev.map(item =>
         item.menuItem.id === itemId
           ? { ...item, notes }
@@ -144,7 +151,7 @@ export default function OrderTakingPage() {
 
   const submitOrder = async () => {
     if (!selectedTable) {
-      alert('Please select a table');
+      alert('Please select a table first');
       return;
     }
 
@@ -195,198 +202,211 @@ export default function OrderTakingPage() {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Take Orders</h1>
-        <p className="text-gray-600 mt-1">Create new orders for customers</p>
-      </div>
-
-      {/* Table Selection */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Select Table</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {tables.map(table => (
+    <div className="flex h-screen bg-gray-50">
+      {/* Left Panel - Menu */}
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Search and Table Selection */}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex gap-4 items-center">
             <button
-              key={table.id}
-              onClick={() => setSelectedTable(table)}
-              className={`p-4 rounded-xl border-2 transition-colors ${
-                selectedTable?.id === table.id
-                  ? 'border-green-500 bg-green-50 text-green-700'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700'
+              onClick={() => setShowTableSelector(true)}
+              className="bg-gray-100 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition-colors text-gray-700 border border-gray-300 whitespace-nowrap"
+            >
+              {selectedTable ? `Table ${selectedTable.number}` : 'Select Table'}
+            </button>
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="Search menu items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-black transition-colors text-base text-black"
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Categories */}
+        <div className="flex px-6 py-4 gap-2 border-b border-gray-200 overflow-x-auto">
+          <button
+            onClick={() => setSelectedCategory('all')}
+            className={`px-6 py-3 border-2 rounded-full whitespace-nowrap font-medium transition-all ${
+              selectedCategory === 'all'
+                ? 'bg-black text-white border-black'
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+            }`}
+          >
+            All
+          </button>
+          {categories.map(category => (
+            <button
+              key={category.id}
+              onClick={() => setSelectedCategory(category.id)}
+              className={`px-6 py-3 border-2 rounded-full whitespace-nowrap font-medium transition-all ${
+                selectedCategory === category.id
+                  ? 'bg-black text-white border-black'
+                  : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
               }`}
             >
-              <div className="text-center">
-                <div className="text-lg font-bold">Table {table.number}</div>
-                <div className="text-sm text-gray-500">{table.capacity} seats</div>
-                {table.location && (
-                  <div className="text-xs text-gray-400">{table.location}</div>
-                )}
-              </div>
+              {category.name}
             </button>
           ))}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Menu Section */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Search and Filters */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search menu items..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="all">All Categories</option>
-                {categories.map(category => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Menu Items Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        {/* Menu Grid */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {filteredItems.map(item => (
-              <div key={item.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
-                    <p className="text-gray-600 text-sm mt-1">{item.description}</p>
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-xl font-bold text-green-600">${item.price.toFixed(2)}</span>
-                      <button
-                        onClick={() => addToCart(item)}
-                        disabled={!selectedTable}
-                        className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  {item.image && (
-                    <div className="ml-4">
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={64}
-                        height={64}
-                        className="w-16 h-16 object-cover rounded-lg"
-                      />
-                    </div>
+              <div
+                key={item.id}
+                onClick={() => addToCart(item)}
+                className="bg-white rounded-xl p-4 border-2 border-gray-200 cursor-pointer transition-all hover:transform hover:-translate-y-1 hover:shadow-lg hover:border-black"
+              >
+                <div className="w-full h-32 bg-gradient-to-br from-black to-gray-800 rounded-lg mb-3 flex items-center justify-center text-white text-4xl">
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      width={64}
+                      height={64}
+                      className="w-16 h-16 object-cover rounded"
+                    />
+                  ) : (
+                    '🍽️'
                   )}
                 </div>
+                <div className="font-semibold text-base mb-2 text-black">{item.name}</div>
+                <div className="text-sm text-gray-600 mb-3 leading-relaxed">{item.description}</div>
+                <div className="text-lg font-bold text-black">${item.price.toFixed(2)}</div>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Cart Section */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 h-fit">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold text-gray-900">Order Cart</h2>
-            <ShoppingCart className="w-5 h-5 text-gray-400" />
+      </div>
+      
+      {/* Right Panel - Order Summary */}
+      <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+        <div className="px-6 py-6 border-b border-gray-200">
+          <div className="text-xl font-bold text-black mb-2">Current Order</div>
+          <div className="text-sm text-gray-600">
+            {selectedTable ? `Table ${selectedTable.number}` : 'No table selected'} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
-
-          {selectedTable && (
-            <div className="mb-4 p-3 bg-green-50 rounded-xl border border-green-200">
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium text-green-800">
-                  Table {selectedTable.number}
-                </span>
-              </div>
-            </div>
-          )}
-
+        </div>
+        
+        <div className="flex-1 overflow-y-auto px-6">
           {cart.length === 0 ? (
-            <div className="text-center py-8">
-              <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No items in cart</p>
-              {!selectedTable && (
-                <p className="text-sm text-gray-400 mt-2">Select a table first</p>
-              )}
+            <div className="text-center py-12 text-gray-500">
+              <div className="text-6xl mb-4">🛒</div>
+              <p>No items in order yet.<br />Click menu items to add them.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {cart.map(item => (
-                <div key={item.menuItem.id} className="border border-gray-200 rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.menuItem.name}</h4>
-                      <p className="text-sm text-gray-600">${item.menuItem.price.toFixed(2)} each</p>
+            <div className="space-y-4 py-4">
+                              {cart.map(item => (
+                  <div key={item.menuItem.id} className="py-4 border-b border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex-1">
+                        <h4 className="text-black font-medium text-sm">{item.menuItem.name}</h4>
+                        <p className="text-gray-600 text-xs">{item.menuItem.price.toFixed(2)} each</p>
+                      </div>
+                      <div className="font-bold text-black text-right">
+                        ${(item.menuItem.price * item.quantity).toFixed(2)}
+                      </div>
                     </div>
-                    <button
-                      onClick={() => removeFromCart(item.menuItem.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-2">
+                    
+                    <div className="flex items-center gap-2 mb-2">
                       <button
                         onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                        className="w-8 h-8 border border-gray-200 bg-white rounded-md flex items-center justify-center font-bold text-black hover:bg-gray-50 hover:border-gray-300 transition-colors"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-8 text-center font-medium">{item.quantity}</span>
+                      <span className="min-w-6 text-center font-semibold text-black">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50"
+                        className="w-8 h-8 border border-gray-200 bg-white rounded-md flex items-center justify-center font-bold text-black hover:bg-gray-50 hover:border-gray-300 transition-colors"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    <span className="font-semibold text-gray-900">
-                      ${(item.menuItem.price * item.quantity).toFixed(2)}
-                    </span>
+                    
+                    <input
+                      placeholder="Add special instructions..."
+                      value={item.notes}
+                      onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded text-xs bg-gray-50 focus:outline-none focus:border-black focus:bg-white text-black"
+                    />
                   </div>
-                  
-                  <textarea
-                    placeholder="Add special instructions..."
-                    value={item.notes}
-                    onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
-                    className="w-full p-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none"
-                    rows={2}
-                  />
-                </div>
-              ))}
-              
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex justify-between items-center mb-4">
-                  <span className="text-lg font-semibold text-gray-900">Total</span>
-                  <span className="text-xl font-bold text-green-600">${getCartTotal().toFixed(2)}</span>
-                </div>
-                
-                <button
-                  onClick={submitOrder}
-                  disabled={submitting || !selectedTable || cart.length === 0}
-                  className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors font-medium"
-                >
-                  {submitting ? 'Placing Order...' : 'Place Order'}
-                </button>
-              </div>
+                ))}
             </div>
           )}
         </div>
+        
+        {cart.length > 0 && (
+          <div className="px-6 py-6 bg-gray-50 border-t border-gray-200">
+            <div className="flex justify-between mb-2 text-black">
+              <span>Subtotal:</span>
+              <span>${getCartTotal().toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mb-2 text-black">
+              <span>Tax (8.5%):</span>
+              <span>${(getCartTotal() * 0.085).toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold text-black pt-2 border-t border-gray-200 mt-2">
+              <span>Total:</span>
+              <span>${(getCartTotal() * 1.085).toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+        
+        <div className="px-6 py-6">
+          <button
+            onClick={submitOrder}
+            disabled={submitting || !selectedTable || cart.length === 0}
+            className="w-full px-6 py-4 bg-black text-white font-semibold rounded-lg border-2 border-black hover:bg-gray-800 hover:border-gray-800 disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            {submitting ? 'Sending Order...' : 'Send Order'}
+          </button>
+        </div>
       </div>
+      
+      {/* Table Selection Modal */}
+      {showTableSelector && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-96 max-h-96 overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-black">Select Table</h2>
+              <button
+                onClick={() => setShowTableSelector(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {tables.map(table => (
+                <button
+                  key={table.id}
+                  onClick={() => {
+                    setSelectedTable(table);
+                    setShowTableSelector(false);
+                  }}
+                  className={`p-4 rounded-lg border-2 transition-colors text-center ${
+                    selectedTable?.id === table.id
+                      ? 'border-black bg-black text-white'
+                      : 'border-gray-200 hover:border-gray-300 text-black'
+                  }`}
+                >
+                  <div className="font-semibold">Table {table.number}</div>
+                  <div className="text-sm opacity-75">{table.capacity} seats</div>
+                  {table.location && (
+                    <div className="text-xs opacity-60">{table.location}</div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

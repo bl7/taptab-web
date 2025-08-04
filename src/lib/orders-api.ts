@@ -109,23 +109,27 @@ export class OrdersApi {
         tableId: params?.table
       });
       
-      console.log('🔍 Raw orders from API:', response.orders);
+      console.log('LOOKFORTHIS 🔍 Raw orders from API:', response.orders);
       
       // Log each order's total fields to debug
       response.orders.forEach((order, index) => {
-        console.log(`🔍 Order ${index + 1} total fields:`, {
+        console.log(`LOOKFORTHIS 🔍 Order ${index + 1} total fields:`, {
           id: order.id,
           totalAmount: order.totalAmount,
           finalAmount: order.finalAmount,
           total: order.total,
           calculatedTotal: order.items.reduce((sum, item) => sum + (item.total || 0), 0),
-          items: order.items.map(item => ({
-            menuItemName: item.menuItemName,
-            price: item.price,
-            quantity: item.quantity,
-            total: item.total,
-            calculatedItemTotal: (item.price * item.quantity)
-          }))
+          waiterName: order.waiterName,
+          sourceDetails: order.sourceDetails,
+          waiterId: order.waiterId,
+          // Log all available fields to see what the backend is sending
+          allFields: Object.keys(order),
+          hasWaiterFields: {
+            hasWaiterName: !!order.waiterName,
+            hasSourceDetails: !!order.sourceDetails,
+            hasWaiterId: !!order.waiterId
+          },
+          orderKeys: Object.keys(order)
         });
       });
       
@@ -142,6 +146,10 @@ export class OrdersApi {
           totalAmount: order.total || order.totalAmount || calculatedOrderTotal,
           finalAmount: order.total || order.finalAmount || calculatedOrderTotal,
           total: order.total || calculatedOrderTotal,
+          // Preserve waiter information
+          waiterName: order.waiterName,
+          sourceDetails: order.sourceDetails,
+          waiterId: order.waiterId,
           // Transform items to include totals
           items: order.items.map(item => ({
             ...item,
@@ -152,7 +160,7 @@ export class OrdersApi {
         return transformedOrder;
       });
       
-      console.log('🔍 Transformed orders:', transformedOrders);
+      console.log('LOOKFORTHIS 🔍 Transformed orders:', transformedOrders);
       
       return {
         success: true,

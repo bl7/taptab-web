@@ -22,6 +22,9 @@ export interface OrderData {
   customerName: string;
   customerPhone: string;
   orderSource?: string;
+  waiterName?: string;
+  sourceDetails?: string;
+  waiterId?: string;
   items: OrderItem[];
   createdAt: string;
   updatedAt: string;
@@ -152,24 +155,25 @@ export class ReceiptPrinter {
       this.printBridgeWebSocket = new WebSocket(printBridgeURL);
 
       this.printBridgeWebSocket.onopen = () => {
-        // Connected to PrintBridge server
+        console.log('🔌 PrintBridge WebSocket connected successfully');
       };
 
       this.printBridgeWebSocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          // PrintBridge message received
+          console.log('📨 PrintBridge message received:', data);
         } catch (error) {
-          // Error parsing PrintBridge message
+          console.warn('⚠️ Error parsing PrintBridge message:', error);
         }
       };
 
       this.printBridgeWebSocket.onclose = () => {
+        console.log('🔌 PrintBridge WebSocket disconnected');
         this.printBridgeWebSocket = null;
       };
 
       this.printBridgeWebSocket.onerror = () => {
-        // PrintBridge server not running
+        console.warn('⚠️ PrintBridge WebSocket connection error');
       };
     } catch {
       // PrintBridge server not available
@@ -183,14 +187,9 @@ export class ReceiptPrinter {
     this.socket.on('connect', () => {
       console.log('✅ Connected to WebSocket server');
       console.log('🔗 WebSocket ID:', this.socket?.id);
-      console.log('🔍 Connection Details:', {
-        socketId: this.socket?.id,
-        isConnected: this.socket?.connected,
-        eventListeners: this.socket ? 'Active' : 'None'
-      });
       this.isConnected = true;
-      this.retryAttempts = 0; // Reset retry attempts on successful connection
-      this.connectionAttempts = 0; // Reset connection attempts on successful connection
+      this.retryAttempts = 0;
+      this.connectionAttempts = 0;
       
       // Authenticate with JWT token
       console.log('🔐 Authenticating with JWT token...');
@@ -199,111 +198,54 @@ export class ReceiptPrinter {
 
     // Authentication response
     this.socket.on('authenticated', (data) => {
-      console.log('✅ WebSocket authenticated successfully', data);
-      console.log('🔍 Authentication Details:', {
-        authenticated: true,
-        data: data
-      });
+      console.log('✅ WebSocket authenticated successfully');
     });
 
     // Authentication error
     this.socket.on('authentication_error', (error) => {
       console.warn('⚠️ WebSocket authentication failed:', error);
-      console.log('🔍 Authentication Error Details:', {
-        error: error,
-        jwtToken: this.jwtToken ? 'Present' : 'Missing'
-      });
       this.isConnected = false;
     });
 
-    // New order notification
+    // NEW ORDER EVENT HANDLER
+    // Backend sends: newOrder event with type: "PRINT_RECEIPT"
     this.socket.on('newOrder', (data: WebSocketOrderEvent) => {
-      console.log('🖨️ New order event received:', data);
-      console.log('📋 New order details:', {
-        orderNumber: data.order?.orderNumber,
-        tableNumber: data.order?.tableNumber,
-        items: data.order?.items?.length,
-        total: data.order?.finalAmount,
+      console.log('🖨️ New order event received');
+      console.log('📋 Event details:', {
         type: data.type,
-        notificationId: data.notificationId
+        orderId: data.order?.id,
+        notificationId: data.notificationId,
+        itemsCount: data.order?.items?.length,
+        total: (data.order as BackendOrderData)?.total || data.order?.finalAmount
       });
-      console.log('🔍 Full newOrder payload:', JSON.stringify(data, null, 2));
       
+      // Only process PRINT_RECEIPT type for new orders
       if (data.type === 'PRINT_RECEIPT') {
-        console.log('🖨️ Triggering notification for PRINT_RECEIPT (NEW ORDER)');
-        console.log('🔍 Order details:', {
-          orderId: data.order?.id,
-          orderNumber: data.order?.orderNumber,
-          notificationId: data.notificationId,
-          hasChanges: !!data.changes
-        });
-        this.showOrderNotification(data.order, data.notificationId);
-      } else if (data.type === 'PRINT_MODIFIED_RECEIPT') {
-        console.log('⚠️ Received PRINT_MODIFIED_RECEIPT in newOrder event - handling as modified order');
-        console.log('🔍 Backend is sending modified orders through newOrder event');
-        this.showModifiedOrderNotification(data.order, data.changes, data.notificationId);
+        console.log('✅ Processing new order notification');
+        this.processNewOrderNotification(data.order, data.notificationId);
       } else {
-        console.log('⚠️ Received newOrder but type is not recognized:', data.type);
+        console.log('⚠️ Ignoring newOrder event with unexpected type:', data.type);
       }
     });
 
-    // Modified order notification (separate event)
+    // MODIFIED ORDER EVENT HANDLER
+    // Backend sends: orderModified event with type: "PRINT_MODIFIED_RECEIPT"
     this.socket.on('orderModified', (data: WebSocketOrderEvent) => {
-      console.log('🖨️ Order modified event received:', data);
-      console.log('📋 Modified order details:', {
-        orderNumber: data.order?.orderNumber,
-        tableNumber: data.order?.tableNumber,
-        items: data.order?.items?.length,
-        total: data.order?.finalAmount,
+      console.log('🔄 Order modified event received');
+      console.log('📋 Event details:', {
         type: data.type,
-        changes: data.changes,
-        notificationId: data.notificationId
+        orderId: data.order?.id,
+        notificationId: data.notificationId,
+        hasChanges: !!data.changes,
+        changesType: data.changes?.modificationType
       });
-      console.log('🔍 Full orderModified payload:', JSON.stringify(data, null, 2));
       
-      // Handle the PRINT_MODIFIED_RECEIPT type
+      // Only process PRINT_MODIFIED_RECEIPT type for modified orders
       if (data.type === 'PRINT_MODIFIED_RECEIPT') {
-        console.log('🖨️ Processing PRINT_MODIFIED_RECEIPT event (MODIFIED ORDER)');
-        console.log('🔍 WebSocket Event Details:');
-        console.log('  - Event Type: orderModified');
-        console.log('  - Order ID:', data.order?.id);
-        console.log('  - Order Number:', data.order?.orderNumber);
-        console.log('  - Changes Present:', !!data.changes);
-        console.log('  - Changes Count:', {
-          added: data.changes?.addedItems?.length || 0,
-          removed: data.changes?.removedItems?.length || 0,
-          modified: data.changes?.modifiedItems?.length || 0
-        });
-        console.log('  - Notification ID:', data.notificationId);
-        
-        this.showModifiedOrderNotification(data.order, data.changes, data.notificationId);
+        console.log('✅ Processing modified order notification');
+        this.processModifiedOrderNotification(data.order, data.changes, data.notificationId);
       } else {
-        console.log('⚠️ Received orderModified but type is not PRINT_MODIFIED_RECEIPT:', data.type);
-      }
-    });
-
-    // Listen for all events to debug
-    this.socket.onAny((eventName: string, ...args: unknown[]) => {
-      console.log('🔍 WebSocket event received:', eventName, args);
-      
-      // Special handling for order-related events
-      if (eventName === 'newOrder' || eventName === 'orderModified' || eventName === 'order_modified') {
-        const eventData = args[0] as WebSocketOrderEvent;
-        console.log('📋 Order event details:', {
-          eventName,
-          data: eventData,
-          type: eventData?.type,
-          orderId: eventData?.order?.id,
-          changes: eventData?.changes,
-          notificationId: eventData?.notificationId,
-          timestamp: new Date().toISOString()
-        });
-        console.log('🔍 Full event payload:', JSON.stringify(eventData, null, 2));
-        
-        // Log if this is a modified order being sent as newOrder
-        if (eventName === 'newOrder' && eventData?.type === 'PRINT_MODIFIED_RECEIPT') {
-          console.log('🚨 WARNING: Backend is sending modified order as newOrder event!');
-        }
+        console.log('⚠️ Ignoring orderModified event with unexpected type:', data.type);
       }
     });
 
@@ -318,76 +260,52 @@ export class ReceiptPrinter {
       console.warn('⚠️ WebSocket connection error:', error);
       this.isConnected = false;
       
+      // Implement exponential backoff retry
       if (this.retryAttempts < this.maxRetries) {
-        this.retryAttempts++;
-        console.log(`🔄 Retrying connection (${this.retryAttempts}/${this.maxRetries})...`);
+        const delay = Math.min(1000 * Math.pow(2, this.retryAttempts), 30000);
+        console.log(`🔄 Retrying connection in ${delay}ms (attempt ${this.retryAttempts + 1}/${this.maxRetries})`);
         
         setTimeout(() => {
-          if (this.jwtToken) {
-            this.connect(this.jwtToken);
-          }
-        }, 2000 * this.retryAttempts); // Exponential backoff
+          this.retryAttempts++;
+          this.connect(this.jwtToken!);
+        }, delay);
+      } else {
+        console.error('❌ Max retry attempts reached. Connection failed.');
       }
     });
   }
 
-  // Show order notification popup
-  async showOrderNotification(orderData: OrderData, notificationId?: string) {
-    console.log('🖨️ New order notification for order:', orderData.orderNumber);
-    console.log('📊 Notification callback set:', !!this.onNotificationCallback);
-    console.log('🔍 Notification ID from backend:', notificationId);
-    
-    // Use unique notification ID from backend, fallback to order ID
-    const uniqueId = notificationId || orderData.id;
-    console.log('🔍 Using unique ID for tracking:', uniqueId);
-    console.log('🔍 Current processed notification IDs:', Array.from(this.processedNotificationIds.keys()));
-    
-    // For new orders, we should always process them unless they have a unique notification ID
-    // that was processed very recently (within 5 seconds) to prevent duplicate notifications
-    const processedTime = this.processedNotificationIds.get(uniqueId);
-    const timeSinceProcessed = processedTime ? Date.now() - processedTime : 0;
-    const isRecentlyProcessed = timeSinceProcessed < 5 * 1000; // 5 seconds for new orders
-    
-    console.log('🔍 Processing details:', {
-      uniqueId,
-      processedTime: processedTime ? new Date(processedTime).toISOString() : 'Never',
-      timeSinceProcessed: `${Math.round(timeSinceProcessed / 1000)}s`,
-      isRecentlyProcessed,
-      willSkip: isRecentlyProcessed && notificationId
+  // Process new order notification (PRINT_RECEIPT)
+  private async processNewOrderNotification(orderData: OrderData, notificationId?: string) {
+    console.log('🖨️ Processing new order notification');
+    console.log('📋 Order details:', {
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      notificationId: notificationId,
+      itemsCount: orderData.items?.length,
+      total: (orderData as BackendOrderData)?.total || orderData.finalAmount
     });
-    
-    // If this is a new notification ID (never processed before), always process it
-    if (!processedTime && notificationId) {
-      console.log('✅ New notification ID - always processing:', uniqueId);
-    } else if (isRecentlyProcessed && notificationId) {
-      console.log('⚠️ Notification ID processed recently, skipping:', uniqueId, `(${Math.round(timeSinceProcessed / 1000)}s ago)`);
+
+    // Validate notification ID
+    if (!notificationId) {
+      console.warn('⚠️ No notification ID provided for new order');
       return;
-    } else if (!notificationId) {
-      console.log('✅ No notification ID from backend - always processing new order');
-    } else {
-      console.log('✅ Notification ID processed long ago - processing:', uniqueId, `(${Math.round(timeSinceProcessed / 1000)}s ago)`);
     }
+
+    // Check for duplicate processing
+    if (this.isNotificationProcessed(notificationId)) {
+      console.log('⚠️ Notification already processed, skipping:', notificationId);
+      return;
+    }
+
+    // Mark as processed immediately to prevent duplicates
+    this.markNotificationAsProcessed(notificationId);
+    console.log('✅ Marked notification as processed:', notificationId);
+
+    // Map backend data to our interface
+    const mappedOrderData = this.mapBackendOrderData(orderData);
     
-    // Map backend data to our interface format
-    const mappedOrderData: OrderData = {
-      id: orderData.id,
-      orderNumber: orderData.orderNumber || orderData.id, // Use id as orderNumber if not provided
-      tableNumber: orderData.tableNumber,
-      totalAmount: orderData.totalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'totalAmount'
-      finalAmount: orderData.finalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'finalAmount'
-      status: orderData.status,
-      customerName: orderData.customerName || 'Walk-in Customer', // Default customer name
-      customerPhone: orderData.customerPhone || 'No phone', // Default phone
-      orderSource: orderData.orderSource || 'WAITER_ORDERING', // Default order source
-      items: orderData.items || [],
-      createdAt: orderData.createdAt,
-      updatedAt: orderData.updatedAt
-    };
-    
-    // Mark this notification ID as processed (only for new orders)
-    this.processedNotificationIds.set(uniqueId, Date.now());
-    console.log('✅ Marked notification ID as processed:', uniqueId);
-    
+    // Create notification
     const notification: OrderNotification = {
       id: `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       order: mappedOrderData,
@@ -396,181 +314,180 @@ export class ReceiptPrinter {
     };
 
     // Add to notifications array
-    this.notifications.unshift(notification);
-    console.log('📝 Total notifications in memory:', this.notifications.length);
-    
-    // Keep only last 10 notifications
-    if (this.notifications.length > 10) {
-      this.notifications = this.notifications.slice(0, 10);
-    }
+    this.addNotification(notification);
+    console.log('📝 Added new order notification to list');
 
-    // Trigger callback if set
+    // Trigger callback
     if (this.onNotificationCallback) {
       console.log('🔄 Triggering notification callback');
       this.onNotificationCallback(notification);
-    } else {
-      console.log('⚠️ No notification callback set');
     }
 
-    // Show browser notification if supported
-    try {
-      this.showBrowserNotification(mappedOrderData);
-    } catch (error) {
-      console.warn('⚠️ Browser notification failed:', error);
-    }
+    // Show browser notification
+    this.showBrowserNotification(mappedOrderData);
 
-    // Print receipt via PrintBridge (with error handling)
+    // Print receipt
     try {
+      console.log('🖨️ Attempting to print receipt for new order...');
       await this.printReceipt(mappedOrderData);
+      console.log('✅ Receipt printing completed for new order');
     } catch (error) {
-      console.warn('⚠️ Receipt printing failed, but order was received:', error);
+      console.error('❌ Receipt printing failed for new order:', error);
     }
   }
 
-  // Show modified order notification popup
-  async showModifiedOrderNotification(orderData: OrderData, changes?: OrderChanges, notificationId?: string) {
-    console.log('🖨️ Modified order notification for order:', orderData.orderNumber);
-    console.log('📊 Changes:', changes);
-    console.log('🔍 Order ID:', orderData.id);
-    console.log('🔍 Notification ID from backend:', notificationId);
-    console.log('🔍 Processed notification IDs:', Array.from(this.processedNotificationIds.keys()));
-    console.log('🔍 Changes summary:', {
-      addedItems: changes?.addedItems?.length || 0,
-      removedItems: changes?.removedItems?.length || 0,
-      modifiedItems: changes?.modifiedItems?.length || 0,
-      hasChanges: changes && (changes.addedItems.length > 0 || changes.removedItems.length > 0 || changes.modifiedItems.length > 0)
+  // Process modified order notification (PRINT_MODIFIED_RECEIPT)
+  private async processModifiedOrderNotification(orderData: OrderData, changes?: OrderChanges, notificationId?: string) {
+    console.log('🔄 Processing modified order notification');
+    console.log('📋 Order details:', {
+      orderId: orderData.id,
+      orderNumber: orderData.orderNumber,
+      notificationId: notificationId,
+      changesType: changes?.modificationType,
+      hasChanges: !!changes
     });
-    
-    // Use unique notification ID from backend, fallback to order ID
-    const uniqueId = notificationId || orderData.id;
-    console.log('🔍 Using unique ID for tracking:', uniqueId);
-    
-    // For modified orders, we always allow notifications regardless of when the order was last processed
-    // because modifications should always trigger a new notification
-    const isModifiedOrder = changes && (changes.addedItems.length > 0 || changes.removedItems.length > 0 || changes.modifiedItems.length > 0);
-    
-    console.log('🔍 Is modified order?', isModifiedOrder);
-    console.log('🔍 Notification Callback Status:', {
-      callbackExists: !!this.onNotificationCallback,
-      callbackType: typeof this.onNotificationCallback
-    });
-    
-    // Always allow modified order notifications
-    if (isModifiedOrder) {
-      console.log('✅ Modified order - always allowing notification');
-    } else {
-      // For non-modified orders, check if recently processed
-      const processedTime = this.processedNotificationIds.get(uniqueId);
-      const timeSinceProcessed = processedTime ? Date.now() - processedTime : 0;
-      const isRecentlyProcessed = timeSinceProcessed < 5 * 60 * 1000; // 5 minutes
-      
-      console.log('🔍 Processing Check:', {
-        processedTime,
-        timeSinceProcessed: Math.round(timeSinceProcessed / 1000) + 's',
-        isRecentlyProcessed,
-        threshold: '5 minutes'
-      });
-      
-      if (isRecentlyProcessed) {
-        console.log('⚠️ Notification ID processed recently, skipping:', uniqueId, `(${Math.round(timeSinceProcessed / 1000)}s ago)`);
-        return;
-      }
+
+    // Validate changes object
+    if (!changes) {
+      console.warn('⚠️ No changes object provided for modified order');
+      return;
     }
-    
-    console.log('✅ Proceeding with notification');
-    
-    // Map backend data to our interface format
-    const mappedOrderData: OrderData = {
-      id: orderData.id,
-      orderNumber: orderData.orderNumber || orderData.id, // Use id as orderNumber if not provided
-      tableNumber: orderData.tableNumber,
-      totalAmount: orderData.totalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'totalAmount'
-      finalAmount: orderData.finalAmount || (orderData as BackendOrderData).total || 0, // Map 'total' to 'finalAmount'
-      status: orderData.status,
-      customerName: orderData.customerName || 'Walk-in Customer', // Default customer name
-      customerPhone: orderData.customerPhone || 'No phone', // Default phone
-      orderSource: orderData.orderSource || 'WAITER_ORDERING', // Default order source
-      items: orderData.items || [],
-      createdAt: orderData.createdAt,
-      updatedAt: orderData.updatedAt
-    };
-    
-    console.log('🔍 Mapped Order Data:', {
-      id: mappedOrderData.id,
-      orderNumber: mappedOrderData.orderNumber,
-      tableNumber: mappedOrderData.tableNumber,
-      finalAmount: mappedOrderData.finalAmount,
-      itemsCount: mappedOrderData.items.length
-    });
-    
-    // For modified orders, we don't add to processed IDs to allow future modifications
-    // For new orders, we add to prevent duplicates
-    if (!isModifiedOrder) {
-      this.processedNotificationIds.set(uniqueId, Date.now());
-      console.log('✅ Marked new order ID as processed:', uniqueId);
-    } else {
-      console.log('✅ Modified order - not adding to processed IDs to allow future modifications');
+
+    // Validate notification ID
+    if (!notificationId) {
+      console.warn('⚠️ No notification ID provided for modified order');
+      return;
     }
+
+    // Check for duplicate processing
+    if (this.isNotificationProcessed(notificationId)) {
+      console.log('⚠️ Notification already processed, skipping:', notificationId);
+      return;
+    }
+
+    // Mark as processed immediately to prevent duplicates
+    this.markNotificationAsProcessed(notificationId);
+    console.log('✅ Marked notification as processed:', notificationId);
+
+    // Map backend data to our interface
+    const mappedOrderData = this.mapBackendOrderData(orderData);
     
+    // Create notification with changes
     const notification: OrderNotification = {
-      id: `modified_notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       order: mappedOrderData,
       timestamp: new Date().toISOString(),
       isRead: false,
       changes: changes
     };
 
-    console.log('🔍 Created Notification:', {
-      id: notification.id,
-      orderId: notification.order.id,
-      hasChanges: !!notification.changes,
-      timestamp: notification.timestamp
-    });
-
     // Add to notifications array
-    this.notifications.unshift(notification);
-    console.log('📝 Total notifications in memory:', this.notifications.length);
-    
-    // Keep only last 10 notifications
-    if (this.notifications.length > 10) {
-      this.notifications = this.notifications.slice(0, 10);
-    }
+    this.addNotification(notification);
+    console.log('📝 Added modified order notification to list');
 
-    // Trigger callback if set
+    // Trigger callback
     if (this.onNotificationCallback) {
-      console.log('🔄 Triggering modified order notification callback');
-      console.log('🔍 Callback Details:', {
-        callbackType: typeof this.onNotificationCallback,
-        notificationId: notification.id,
-        orderNumber: notification.order.orderNumber
-      });
+      console.log('🔄 Triggering notification callback');
       this.onNotificationCallback(notification);
-    } else {
-      console.log('⚠️ No notification callback set - this is why no notification appears!');
-      console.log('🔍 Callback Status:', {
-        callbackExists: !!this.onNotificationCallback,
-        callbackType: typeof this.onNotificationCallback
-      });
     }
 
-    // Show browser notification for modified order
-    try {
-      console.log('🔍 Attempting browser notification...');
-      this.showModifiedBrowserNotification(mappedOrderData, changes);
-      console.log('✅ Browser notification sent successfully');
-    } catch (error) {
-      console.warn('⚠️ Browser notification failed:', error);
-    }
+    // Show browser notification
+    this.showModifiedBrowserNotification(mappedOrderData, changes);
 
-    // Print receipt via PrintBridge (with error handling)
+    // Print receipt
     try {
-      console.log('🔍 Attempting receipt printing...');
+      console.log('🖨️ Attempting to print receipt for modified order...');
       await this.printReceipt(mappedOrderData, changes);
-      console.log('✅ Receipt printed successfully');
+      console.log('✅ Receipt printing completed for modified order');
     } catch (error) {
-      console.warn('⚠️ Receipt printing failed, but order modification was successful:', error);
+      console.error('❌ Receipt printing failed for modified order:', error);
     }
   }
+
+  // Check if notification was already processed
+  private isNotificationProcessed(notificationId: string): boolean {
+    const processedTime = this.processedNotificationIds.get(notificationId);
+    if (!processedTime) return false;
+    
+    const timeSinceProcessed = Date.now() - processedTime;
+    const isRecentlyProcessed = timeSinceProcessed < 10 * 1000; // 10 seconds
+    
+    if (isRecentlyProcessed) {
+      console.log('⚠️ Notification processed recently:', notificationId, `(${Math.round(timeSinceProcessed / 1000)}s ago)`);
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Mark notification as processed
+  private markNotificationAsProcessed(notificationId: string): void {
+    this.processedNotificationIds.set(notificationId, Date.now());
+    
+    // Clean up old entries (older than 1 hour)
+    const oneHourAgo = Date.now() - (60 * 60 * 1000);
+    for (const [id, timestamp] of this.processedNotificationIds.entries()) {
+      if (timestamp < oneHourAgo) {
+        this.processedNotificationIds.delete(id);
+      }
+    }
+  }
+
+  // Map backend order data to our interface
+  private mapBackendOrderData(orderData: OrderData): OrderData {
+    // Debug waiter data
+    console.log('LOOKFORTHIS 🔍 Waiter Data Debug:', {
+      waiterName: orderData.waiterName,
+      sourceDetails: orderData.sourceDetails,
+      waiterId: orderData.waiterId,
+      hasWaiterName: !!orderData.waiterName,
+      hasSourceDetails: !!orderData.sourceDetails,
+      fallbackName: orderData.waiterName || orderData.sourceDetails || 'Unknown Waiter',
+      orderKeys: Object.keys(orderData),
+      orderId: orderData.id,
+      tableNumber: orderData.tableNumber
+    });
+
+    return {
+      id: orderData.id,
+      orderNumber: orderData.orderNumber || orderData.id,
+      tableNumber: orderData.tableNumber,
+      totalAmount: orderData.totalAmount || (orderData as BackendOrderData).total || 0,
+      finalAmount: orderData.finalAmount || (orderData as BackendOrderData).total || 0,
+      status: orderData.status,
+      customerName: orderData.customerName || 'Walk-in Customer',
+      customerPhone: orderData.customerPhone || 'No phone',
+      orderSource: orderData.orderSource || 'WAITER_ORDERING',
+      waiterName: orderData.waiterName,
+      sourceDetails: orderData.sourceDetails,
+      waiterId: orderData.waiterId,
+      items: orderData.items || [],
+      createdAt: orderData.createdAt,
+      updatedAt: orderData.updatedAt
+    };
+  }
+
+  // Add notification to list with proper management
+  private addNotification(notification: OrderNotification): void {
+    // Check if notification already exists to prevent duplicates
+    const existingIndex = this.notifications.findIndex(n => n.id === notification.id);
+    if (existingIndex !== -1) {
+      console.log('⚠️ Notification already exists, skipping:', notification.id);
+      return;
+    }
+    
+    this.notifications.unshift(notification);
+    
+    // Keep only last 20 notifications
+    if (this.notifications.length > 20) {
+      this.notifications = this.notifications.slice(0, 20);
+    }
+    
+    console.log('📊 Total notifications in memory:', this.notifications.length);
+  }
+
+  // Show order notification popup
+
 
   // Show browser notification
   private showBrowserNotification(orderData: OrderData) {
@@ -600,15 +517,15 @@ export class ReceiptPrinter {
       if (changes) {
         notificationBody += '\n\nChanges:';
         
-        if (changes.addedItems.length > 0) {
+        if (changes.addedItems && changes.addedItems.length > 0) {
           notificationBody += `\n➕ Added: ${changes.addedItems.map(item => `${item.name} x${item.quantity}`).join(', ')}`;
         }
         
-        if (changes.removedItems.length > 0) {
+        if (changes.removedItems && changes.removedItems.length > 0) {
           notificationBody += `\n➖ Removed: ${changes.removedItems.map(item => `${item.name} x${item.quantity}`).join(', ')}`;
         }
         
-        if (changes.modifiedItems.length > 0) {
+        if (changes.modifiedItems && changes.modifiedItems.length > 0) {
           notificationBody += `\n✏️ Modified: ${changes.modifiedItems.map(item => `${item.name} ${item.oldQuantity}→${item.newQuantity}`).join(', ')}`;
         }
       }
@@ -652,8 +569,9 @@ export class ReceiptPrinter {
     console.log('📝 Marking notification as read:', notificationId);
     const notificationIndex = this.notifications.findIndex(n => n.id === notificationId);
     if (notificationIndex !== -1) {
-      this.notifications.splice(notificationIndex, 1);
-      console.log('✅ Notification removed from memory');
+      // Mark as read instead of removing
+      this.notifications[notificationIndex].isRead = true;
+      console.log('✅ Notification marked as read');
     } else {
       console.log('⚠️ Notification not found for marking as read:', notificationId);
     }
@@ -664,6 +582,14 @@ export class ReceiptPrinter {
     this.notifications = [];
     this.processedNotificationIds.clear(); // Also clear processed order IDs
     console.log('🧹 Cleared all notifications and processed order IDs');
+  }
+
+  // Mark all notifications as read
+  markAllAsRead() {
+    this.notifications.forEach(notification => {
+      notification.isRead = true;
+    });
+    console.log('✅ All notifications marked as read');
   }
 
   // Clear processed order IDs (useful for testing)
@@ -706,6 +632,14 @@ export class ReceiptPrinter {
     return this.isConnected;
   }
 
+  // Check PrintBridge connection status
+  getPrintBridgeStatus(): { connected: boolean; readyState?: number } {
+    return {
+      connected: !!(this.printBridgeWebSocket && this.printBridgeWebSocket.readyState === WebSocket.OPEN),
+      readyState: this.printBridgeWebSocket?.readyState
+    };
+  }
+
   // Reset connection attempts (useful for manual reconnection)
   resetConnectionAttempts() {
     this.connectionAttempts = 0;
@@ -715,11 +649,18 @@ export class ReceiptPrinter {
   // Print receipt via PrintBridge
   private async printReceipt(orderData: OrderData, changes?: OrderChanges) {
     try {
-      console.log('🖨️ Generating receipt PNG for order:', orderData.orderNumber);
+      console.log('🖨️ Starting receipt printing process for order:', orderData.orderNumber);
+      console.log('🔍 Print details:', {
+        orderId: orderData.id,
+        orderNumber: orderData.orderNumber,
+        hasChanges: !!changes,
+        changesType: changes?.modificationType
+      });
       
       // Generate receipt PNG
+      console.log('📄 Generating receipt PNG...');
       const receiptDataURL = await this.receiptGenerator.generateReceiptPNG(orderData, changes);
-      console.log('✅ Receipt PNG generated');
+      console.log('✅ Receipt PNG generated successfully');
       
       // Get dimensions in millimeters (56mm width is standard receipt width)
       const labelWidth = 56; // 56mm receipt width
@@ -746,6 +687,7 @@ export class ReceiptPrinter {
           images: [base64Only],
           selectedPrinter: "Receipt Printer"
         };
+        console.log('🍎 Using Mac format for PrintBridge');
       } else {
         // Windows/Linux format: full data URL with dimensions
         printData = {
@@ -754,14 +696,31 @@ export class ReceiptPrinter {
           image: receiptDataURL,
           selectedPrinter: "Receipt Printer"
         };
+        console.log('🪟 Using Windows/Linux format for PrintBridge');
       }
+      
+      // Check PrintBridge connection status
+      console.log('🔌 PrintBridge connection status:', {
+        exists: !!this.printBridgeWebSocket,
+        readyState: this.printBridgeWebSocket?.readyState,
+        isOpen: this.printBridgeWebSocket?.readyState === WebSocket.OPEN
+      });
       
       // Send to PrintBridge if connected
       if (this.printBridgeWebSocket && this.printBridgeWebSocket.readyState === WebSocket.OPEN) {
+        console.log('📤 Sending receipt to PrintBridge...');
         this.printBridgeWebSocket.send(JSON.stringify(printData));
+        console.log('✅ Receipt sent to PrintBridge successfully');
+      } else {
+        console.warn('⚠️ PrintBridge not connected - receipt not printed');
+        console.log('💡 To enable receipt printing, ensure PrintBridge server is running on localhost:8080');
       }
     } catch (error) {
-      console.warn('⚠️ Error printing receipt:', error);
+      console.error('❌ Error printing receipt:', error);
+      console.log('🔍 Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
     }
   }
 
@@ -791,6 +750,38 @@ export class ReceiptPrinter {
       updatedAt: new Date().toISOString()
     };
 
-    this.showOrderNotification(testOrder);
+    // Use the new robust notification system
+    this.processNewOrderNotification(testOrder, `test_notification_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  }
+
+  // Test receipt printing function for debugging
+  testReceiptPrinting() {
+    const testOrder: OrderData = {
+      id: 'test_order_123',
+      orderNumber: 'TEST-001',
+      tableNumber: '5',
+      totalAmount: 25.50,
+      finalAmount: 25.50,
+      status: 'PENDING',
+      customerName: 'Test Customer',
+      customerPhone: '1234567890',
+      items: [
+        {
+          id: 'test_item_1',
+          menuItemId: 'item_1',
+          menuItemName: 'Burger',
+          quantity: 2,
+          price: 12.75,
+          total: 25.50,
+          notes: 'No onions please'
+        }
+      ],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    console.log('🧪 Testing receipt printing...');
+    console.log('🔍 PrintBridge status:', this.getPrintBridgeStatus());
+    this.printReceipt(testOrder);
   }
 } 

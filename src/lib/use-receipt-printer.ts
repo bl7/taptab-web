@@ -113,7 +113,9 @@ export function useReceiptPrinter() {
   const markAsRead = (id: string) => {
     if (printerRef.current) {
       printerRef.current.markAsRead(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
+      setNotifications(prev => prev.map(n => 
+        n.id === id ? { ...n, isRead: true } : n
+      ));
     }
   };
 
@@ -122,6 +124,14 @@ export function useReceiptPrinter() {
     if (printerRef.current) {
       printerRef.current.clearNotifications();
       setNotifications([]);
+    }
+  };
+
+  // Mark all notifications as read
+  const markAllAsRead = () => {
+    if (printerRef.current) {
+      printerRef.current.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     }
   };
 
@@ -138,6 +148,7 @@ export function useReceiptPrinter() {
     disconnect,
     testNotification,
     markAsRead,
+    markAllAsRead,
     clearNotifications,
     notifications,
     isConnected,

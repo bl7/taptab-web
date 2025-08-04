@@ -57,7 +57,9 @@ export function OrderNotificationPopup({
 
   const handleMarkAsRead = () => {
     onMarkAsRead(notification.id);
+    // Immediately hide the popup
     setIsVisible(false);
+    // Close after animation
     setTimeout(onClose, 300);
   };
 
@@ -77,6 +79,7 @@ export function OrderNotificationPopup({
           <button
             onClick={handleMarkAsRead}
             className="text-white hover:text-gray-200 transition-colors"
+            title="Mark as read and close"
           >
             <X className="h-4 w-4" />
           </button>
@@ -109,13 +112,11 @@ export function OrderNotificationPopup({
                 <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
                 <span className="truncate">{notification.order.customerPhone || 'No phone'}</span>
               </div>
-              {notification.order.orderSource && (
-                <div className="flex items-center">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 truncate`}>
-                    {notification.order.orderSource}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center">
+                <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 truncate">
+                  {notification.order.waiterName || notification.order.sourceDetails || 'Unknown Waiter'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -218,21 +219,12 @@ export function OrderNotificationPopup({
           </div>
 
           {/* Actions */}
-          <div className="mt-4 flex space-x-2">
+          <div className="mt-4">
             <button
               onClick={handleMarkAsRead}
-              className={`flex-1 ${isModifiedOrder ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors`}
+              className={`w-full ${isModifiedOrder ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors`}
             >
               Mark as Read
-            </button>
-            <button
-              onClick={() => {
-                setIsVisible(false);
-                setTimeout(onClose, 300);
-              }}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 px-4 rounded-lg text-sm font-medium transition-colors"
-            >
-              Dismiss
             </button>
           </div>
         </div>
