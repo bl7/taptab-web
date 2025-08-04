@@ -6,10 +6,8 @@ const getPrintBridgeURL = (): string => {
   const userAgent = navigator.userAgent.toLowerCase();
   
   if (platform.includes('mac') || userAgent.includes('mac')) {
-    console.log('🖥️ Mac detected - using ws://localhost:8080');
     return 'ws://localhost:8080';
   } else {
-    console.log('🖥️ Windows/Linux detected - using ws://localhost:8080/ws');
     return 'ws://localhost:8080/ws';
   }
 };
@@ -36,37 +34,31 @@ export const usePrintBridge = () => {
   const connect = useCallback(() => {
     try {
       const printBridgeURL = getPrintBridgeURL();
-      console.log('🔌 Connecting to PrintBridge server...');
       const ws = new WebSocket(printBridgeURL);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('✅ Connected to PrintBridge server');
         setIsConnected(true);
       };
 
       ws.onmessage = (event) => {
         try {
           const data: PrintBridgeMessage = JSON.parse(event.data);
-          console.log('📨 PrintBridge received:', data);
 
           if (data.type === 'connection') {
             setPrinters(data.printers || []);
             setDefaultPrinter(data.defaultPrinter || '');
-            console.log('🖨️ Printers discovered:', data.printers);
           }
 
           if (data.success !== undefined) {
             setLastPrintResult(data);
-            console.log('🖨️ Print job result:', data);
           }
         } catch (error) {
-          console.error('❌ Error parsing PrintBridge message:', error);
+          // Error parsing PrintBridge message
         }
       };
 
       ws.onclose = () => {
-        console.log('🔌 Disconnected from PrintBridge');
         setIsConnected(false);
         setPrinters([]);
         setDefaultPrinter('');
@@ -76,13 +68,9 @@ export const usePrintBridge = () => {
       };
 
       ws.onerror = () => {
-        console.warn('⚠️ PrintBridge server not running on localhost:8080');
-        console.log('💡 To enable printing, start the PrintBridge server');
         setIsConnected(false);
       };
     } catch {
-      console.warn('⚠️ PrintBridge server not available');
-      console.log('💡 To enable printing, start the PrintBridge server');
       setIsConnected(false);
     }
   }, []);
@@ -98,11 +86,9 @@ export const usePrintBridge = () => {
 
   const sendPrintJob = (base64Image: string) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      console.log('🖨️ Sending print job to PrintBridge...');
       wsRef.current.send(base64Image);
       return true;
     } else {
-      console.warn('⚠️ PrintBridge not connected - print job skipped');
       return false;
     }
   };

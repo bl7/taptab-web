@@ -144,41 +144,35 @@ export class ReceiptPrinter {
       
       let printBridgeURL: string;
       if (platform.includes('mac') || userAgent.includes('mac')) {
-        console.log('🖥️ Mac detected - using ws://localhost:8080');
         printBridgeURL = 'ws://localhost:8080';
       } else {
-        console.log('🖥️ Windows/Linux detected - using ws://localhost:8080/ws');
         printBridgeURL = 'ws://localhost:8080/ws';
       }
       
-      console.log('🔌 Connecting to PrintBridge server...');
       this.printBridgeWebSocket = new WebSocket(printBridgeURL);
 
       this.printBridgeWebSocket.onopen = () => {
-        console.log('✅ Connected to PrintBridge server');
+        // Connected to PrintBridge server
       };
 
       this.printBridgeWebSocket.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📨 PrintBridge received:', data);
+          // PrintBridge message received
         } catch (error) {
-          console.warn('⚠️ Error parsing PrintBridge message:', error);
+          // Error parsing PrintBridge message
         }
       };
 
       this.printBridgeWebSocket.onclose = () => {
-        console.log('🔌 Disconnected from PrintBridge');
         this.printBridgeWebSocket = null;
       };
 
       this.printBridgeWebSocket.onerror = () => {
-        console.warn('⚠️ PrintBridge server not running on localhost:8080');
-        console.log('💡 To enable receipt printing, start the PrintBridge server');
+        // PrintBridge server not running
       };
     } catch {
-      console.warn('⚠️ PrintBridge server not available');
-      console.log('💡 To enable receipt printing, start the PrintBridge server');
+      // PrintBridge server not available
     }
   }
 
@@ -236,7 +230,13 @@ export class ReceiptPrinter {
       console.log('🔍 Full newOrder payload:', JSON.stringify(data, null, 2));
       
       if (data.type === 'PRINT_RECEIPT') {
-        console.log('🖨️ Triggering notification for PRINT_RECEIPT');
+        console.log('🖨️ Triggering notification for PRINT_RECEIPT (NEW ORDER)');
+        console.log('🔍 Order details:', {
+          orderId: data.order?.id,
+          orderNumber: data.order?.orderNumber,
+          notificationId: data.notificationId,
+          hasChanges: !!data.changes
+        });
         this.showOrderNotification(data.order, data.notificationId);
       } else if (data.type === 'PRINT_MODIFIED_RECEIPT') {
         console.log('⚠️ Received PRINT_MODIFIED_RECEIPT in newOrder event - handling as modified order');
@@ -263,7 +263,7 @@ export class ReceiptPrinter {
       
       // Handle the PRINT_MODIFIED_RECEIPT type
       if (data.type === 'PRINT_MODIFIED_RECEIPT') {
-        console.log('🖨️ Processing PRINT_MODIFIED_RECEIPT event');
+        console.log('🖨️ Processing PRINT_MODIFIED_RECEIPT event (MODIFIED ORDER)');
         console.log('🔍 WebSocket Event Details:');
         console.log('  - Event Type: orderModified');
         console.log('  - Order ID:', data.order?.id);
@@ -340,15 +340,32 @@ export class ReceiptPrinter {
     // Use unique notification ID from backend, fallback to order ID
     const uniqueId = notificationId || orderData.id;
     console.log('🔍 Using unique ID for tracking:', uniqueId);
+    console.log('🔍 Current processed notification IDs:', Array.from(this.processedNotificationIds.keys()));
     
-    // Check if we already processed this notification ID recently (within last 5 minutes)
+    // For new orders, we should always process them unless they have a unique notification ID
+    // that was processed very recently (within 5 seconds) to prevent duplicate notifications
     const processedTime = this.processedNotificationIds.get(uniqueId);
     const timeSinceProcessed = processedTime ? Date.now() - processedTime : 0;
-    const isRecentlyProcessed = timeSinceProcessed < 5 * 60 * 1000; // 5 minutes
+    const isRecentlyProcessed = timeSinceProcessed < 5 * 1000; // 5 seconds for new orders
     
-    if (isRecentlyProcessed) {
+    console.log('🔍 Processing details:', {
+      uniqueId,
+      processedTime: processedTime ? new Date(processedTime).toISOString() : 'Never',
+      timeSinceProcessed: `${Math.round(timeSinceProcessed / 1000)}s`,
+      isRecentlyProcessed,
+      willSkip: isRecentlyProcessed && notificationId
+    });
+    
+    // If this is a new notification ID (never processed before), always process it
+    if (!processedTime && notificationId) {
+      console.log('✅ New notification ID - always processing:', uniqueId);
+    } else if (isRecentlyProcessed && notificationId) {
       console.log('⚠️ Notification ID processed recently, skipping:', uniqueId, `(${Math.round(timeSinceProcessed / 1000)}s ago)`);
       return;
+    } else if (!notificationId) {
+      console.log('✅ No notification ID from backend - always processing new order');
+    } else {
+      console.log('✅ Notification ID processed long ago - processing:', uniqueId, `(${Math.round(timeSinceProcessed / 1000)}s ago)`);
     }
     
     // Map backend data to our interface format
@@ -676,14 +693,12 @@ export class ReceiptPrinter {
 
     // Disconnect from PrintBridge
     if (this.printBridgeWebSocket) {
-      console.log('🔌 Disconnecting from PrintBridge...');
       this.printBridgeWebSocket.close();
       this.printBridgeWebSocket = null;
     }
     
     this.isConnected = false;
     this.jwtToken = null;
-    console.log('✅ WebSocket and PrintBridge disconnected');
   }
 
   // Check connection status
@@ -731,7 +746,6 @@ export class ReceiptPrinter {
           images: [base64Only],
           selectedPrinter: "Receipt Printer"
         };
-        console.log('🖨️ Sending Mac-format receipt to PrintBridge');
       } else {
         // Windows/Linux format: full data URL with dimensions
         printData = {
@@ -740,15 +754,11 @@ export class ReceiptPrinter {
           image: receiptDataURL,
           selectedPrinter: "Receipt Printer"
         };
-        console.log('🖨️ Sending Windows/Linux-format receipt to PrintBridge:', { labelWidth: printData.labelWidth, labelHeight: printData.labelHeight });
       }
       
       // Send to PrintBridge if connected
       if (this.printBridgeWebSocket && this.printBridgeWebSocket.readyState === WebSocket.OPEN) {
         this.printBridgeWebSocket.send(JSON.stringify(printData));
-        console.log('✅ Receipt sent to PrintBridge');
-      } else {
-        console.warn('⚠️ PrintBridge not connected, receipt not printed');
       }
     } catch (error) {
       console.warn('⚠️ Error printing receipt:', error);
