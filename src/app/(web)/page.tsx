@@ -1,30 +1,30 @@
 'use client';
 
 import HeroSection from '@/components/home/HeroSection';
-import SummarySection from '@/components/home/SummarySection';
-import TargetAudienceSection from '@/components/home/TargetAudienceSection';
-import BrandPromiseSection from '@/components/home/BrandPromiseSection';
-import BeforeAfterSection from '@/components/home/BeforeAfterSection';
+import ProblemSection from '@/components/home/ProblemSection';
+import SolutionSection from '@/components/home/SolutionSection';
+import HowItWorksSection from '@/components/home/HowItWorksSection';
+import UseCasesSection from '@/components/home/UseCasesSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
-import TestimonialsSection from '@/components/home/TestimonialsSection';
+import FinalCTASection from '@/components/home/FinalCTASection';
 import StickyForm from '@/components/home/StickyForm';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-white">
       <div className="flex">
-        {/* Left Side - Content Sections */}
-        <div className="w-1/2">
+        {/* Left Side - Content Sections (60%) */}
+        <div className="w-3/5">
           <HeroSection />
-          <SummarySection />
-          <TargetAudienceSection />
-          <BrandPromiseSection />
-          <BeforeAfterSection />
+          <ProblemSection />
+          <SolutionSection />
+          <HowItWorksSection />
+          <UseCasesSection />
           <FeaturesSection />
-          <TestimonialsSection />
+          <FinalCTASection />
         </div>
-        
-        {/* Right Side - Sticky Form */}
+
+        {/* Right Side - Sticky Form (40%) */}
         <StickyForm />
       </div>
     </div>
