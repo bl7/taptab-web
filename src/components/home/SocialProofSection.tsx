@@ -17,7 +17,7 @@ export default function SocialProofSection() {
             Built for Modern Restaurant Owners
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-12">
-            "Finally, restaurant technology that thinks like we do."
+            &ldquo;Finally, restaurant technology that thinks like we do.&rdquo;
           </p>
           
           <div className="bg-gray-50 rounded-2xl p-8 max-w-4xl mx-auto mb-8">

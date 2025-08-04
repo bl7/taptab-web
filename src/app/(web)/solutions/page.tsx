@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   Coffee, 
@@ -119,7 +120,7 @@ export default function SolutionsPage() {
             >
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center">
-                  <solutions[0].icon className="w-8 h-8 text-white" />
+                  {React.createElement(solutions[0].icon, { className: "w-8 h-8 text-white" })}
                 </div>
                 <div>
                   <h2 className="text-3xl font-semibold text-black">{solutions[0].title}</h2>
@@ -180,7 +181,7 @@ export default function SolutionsPage() {
             >
               <div className="text-center">
                 <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <solutions[0].icon className="w-10 h-10 text-white" />
+                  {React.createElement(solutions[0].icon, { className: "w-10 h-10 text-white" })}
                 </div>
                 <p className="text-black">Quick Service Demo</p>
               </div>
@@ -203,7 +204,7 @@ export default function SolutionsPage() {
               <div className="bg-gray-100 rounded-2xl p-8 h-96 flex items-center justify-center">
                 <div className="text-center">
                   <div className="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <solutions[1].icon className="w-10 h-10 text-white" />
+                    {React.createElement(solutions[1].icon, { className: "w-10 h-10 text-white" })}
                   </div>
                   <p className="text-black">Full Service Demo</p>
                 </div>
@@ -219,7 +220,7 @@ export default function SolutionsPage() {
             >
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center">
-                  <solutions[1].icon className="w-8 h-8 text-white" />
+                  {React.createElement(solutions[1].icon, { className: "w-8 h-8 text-white" })}
                 </div>
                 <div>
                   <h2 className="text-3xl font-semibold text-black">{solutions[1].title}</h2>

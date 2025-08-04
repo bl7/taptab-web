@@ -5,8 +5,9 @@ import { Clock, User, MapPin, DollarSign, Eye, CheckCircle, XCircle, AlertCircle
 import { useOrders } from '@/lib/use-orders';
 import { OrderStatus, Order } from '@/lib/orders-api';
 import { api } from '@/lib/api';
-import { Table } from '@/lib/api';
+import { Table, OrderModificationChange } from '@/lib/api';
 import { ReceiptGenerator } from '@/lib/receipt-generator';
+import EditOrderModal from '@/components/EditOrderModal'; // Added import for EditOrderModal
 
 export default function OrdersPage() {
   const { 
@@ -44,6 +45,10 @@ export default function OrdersPage() {
   const [orderToPrint, setOrderToPrint] = useState<Order | null>(null);
   const [printReceiptType, setPrintReceiptType] = useState<'kitchen' | 'customer' | null>(null);
   const [printingReceipt, setPrintingReceipt] = useState(false);
+
+  // Menu items for edit order modal
+  const [menuItems, setMenuItems] = useState<Array<{ id: string; name: string; price: number; category: string }>>([]);
+  const [menuCategories, setMenuCategories] = useState<Array<{ id: string; name: string }>>([]);
 
   // Load tables on component mount
   useEffect(() => {
@@ -249,14 +254,107 @@ export default function OrdersPage() {
     await handleCancelOrder(orderToAction.id, cancelReason.trim());
   };
 
-  const openEditOrderModal = (order: Order) => {
+  const openEditOrderModal = async (order: Order) => {
     setEditingOrder(order);
     setShowEditOrderModal(true);
+    
+    // Load menu items if not already loaded
+    if (menuItems.length === 0) {
+      try {
+        const [menuResponse, categoriesResponse] = await Promise.all([
+          api.getMenuItems(),
+          api.getMenuCategories()
+        ]);
+        setMenuItems(menuResponse.items);
+        setMenuCategories(categoriesResponse.categories);
+      } catch (error) {
+        console.error('Error loading menu data:', error);
+      }
+    }
   };
 
   const closeEditOrderModal = () => {
     setEditingOrder(null);
     setShowEditOrderModal(false);
+  };
+
+  const handleModifyOrder = async (
+    orderId: string,
+    changes: OrderModificationChange[]
+  ) => {
+    try {
+      // Use the new batch API method
+      const result = await api.modifyOrderBatch(orderId, changes);
+      
+      if (result.success) {
+        // Refresh orders to get updated data
+        await refreshOrders();
+        
+        // Update the editing order if it's the same order
+        if (editingOrder && editingOrder.id === orderId) {
+          // Refresh the editing order data
+          const updatedOrder = orders.find(order => order.id === orderId);
+          if (updatedOrder) {
+            setEditingOrder(updatedOrder);
+          }
+        }
+        
+        console.log('Order modified successfully with batch changes:', result);
+        
+        // Trigger receipt printing for modified orders using existing system
+        if (editingOrder) {
+          try {
+            // Convert Order to OrderData format for printing
+            const orderData = {
+              id: editingOrder.id,
+              orderNumber: editingOrder.orderNumber || editingOrder.id.slice(-8),
+              tableNumber: editingOrder.tableNumber,
+              totalAmount: editingOrder.totalAmount || 0,
+              finalAmount: editingOrder.finalAmount || editingOrder.totalAmount || 0,
+              status: editingOrder.status,
+              customerName: editingOrder.customerName || 'Walk-in Customer',
+              customerPhone: editingOrder.customerPhone || '',
+              orderSource: editingOrder.orderSource,
+              items: editingOrder.items.map(item => ({
+                id: item.id,
+                menuItemId: item.menuItemId,
+                menuItemName: item.menuItemName,
+                quantity: item.quantity,
+                price: item.price,
+                total: item.total || (item.price * item.quantity),
+                notes: item.notes
+              })),
+              createdAt: editingOrder.createdAt,
+              updatedAt: editingOrder.updatedAt
+            };
+
+            // Use the global printer instance
+            const { getGlobalPrinter } = await import('@/lib/use-receipt-printer');
+            const globalPrinter = getGlobalPrinter();
+            
+            if (globalPrinter) {
+              await globalPrinter.showOrderNotification(orderData);
+              console.log('🖨️ Updated receipt printed for modified order');
+            }
+            
+          } catch (printError) {
+            console.warn('⚠️ Failed to print updated receipt:', printError);
+          }
+        }
+        
+        // Note: The existing WebSocket system will handle any notifications
+        // if the backend sends order modification events. For now, we just
+        // log the success and let the existing notification system handle
+        // any real-time updates that come through WebSocket.
+        
+      } else {
+        throw new Error('Failed to modify order');
+      }
+      
+    } catch (error) {
+      console.error('Error modifying order:', error);
+      throw error;
+    }
   };
 
   const openPrintReceiptModal = (order: Order) => {
@@ -800,38 +898,11 @@ export default function OrdersPage() {
 
         {/* Edit Order Modal */}
         {showEditOrderModal && editingOrder && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div>
-                  <h2 className="text-xl font-bold text-black">Edit Order</h2>
-                  <p className="text-sm text-gray-600">
-                    Order: {editingOrder.orderNumber || editingOrder.id.slice(-8)} | Table: {editingOrder.tableNumber}
-                  </p>
-                </div>
-                <button
-                  onClick={closeEditOrderModal}
-                  className="p-2 text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              
-              <div className="p-6">
-                <p className="text-gray-600 mb-4">
-                  Edit order functionality will be implemented here. This will allow adding/removing items and modifying quantities.
-                </p>
-                <div className="flex space-x-3">
-                  <button
-                    onClick={closeEditOrderModal}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <EditOrderModal
+            order={editingOrder}
+            onClose={closeEditOrderModal}
+            onModifyOrder={handleModifyOrder}
+          />
         )}
 
         {/* Print Receipt Modal */}

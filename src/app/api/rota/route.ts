@@ -121,7 +121,13 @@ export async function POST(request: NextRequest) {
           `INSERT INTO rota_shifts (
             "tenantId", "staffId", "weekStartDate", "dayOfWeek", 
             "startTime", "endTime", "breakDuration", "shiftHours", "notes", "shiftLabel"
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          ON CONFLICT ("tenantId", "staffId", "weekStartDate", "dayOfWeek", "startTime", "endTime") 
+          DO UPDATE SET 
+            "breakDuration" = EXCLUDED."breakDuration",
+            "shiftHours" = EXCLUDED."shiftHours",
+            "notes" = EXCLUDED."notes",
+            "shiftLabel" = EXCLUDED."shiftLabel"`,
           [decoded.tenantId, staffId, weekStartDate, dayOfWeek, startTime, endTime, breakDuration, shiftHours, notes, shiftLabel]
         );
         

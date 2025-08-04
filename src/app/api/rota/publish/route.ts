@@ -93,6 +93,7 @@ export async function POST(request: NextRequest) {
         shiftHours: number;
         breakDuration: number;
         notes?: string;
+        shiftLabel?: string;
       }) => {
         if (!staffShifts.has(shift.staffId)) {
           staffShifts.set(shift.staffId, {
@@ -109,7 +110,8 @@ export async function POST(request: NextRequest) {
           endTime: shift.endTime,
           shiftHours: shift.shiftHours,
           breakDuration: shift.breakDuration,
-          notes: shift.notes
+          notes: shift.notes,
+          shiftLabel: shift.shiftLabel
         });
       });
 

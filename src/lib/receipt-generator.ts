@@ -1,4 +1,4 @@
-import { OrderData } from './receipt-printer';
+import { OrderData, OrderChanges } from './receipt-printer';
 
 interface ReceiptOptions {
   width?: number; // 56mm in pixels (approximately 264px at 120 DPI)
@@ -22,7 +22,7 @@ export class ReceiptGenerator {
     };
   }
 
-  async generateReceiptPNG(orderData: OrderData): Promise<string> {
+  async generateReceiptPNG(orderData: OrderData, changes?: OrderChanges): Promise<string> {
     return new Promise((resolve, reject) => {
       try {
         // Create canvas
@@ -38,7 +38,7 @@ export class ReceiptGenerator {
         canvas.width = this.options.width!;
         
         // Calculate content height
-        const contentHeight = this.calculateContentHeight(orderData);
+        const contentHeight = this.calculateContentHeight(orderData, changes);
         canvas.height = contentHeight;
 
         // Set background
@@ -53,10 +53,15 @@ export class ReceiptGenerator {
         let y = this.options.margin!;
 
         // Header
-        y = this.drawHeader(ctx, orderData, y);
+        y = this.drawHeader(ctx, orderData, y, changes);
         
         // Order details
         y = this.drawOrderDetails(ctx, orderData, y);
+        
+        // Changes section (for modified orders)
+        if (changes) {
+          y = this.drawChanges(ctx, changes, y);
+        }
         
         // Items
         y = this.drawItems(ctx, orderData, y);
@@ -73,7 +78,7 @@ export class ReceiptGenerator {
     });
   }
 
-  private calculateContentHeight(orderData: OrderData): number {
+  private calculateContentHeight(orderData: OrderData, changes?: OrderChanges): number {
     const lineHeight = this.options.fontSize! * this.options.lineHeight!;
     const margin = this.options.margin!;
     
@@ -84,6 +89,13 @@ export class ReceiptGenerator {
     
     // Order details (table, customer)
     height += lineHeight * 2;
+
+    // Changes section (if changes exist)
+    if (changes) {
+      height += lineHeight * 2; // Title and separator
+      const totalChanges = changes.addedItems.length + changes.removedItems.length + changes.modifiedItems.length;
+      height += totalChanges * lineHeight * 2; // Each change takes 2 lines
+    }
     
     // Items
     height += orderData.items.length * lineHeight * 2; // Each item takes 2 lines
@@ -100,23 +112,32 @@ export class ReceiptGenerator {
     return height;
   }
 
-  private drawHeader(ctx: CanvasRenderingContext2D, orderData: OrderData, y: number): number {
+  private drawHeader(ctx: CanvasRenderingContext2D, orderData: OrderData, y: number, changes?: OrderChanges): number {
     const lineHeight = this.options.fontSize! * this.options.lineHeight!;
     
-    // Restaurant name
-    ctx.font = `bold ${this.options.fontSize! + 2}px ${this.options.fontFamily}`;
-    ctx.fillText('TapTab Restaurant', this.options.margin!, y);
+    // Restaurant name (centered)
+    ctx.font = `bold ${this.options.fontSize! + 4}px ${this.options.fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.fillText('RESTAURANT NAME', this.options.width! / 2, y);
     y += lineHeight;
     
     // Date and time
-    ctx.font = `${this.options.fontSize!}px ${this.options.fontFamily}`;
-    const date = new Date(orderData.createdAt).toLocaleString();
-    ctx.fillText(date, this.options.margin!, y);
+    ctx.font = `${this.options.fontSize}px ${this.options.fontFamily}`;
+    ctx.textAlign = 'left';
+    const now = new Date();
+    ctx.fillText(`Date: ${now.toLocaleDateString()}`, this.options.margin!, y);
     y += lineHeight;
     
     // Order number
     ctx.fillText(`Order: ${orderData.orderNumber}`, this.options.margin!, y);
     y += lineHeight;
+
+    // Changes header (if changes exist)
+    if (changes) {
+      ctx.font = `bold ${this.options.fontSize! + 2}px ${this.options.fontFamily}`;
+      ctx.fillText('MODIFIED ORDER', this.options.margin!, y);
+      y += lineHeight;
+    }
     
     return y;
   }
@@ -134,6 +155,80 @@ export class ReceiptGenerator {
       y += lineHeight;
     }
     
+    return y;
+  }
+
+  private drawChanges(ctx: CanvasRenderingContext2D, changes: OrderChanges, y: number): number {
+    const lineHeight = this.options.fontSize! * this.options.lineHeight!;
+
+    // Separator line
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(this.options.margin!, y);
+    ctx.lineTo(this.options.width! - this.options.margin!, y);
+    ctx.stroke();
+    y += lineHeight;
+
+    // Changes header
+    ctx.font = `bold ${this.options.fontSize! + 2}px ${this.options.fontFamily}`;
+    ctx.fillText('Changes:', this.options.margin!, y);
+    y += lineHeight;
+
+    // Draw added items
+    if (changes.addedItems.length > 0) {
+      ctx.font = `bold ${this.options.fontSize!}px ${this.options.fontFamily}`;
+      ctx.fillText('Added:', this.options.margin!, y);
+      y += lineHeight;
+      
+      changes.addedItems.forEach(item => {
+        const itemText = `+ ${item.name} x${item.quantity}`;
+        ctx.font = `${this.options.fontSize!}px ${this.options.fontFamily}`;
+        ctx.fillText(itemText, this.options.margin! + 10, y);
+        y += lineHeight;
+        
+        const priceText = `$${item.price.toFixed(2)} each`;
+        ctx.fillText(priceText, this.options.margin! + 20, y);
+        y += lineHeight;
+      });
+    }
+
+    // Draw removed items
+    if (changes.removedItems.length > 0) {
+      ctx.font = `bold ${this.options.fontSize!}px ${this.options.fontFamily}`;
+      ctx.fillText('Removed:', this.options.margin!, y);
+      y += lineHeight;
+      
+      changes.removedItems.forEach(item => {
+        const itemText = `- ${item.name} x${item.quantity}`;
+        ctx.font = `${this.options.fontSize!}px ${this.options.fontFamily}`;
+        ctx.fillText(itemText, this.options.margin! + 10, y);
+        y += lineHeight;
+        
+        const priceText = `$${item.price.toFixed(2)} each`;
+        ctx.fillText(priceText, this.options.margin! + 20, y);
+        y += lineHeight;
+      });
+    }
+
+    // Draw modified items
+    if (changes.modifiedItems.length > 0) {
+      ctx.font = `bold ${this.options.fontSize!}px ${this.options.fontFamily}`;
+      ctx.fillText('Modified:', this.options.margin!, y);
+      y += lineHeight;
+      
+      changes.modifiedItems.forEach(item => {
+        const itemText = `* ${item.name} ${item.oldQuantity}→${item.newQuantity}`;
+        ctx.font = `${this.options.fontSize!}px ${this.options.fontFamily}`;
+        ctx.fillText(itemText, this.options.margin! + 10, y);
+        y += lineHeight;
+        
+        const priceText = `$${item.price.toFixed(2)} each`;
+        ctx.fillText(priceText, this.options.margin! + 20, y);
+        y += lineHeight;
+      });
+    }
+
     return y;
   }
 
@@ -203,7 +298,7 @@ export class ReceiptGenerator {
   }
 
   // Get receipt height for a specific order
-  getHeight(orderData: OrderData): number {
-    return this.calculateContentHeight(orderData);
+  getHeight(orderData: OrderData, changes?: OrderChanges): number {
+    return this.calculateContentHeight(orderData, changes);
   }
 } 

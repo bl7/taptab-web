@@ -129,6 +129,18 @@ export interface User {
   };
 }
 
+export interface OrderModificationChange {
+  action: 'add_item' | 'remove_item' | 'change_quantity';
+  itemId: string;
+  quantity?: number;
+  notes?: string;
+  reason?: string;
+}
+
+export interface OrderModificationBatchRequest {
+  changes: OrderModificationChange[];
+}
+
 class APIError extends Error {
   constructor(
     public status: number,
@@ -471,6 +483,33 @@ class APIClient {
       action: result.action || action,
       itemId: result.itemId || itemId,
       quantity: result.quantity || quantity
+    };
+  }
+
+  async modifyOrderBatch(
+    id: string,
+    changes: OrderModificationChange[]
+  ): Promise<{ success: boolean; changes: OrderModificationChange[] }> {
+    const response = await this.request<{ 
+      data?: { 
+        success: boolean; 
+        changes: OrderModificationChange[]; 
+      }; 
+      success?: boolean; 
+      changes?: OrderModificationChange[]; 
+    }>(`/orders/${id}/modify/batch`, {
+      method: 'PUT',
+      body: JSON.stringify({ changes }),
+    });
+
+    const result = response.data || response;
+    if (result.success === undefined) {
+      throw new Error('API response does not contain success data');
+    }
+
+    return {
+      success: result.success,
+      changes: result.changes || changes,
     };
   }
 

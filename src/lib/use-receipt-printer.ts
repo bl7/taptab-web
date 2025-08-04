@@ -5,6 +5,11 @@ import { ReceiptPrinter, OrderNotification } from './receipt-printer';
 let globalPrinter: ReceiptPrinter | null = null;
 let globalConnectionCount = 0;
 
+// Function to get the global printer instance
+export function getGlobalPrinter(): ReceiptPrinter | null {
+  return globalPrinter;
+}
+
 export function useReceiptPrinter() {
   const printerRef = useRef<ReceiptPrinter | null>(null);
   const [isConnected, setIsConnected] = useState(false);

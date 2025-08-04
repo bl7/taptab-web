@@ -163,6 +163,7 @@ export async function sendRotaEmail(
     shiftHours: number;
     breakDuration: number;
     notes?: string;
+    shiftLabel?: string;
   }>
 ) {
   try {
@@ -186,21 +187,42 @@ export async function sendRotaEmail(
       });
     };
 
-    const totalHours = shifts.reduce((sum, shift) => sum + shift.shiftHours, 0);
+    const totalHours = shifts.reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
 
-    const shiftsHtml = shifts.map(shift => `
-      <div style="background: white; padding: 15px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #667eea;">
-        <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">${shift.day}</h3>
-        <p style="color: #666; margin: 5px 0;">
-          <strong>Time:</strong> ${formatTime(shift.startTime)} - ${formatTime(shift.endTime)}
-        </p>
-        <p style="color: #666; margin: 5px 0;">
-          <strong>Hours:</strong> ${shift.shiftHours} hours
-        </p>
-        ${shift.breakDuration > 0 ? `<p style="color: #666; margin: 5px 0;"><strong>Break:</strong> ${shift.breakDuration} minutes</p>` : ''}
-        ${shift.notes ? `<p style="color: #666; margin: 5px 0;"><strong>Notes:</strong> ${shift.notes}</p>` : ''}
-      </div>
-    `).join('');
+    // Group shifts by day to handle multiple shifts per day
+    const shiftsByDay = new Map();
+    shifts.forEach(shift => {
+      if (!shiftsByDay.has(shift.day)) {
+        shiftsByDay.set(shift.day, []);
+      }
+      shiftsByDay.get(shift.day).push(shift);
+    });
+
+    const shiftsHtml = Array.from(shiftsByDay.entries()).map(([day, dayShifts]) => {
+      const dayShiftsHtml = dayShifts.map((shift, index) => `
+        <div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #667eea;">
+          ${dayShifts.length > 1 ? `<div style="font-size: 12px; color: #667eea; margin-bottom: 5px; font-weight: bold;">Shift ${index + 1}${shift.shiftLabel ? ` - ${shift.shiftLabel}` : ''}</div>` : ''}
+          <p style="color: #666; margin: 5px 0;">
+            <strong>Time:</strong> ${formatTime(shift.startTime)} - ${formatTime(shift.endTime)}
+          </p>
+          <p style="color: #666; margin: 5px 0;">
+            <strong>Hours:</strong> ${Number(shift.shiftHours)} hours
+          </p>
+          ${shift.breakDuration > 0 ? `<p style="color: #666; margin: 5px 0;"><strong>Break:</strong> ${shift.breakDuration} minutes</p>` : ''}
+          ${shift.notes ? `<p style="color: #666; margin: 5px 0;"><strong>Notes:</strong> ${shift.notes}</p>` : ''}
+        </div>
+      `).join('');
+
+      const dayTotalHours = dayShifts.reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
+      
+      return `
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
+          <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">${day}</h3>
+          ${dayShifts.length > 1 ? `<p style="color: #667eea; margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">Day Total: ${dayTotalHours} hours</p>` : ''}
+          ${dayShiftsHtml}
+        </div>
+      `;
+    }).join('');
 
     const mailOptions = {
       from: process.env.SMTP_EMAIL,
@@ -228,7 +250,7 @@ export async function sendRotaEmail(
                 <strong>Total Hours:</strong> ${totalHours} hours
               </p>
               <p style="color: #666; margin-bottom: 10px;">
-                <strong>Shifts:</strong> ${shifts.length} shifts
+                <strong>Shifts:</strong> ${shifts.length} shifts across ${shiftsByDay.size} days
               </p>
             </div>
             <div style="margin: 20px 0;">

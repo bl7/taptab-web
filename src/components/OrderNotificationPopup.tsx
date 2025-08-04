@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { OrderNotification } from '@/lib/receipt-printer';
-import { X, Bell, Clock, User, Phone, MapPin } from 'lucide-react';
+import { X, Bell, Clock, User, Phone, MapPin, Plus, Minus, Edit } from 'lucide-react';
 
 interface OrderNotificationPopupProps {
   notification: OrderNotification;
@@ -15,6 +15,9 @@ export function OrderNotificationPopup({
 }: OrderNotificationPopupProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [timeAgo, setTimeAgo] = useState('');
+
+  // Check if this is a modified order
+  const isModifiedOrder = notification.changes !== undefined;
 
   useEffect(() => {
     // Show popup with animation
@@ -58,23 +61,18 @@ export function OrderNotificationPopup({
     setTimeout(onClose, 300);
   };
 
-  // Helper function to format items (unused but kept for future use)
-  // const formatItems = (items: OrderData['items']) => {
-  //   return items.map(item => 
-  //     `${item.menuItemName} x${item.quantity}`
-  //   ).join(', ');
-  // };
-
   return (
     <div className={`fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 transition-all duration-300 ${
       isVisible ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
     }`}>
       <div className="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden max-h-[80vh]">
         {/* Header */}
-        <div className="bg-green-500 text-white px-4 py-3 flex items-center justify-between">
+        <div className={`${isModifiedOrder ? 'bg-blue-500' : 'bg-green-500'} text-white px-4 py-3 flex items-center justify-between`}>
           <div className="flex items-center space-x-2">
             <Bell className="h-5 w-5" />
-            <span className="font-semibold">New Order Received!</span>
+            <span className="font-semibold">
+              {isModifiedOrder ? 'Order Modified!' : 'New Order Received!'}
+            </span>
           </div>
           <button
             onClick={handleMarkAsRead}
@@ -121,9 +119,69 @@ export function OrderNotificationPopup({
             </div>
           </div>
 
+          {/* Changes Section (for modified orders) */}
+          {isModifiedOrder && notification.changes && (
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <h4 className="font-semibold text-blue-800 mb-2 flex items-center">
+                <Edit className="h-4 w-4 mr-1" />
+                Changes Made:
+              </h4>
+              
+              {notification.changes.addedItems && notification.changes.addedItems.length > 0 && (
+                <div className="mb-2">
+                  <div className="flex items-center text-sm font-medium text-green-700 mb-1">
+                    <Plus className="h-3 w-3 mr-1" />
+                    Added:
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    {notification.changes.addedItems.map((item, index) => (
+                      <div key={index} className="text-sm text-gray-700">
+                        {item.name} x{item.quantity} - ${item.price.toFixed(2)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {notification.changes.removedItems && notification.changes.removedItems.length > 0 && (
+                <div className="mb-2">
+                  <div className="flex items-center text-sm font-medium text-red-700 mb-1">
+                    <Minus className="h-3 w-3 mr-1" />
+                    Removed:
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    {notification.changes.removedItems.map((item, index) => (
+                      <div key={index} className="text-sm text-gray-700">
+                        {item.name} x{item.quantity} - ${item.price.toFixed(2)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {notification.changes.modifiedItems && notification.changes.modifiedItems.length > 0 && (
+                <div className="mb-2">
+                  <div className="flex items-center text-sm font-medium text-orange-700 mb-1">
+                    <Edit className="h-3 w-3 mr-1" />
+                    Modified:
+                  </div>
+                  <div className="ml-4 space-y-1">
+                    {notification.changes.modifiedItems.map((item, index) => (
+                      <div key={index} className="text-sm text-gray-700">
+                        {item.name} {item.oldQuantity}→{item.newQuantity} - ${item.price.toFixed(2)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Items */}
           <div className="mb-4">
-            <h4 className="font-semibold text-black mb-2">Items:</h4>
+            <h4 className="font-semibold text-black mb-2">
+              {isModifiedOrder ? 'Complete Order:' : 'Items:'}
+            </h4>
             <div className="space-y-1 max-h-32 overflow-y-auto">
               {notification.order.items.map((item, index) => (
                 <div key={index} className="flex justify-between text-sm">
@@ -163,7 +221,7 @@ export function OrderNotificationPopup({
           <div className="mt-4 flex space-x-2">
             <button
               onClick={handleMarkAsRead}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors"
+              className={`flex-1 ${isModifiedOrder ? 'bg-blue-500 hover:bg-blue-600' : 'bg-green-500 hover:bg-green-600'} text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors`}
             >
               Mark as Read
             </button>

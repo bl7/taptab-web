@@ -3,19 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, Plus, Minus, Trash2, Search, Filter } from 'lucide-react';
-import { Order, MenuItem, MenuCategory } from '@/lib/api';
+import { Order, MenuItem, MenuCategory, OrderModificationChange } from '@/lib/api';
 import { api } from '@/lib/api';
 
 interface EditOrderModalProps {
   order: Order;
   onClose: () => void;
-  onModifyOrder: (
-    orderId: string,
-    action: 'add_item' | 'remove_item' | 'change_quantity',
-    itemId: string,
-    quantity: number,
-    notes?: string
-  ) => Promise<void>;
+  onModifyOrder: (orderId: string, changes: OrderModificationChange[]) => Promise<void>;
 }
 
 interface CartItem {
@@ -133,12 +127,19 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
   const handleSaveChanges = async () => {
     setModifying(true);
     try {
+      const changes: OrderModificationChange[] = [];
+
       // Remove items that are no longer in cart
       const currentItemIds = cart.map(item => item.menuItem.id);
       const removedItems = order.items.filter(item => !currentItemIds.includes(item.menuItemId));
       
       for (const item of removedItems) {
-        await onModifyOrder(order.id, 'remove_item', item.menuItemId, 0);
+        changes.push({
+          action: 'remove_item',
+          itemId: item.menuItemId,
+          quantity: 0,
+          notes: ''
+        });
       }
 
       // Update quantities and notes for existing items
@@ -146,14 +147,25 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
         const existingItem = order.items.find(item => item.menuItemId === cartItem.menuItem.id);
         if (existingItem) {
           if (existingItem.quantity !== cartItem.quantity || existingItem.notes !== cartItem.notes) {
-            await onModifyOrder(order.id, 'change_quantity', cartItem.menuItem.id, cartItem.quantity, cartItem.notes);
+            changes.push({
+              action: 'change_quantity',
+              itemId: cartItem.menuItem.id,
+              quantity: cartItem.quantity,
+              notes: cartItem.notes
+            });
           }
         } else {
           // Add new items
-          await onModifyOrder(order.id, 'add_item', cartItem.menuItem.id, cartItem.quantity, cartItem.notes);
+          changes.push({
+            action: 'add_item',
+            itemId: cartItem.menuItem.id,
+            quantity: cartItem.quantity,
+            notes: cartItem.notes
+          });
         }
       }
 
+      await onModifyOrder(order.id, changes);
       onClose();
     } catch (error) {
       console.error('Error saving changes:', error);
@@ -185,8 +197,8 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+    <div className="fixed inset-0 bg-black text-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-7xl h-[95vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div>
@@ -203,7 +215,7 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
           </button>
         </div>
 
-        <div className="flex h-[calc(90vh-120px)]">
+        <div className="flex h-[calc(95vh-120px)]">
           {/* Left Side - Menu Items */}
           <div className="flex-1 flex flex-col border-r border-gray-200">
             {/* Search and Filters */}
@@ -225,10 +237,10 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
               </div>
 
               {/* Category Filters */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 overflow-x-auto pb-2">
                 <button
                   onClick={() => setSelectedCategory('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                     selectedCategory === 'all'
                       ? 'bg-black text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -240,7 +252,7 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                       selectedCategory === category.id
                         ? 'bg-black text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -254,7 +266,7 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
 
             {/* Menu Items Grid */}
             <div className="flex-1 p-4 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {searchFilteredItems.map(item => (
                   <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
                     <div className="relative">
@@ -302,8 +314,8 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
           </div>
 
           {/* Right Side - Cart */}
-          <div className="w-80 bg-gray-50 flex flex-col">
-            <div className="p-6">
+          <div className="w-96 bg-gray-50 flex flex-col">
+            <div className="p-6 flex flex-col h-full">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-black">Order Items</h2>
               </div>

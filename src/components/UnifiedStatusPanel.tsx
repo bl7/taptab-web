@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useReceiptPrinter } from '@/lib/use-receipt-printer';
 import { usePrintBridgeContext } from '@/contexts/PrintBridgeContext';
 import { shouldReceivePrintNotifications, getPrintPermissionDescription } from '@/lib/print-permissions';
@@ -19,9 +19,11 @@ export function UnifiedStatusPanel({ jwtToken, userRole }: UnifiedStatusPanelPro
     disconnect, 
     testNotification, 
     markAsRead, 
+    clearNotifications,
     notifications, 
     isConnected: wsConnected, 
-    connectionStatus: wsStatus 
+    connectionStatus: wsStatus,
+    printer 
   } = useReceiptPrinter();
 
   const { 
@@ -77,6 +79,19 @@ export function UnifiedStatusPanel({ jwtToken, userRole }: UnifiedStatusPanelPro
   const getPbStatusIcon = () => {
     return pbConnected ? '🖨️' : '❌';
   };
+
+  const markAllAsRead = useCallback(() => {
+    notifications.forEach(notification => {
+      markAsRead(notification.id);
+    });
+  }, [markAsRead, notifications]);
+
+  const clearAllNotifications = useCallback(() => {
+    // Use the clearNotifications method from the receipt printer
+    if (printer) {
+      printer.clearNotifications();
+    }
+  }, [printer]);
 
   if (!shouldReceivePrints) {
     return (
@@ -202,6 +217,8 @@ export function UnifiedStatusPanel({ jwtToken, userRole }: UnifiedStatusPanelPro
         <NotificationManager
           notifications={notifications}
           onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onClearAll={clearAllNotifications}
         />
       )}
     </>

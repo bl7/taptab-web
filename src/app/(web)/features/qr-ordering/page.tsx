@@ -221,7 +221,7 @@ export default function QROrderingFeaturePage() {
                 <span className="text-2xl font-bold text-white">3</span>
               </div>
               <h3 className="text-xl font-semibold text-black mb-3">Real-Time Order Tracking</h3>
-              <p className="text-black leading-relaxed">Guests see exactly when their food is being prepared and when it's ready.</p>
+              <p className="text-black leading-relaxed">Guests see exactly when their food is being prepared and when it&apos;s ready.</p>
             </motion.div>
 
             <motion.div
