@@ -1,45 +1,33 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Zap, Shield, Users, QrCode, Tablet, BarChart3 } from 'lucide-react';
+import { QrCode, Calendar, Printer, Truck } from 'lucide-react';
 
 export default function FeaturesSection() {
   const features = [
     {
       icon: QrCode,
-      title: "QR Ordering",
-      description: "Guests scan and order instantly - no app download required",
-      category: "Speed"
+      title: "QR Ordering That Just Works",
+      description: "Guests scan, order, pay. Kitchen gets tickets instantly. No apps to download.",
+      category: "Ordering"
     },
     {
-      icon: Tablet,
-      title: "Tablet POS",
-      description: "Intuitive interface that staff love to use",
-      category: "Ease"
+      icon: Calendar,
+      title: "Smart Staff Scheduling",
+      description: "Your rota system knows your busy periods. Schedule based on real data, not guesswork.",
+      category: "Management"
     },
     {
-      icon: Zap,
-      title: "Lightning Fast",
-      description: "Orders processed in seconds, not minutes",
-      category: "Speed"
+      icon: Printer,
+      title: "Seamless Kitchen Integration",
+      description: "Orders print exactly where they need to go. No lost tickets, no confusion.",
+      category: "Operations"
     },
     {
-      icon: Shield,
-      title: "Offline Mode",
-      description: "Never lose sales, even when internet is down",
-      category: "Reliability"
-    },
-    {
-      icon: Users,
-      title: "Staff Friendly",
-      description: "Anyone can learn it in minutes, not days",
-      category: "Ease"
-    },
-    {
-      icon: BarChart3,
-      title: "Real-time Analytics",
-      description: "Track performance and grow your business",
-      category: "Control"
+      icon: Truck,
+      title: "Delivery Apps Connected",
+      description: "Uber Eats and Deliveroo orders flow through the same system as dine-in orders.",
+      category: "Integration"
     }
   ];
 
@@ -54,14 +42,11 @@ export default function FeaturesSection() {
           viewport={{ once: true }}
         >
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Everything you need to succeed
+            Built for How Modern Restaurants Actually Work
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-            Six powerful features that transform how you run your restaurant
-          </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {features.map((feature, index) => (
             <motion.div
               key={feature.title}

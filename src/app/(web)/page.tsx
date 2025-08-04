@@ -6,6 +6,7 @@ import SolutionSection from '@/components/home/SolutionSection';
 import HowItWorksSection from '@/components/home/HowItWorksSection';
 import UseCasesSection from '@/components/home/UseCasesSection';
 import FeaturesSection from '@/components/home/FeaturesSection';
+import SocialProofSection from '@/components/home/SocialProofSection';
 import FinalCTASection from '@/components/home/FinalCTASection';
 import StickyForm from '@/components/home/StickyForm';
 
@@ -21,6 +22,7 @@ export default function HomePage() {
           <HowItWorksSection />
           <UseCasesSection />
           <FeaturesSection />
+          <SocialProofSection />
           <FinalCTASection />
         </div>
 
