@@ -83,7 +83,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
               <Image 
-                src="/logo.png" 
+                src="/icon.png" 
                 alt="TapTab POS Logo" 
                 width={120} 
                 height={40}
