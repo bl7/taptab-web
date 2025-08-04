@@ -32,6 +32,7 @@ interface RotaGridProps {
   onEditShift: (shift: Shift) => void;
   onDeleteShift: (shiftId: string) => void;
   getDailyHours: (dayOfWeek: number) => number;
+  readOnly?: boolean;
 }
 
 export default function RotaGrid({
@@ -41,7 +42,8 @@ export default function RotaGrid({
   onAddShift,
   onEditShift,
   onDeleteShift,
-  getDailyHours
+  getDailyHours,
+  readOnly = false
 }: RotaGridProps) {
   const [draggedShift, setDraggedShift] = useState<Shift | null>(null);
   const [dragOverCell, setDragOverCell] = useState<{ staffId: string; dayOfWeek: number } | null>(null);
@@ -164,35 +166,39 @@ export default function RotaGrid({
                     <td
                       key={dayIndex}
                       className={`px-3 py-3 border-r border-gray-200 min-h-[100px] relative ${
-                        isDragOver ? 'bg-gray-100 border-gray-300' : ''
+                        isDragOver && !readOnly ? 'bg-gray-100 border-gray-300' : ''
                       }`}
-                      onDragOver={(e) => handleDragOver(e, member.id, dayIndex)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, member.id, dayIndex)}
+                      onDragOver={!readOnly ? (e) => handleDragOver(e, member.id, dayIndex) : undefined}
+                      onDragLeave={!readOnly ? handleDragLeave : undefined}
+                      onDrop={!readOnly ? (e) => handleDrop(e, member.id, dayIndex) : undefined}
                     >
                       {cellShifts.length > 0 ? (
                         cellShifts.map((shift) => (
                           <div
                             key={shift.id}
-                            className="mb-2 p-3 bg-black text-white rounded-lg cursor-move shadow-sm"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, shift)}
+                            className={`mb-2 p-2 bg-black text-white rounded-lg shadow-sm ${
+                              !readOnly ? 'cursor-move' : 'cursor-default'
+                            }`}
+                            draggable={!readOnly}
+                            onDragStart={!readOnly ? (e) => handleDragStart(e, shift) : undefined}
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex-1">
-                                <div className="text-xs font-semibold text-white">
-                                  {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
-                                </div>
-                                <div className="text-xs text-gray-200">
-                                  {shift.shiftHours} hrs
-                                </div>
-                                {shift.notes && (
-                                  <div className="text-xs text-gray-300 truncate">
-                                    {shift.notes}
-                                  </div>
-                                )}
+                            {/* Top row - Time and Hours */}
+                            <div className="mb-2">
+                              <div className="text-xs font-semibold text-white">
+                                {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
                               </div>
-                              <div className="flex space-x-1">
+                              <div className="text-xs text-gray-200">
+                                {shift.shiftHours} hrs
+                              </div>
+                              {shift.notes && (
+                                <div className="text-xs text-gray-300 truncate">
+                                  {shift.notes}
+                                </div>
+                              )}
+                            </div>
+                            {/* Bottom row - Action buttons */}
+                            {!readOnly && (
+                              <div className="flex justify-end space-x-1">
                                 <button
                                   onClick={() => onEditShift(shift)}
                                   className="p-1 text-white hover:text-gray-300"
@@ -206,16 +212,18 @@ export default function RotaGrid({
                                   <Trash2 className="w-3 h-3" />
                                 </button>
                               </div>
-                            </div>
+                            )}
                           </div>
                         ))
                       ) : (
-                        <button
-                          onClick={() => onAddShift(member.id, dayIndex)}
-                          className="w-full h-20 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
-                        >
-                          <Plus className="w-6 h-6" />
-                        </button>
+                        !readOnly && (
+                          <button
+                            onClick={() => onAddShift(member.id, dayIndex)}
+                            className="w-full h-20 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
+                          >
+                            <Plus className="w-6 h-6" />
+                          </button>
+                        )
                       )}
                     </td>
                   );

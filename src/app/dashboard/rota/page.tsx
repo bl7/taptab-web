@@ -9,7 +9,8 @@ import {
   Save, 
   Send,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 import RotaGrid from '@/components/rota/RotaGrid';
 import StaffPanel from '@/components/rota/StaffPanel';
@@ -44,16 +45,26 @@ interface RotaWeek {
   publishedAt?: string;
 }
 
+interface SavedRota {
+  weekStartDate: string;
+  status: string;
+  totalHours: number;
+  publishedAt?: string;
+  createdAt: string;
+}
+
 export default function RotaPage() {
   const [currentWeek, setCurrentWeek] = useState(startOfWeek(new Date(), { weekStartsOn: 1 }));
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [rotaWeek, setRotaWeek] = useState<RotaWeek | null>(null);
+  const [savedRotas, setSavedRotas] = useState<SavedRota[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [showShiftModal, setShowShiftModal] = useState(false);
   const [selectedShift, setSelectedShift] = useState<Shift | null>(null);
+  const [showRotaDropdown, setShowRotaDropdown] = useState(false);
   const [currentUser, setCurrentUser] = useState<{
     id: string;
     email: string;
@@ -78,8 +89,8 @@ export default function RotaPage() {
       const user = JSON.parse(userData);
       setCurrentUser(user);
       
-      // Only TENANT_ADMIN and SUPER_ADMIN can access rota management
-      if (user.role !== 'TENANT_ADMIN' && user.role !== 'SUPER_ADMIN') {
+      // Only TENANT_ADMIN can access rota management
+      if (user.role !== 'TENANT_ADMIN') {
         router.push('/dashboard');
         return;
       }
@@ -124,11 +135,41 @@ export default function RotaPage() {
     }
   }, [currentWeek, router]);
 
+  const fetchSavedRotas = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const response = await fetch('/api/rota/list', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSavedRotas(data.rotas);
+      } else if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.push('/login');
+      } else {
+        console.error('Failed to fetch saved rotas');
+      }
+    } catch (error) {
+      console.error('Error fetching saved rotas:', error);
+    }
+  }, [router]);
+
   useEffect(() => {
     if (currentUser) {
       fetchRota();
+      fetchSavedRotas();
     }
-  }, [currentUser, fetchRota]);
+  }, [currentUser, fetchRota, fetchSavedRotas]);
 
   const handleSaveRota = async () => {
     try {
@@ -245,6 +286,36 @@ export default function RotaPage() {
     setCurrentWeek(prev => addDays(prev, 7));
   };
 
+  const handleSelectRota = (weekStartDate: string) => {
+    setCurrentWeek(new Date(weekStartDate));
+    setShowRotaDropdown(false);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.rota-dropdown')) {
+        setShowRotaDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const isPastWeek = () => {
+    const today = new Date();
+    const weekEnd = addDays(currentWeek, 6);
+    return weekEnd < today;
+  };
+
+  const canEditRota = () => {
+    return !isPastWeek();
+  };
+
   const getTotalHours = () => {
     return shifts.reduce((sum, shift) => sum + shift.shiftHours, 0);
   };
@@ -276,7 +347,7 @@ export default function RotaPage() {
             <div className="flex items-center space-x-4">
               <button
                 onClick={handleSaveRota}
-                disabled={saving}
+                disabled={saving || !canEditRota()}
                 className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
                 <Save className="w-4 h-4 mr-2" />
@@ -284,7 +355,7 @@ export default function RotaPage() {
               </button>
               <button
                 onClick={handlePublishRota}
-                disabled={publishing || rotaWeek?.status === 'published'}
+                disabled={publishing || rotaWeek?.status === 'published' || !canEditRota()}
                 className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
               >
                 <Send className="w-4 h-4 mr-2" />
@@ -304,14 +375,48 @@ export default function RotaPage() {
               <ChevronLeft className="w-5 h-5 mr-2" />
               Previous Week
             </button>
-            <div className="text-center">
-              <h2 className="text-2xl font-bold text-black">
-                Week of {format(currentWeek, 'MMMM d, yyyy')}
-              </h2>
-              <p className="text-gray-600">
+            
+            {/* Rota Dropdown */}
+            <div className="relative rota-dropdown">
+              <button
+                onClick={() => setShowRotaDropdown(!showRotaDropdown)}
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-black font-semibold">
+                  Week of {format(currentWeek, 'MMMM d, yyyy')}
+                </span>
+                <ChevronDown className="w-4 h-4 text-black" />
+              </button>
+              
+              {showRotaDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-60 overflow-y-auto">
+                  {savedRotas.map((rota) => (
+                    <button
+                      key={rota.weekStartDate}
+                      onClick={() => handleSelectRota(rota.weekStartDate)}
+                      className="w-full px-4 py-3 text-left hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+                    >
+                      <div className="font-semibold text-black">
+                        Week of {format(new Date(rota.weekStartDate), 'MMMM d, yyyy')}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {rota.status} • {rota.totalHours} hrs
+                      </div>
+                    </button>
+                  ))}
+                  {savedRotas.length === 0 && (
+                    <div className="px-4 py-3 text-gray-500">
+                      No saved rotas found
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              <p className="text-gray-600 text-sm mt-1">
                 {format(currentWeek, 'MMM d')} - {format(addDays(currentWeek, 6), 'MMM d, yyyy')}
               </p>
             </div>
+            
             <button
               onClick={handleNextWeek}
               className="flex items-center text-black hover:text-gray-600 transition-colors"
@@ -371,14 +476,22 @@ export default function RotaPage() {
 
           {/* Rota Grid */}
           <div className="lg:col-span-3">
+            {!canEditRota() && (
+              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-yellow-800 text-sm">
+                  This week has already ended and cannot be edited. You can view the schedule but cannot make changes.
+                </p>
+              </div>
+            )}
             <RotaGrid
               staff={staff}
               shifts={shifts}
               currentWeek={currentWeek}
-              onAddShift={handleAddShift}
-              onEditShift={handleEditShift}
-              onDeleteShift={handleDeleteShift}
+              onAddShift={canEditRota() ? handleAddShift : () => {}}
+              onEditShift={canEditRota() ? handleEditShift : () => {}}
+              onDeleteShift={canEditRota() ? handleDeleteShift : () => {}}
               getDailyHours={getDailyHours}
+              readOnly={!canEditRota()}
             />
           </div>
         </div>
