@@ -92,7 +92,16 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form 
+            onSubmit={handleSubmit} 
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(e);
+              }
+            }}
+            className="space-y-6"
+          >
             {/* Restaurant Details */}
             <div className="bg-gray-50 p-6 rounded-lg">
               <h3 className="text-xl font-semibold text-black mb-4">Restaurant Information</h3>

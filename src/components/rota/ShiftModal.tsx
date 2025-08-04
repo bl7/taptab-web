@@ -78,6 +78,7 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Form submitted!', formData);
     
     if (validateForm()) {
       onSave(formData);
@@ -136,7 +137,16 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-4">
+        <form 
+          onSubmit={handleSubmit} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
+          className="px-6 py-4"
+        >
           {/* Staff Selection */}
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">

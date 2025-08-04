@@ -506,7 +506,16 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-xl  text-black font-semibold mb-4">Add New Staff Member</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          onSubmit={handleSubmit} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium text-black mb-1">
               Email
@@ -604,7 +613,16 @@ function EditUserModal({ user, onClose, onSubmit, loading, isCurrentUser }: { us
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-xl font-semibold mb-4">Edit Staff Member</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form 
+          onSubmit={handleSubmit} 
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSubmit(e);
+            }
+          }}
+          className="space-y-4"
+        >
           <div>
             <label className="block text-sm font-medium text-black mb-1">
               Email
