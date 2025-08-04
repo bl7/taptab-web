@@ -287,7 +287,7 @@ export default function QROrderPage() {
   // Order confirmation state
   if (orderStatus) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen text-black bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
           <div className="text-center mb-6">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
@@ -298,20 +298,20 @@ export default function QROrderPage() {
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-black">Order ID:</span>
-              <span className="font-mono text-sm">{orderStatus.orderId}</span>
+              <span className="font-mono text-sm text-black">{orderStatus.orderId}</span>
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-black">Table:</span>
-              <span className="font-medium">{tableNumber}</span>
+              <span className="font-medium text-black">{tableNumber}</span>
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-black">Total:</span>
-              <span className="font-bold">${orderStatus.total.toFixed(2)}</span>
+              <span className="font-bold text-black">${orderStatus.total.toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-black">Status:</span>
-              <span className="flex items-center text-sm">
-                <Clock className="h-4 w-4 mr-1" />
+              <span className="flex items-center text-sm text-black">
+                <Clock className="h-4 w-4 mr-1 text-black" />
                 {orderStatus.status}
               </span>
             </div>
@@ -321,8 +321,8 @@ export default function QROrderPage() {
             <h3 className="font-semibold text-black">Order Items:</h3>
             {orderStatus.items.map((item, index) => (
               <div key={index} className="flex justify-between text-sm">
-                <span>{item.menuItem.name} x{item.quantity}</span>
-                <span>${(item.menuItem.price * item.quantity).toFixed(2)}</span>
+                <span className="text-black">{item.menuItem.name} x{item.quantity}</span>
+                <span className="text-black">${(item.menuItem.price * item.quantity).toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -465,8 +465,8 @@ export default function QROrderPage() {
             {cart.length === 0 ? (
               <div className="text-center py-8">
                 <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500 text-sm">Your cart is empty</p>
-                <p className="text-gray-400 text-xs">Add items to get started</p>
+                <p className="text-black text-sm">Your cart is empty</p>
+                <p className="text-black text-xs">Add items to get started</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -483,16 +483,16 @@ export default function QROrderPage() {
                         />
                       ) : (
                         <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <span className="text-gray-400 text-xs">No</span>
+                          <span className="text-black text-xs">No</span>
                         </div>
                       )}
                       
                       <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-gray-900 text-sm truncate">
+                        <h4 className="font-medium text-black text-sm truncate">
                           {item.menuItem.name}
                         </h4>
-                        <p className="text-gray-500 text-xs">Small Size</p>
-                        <p className="text-green-600 font-semibold text-sm">
+                        <p className="text-black text-xs">Small Size</p>
+                        <p className="text-black font-semibold text-sm">
                           ${item.menuItem.price.toFixed(2)}
                         </p>
                       </div>
@@ -502,20 +502,20 @@ export default function QROrderPage() {
                           onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
                           className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-3 h-3 text-black" />
                         </button>
-                        <span className="text-sm font-medium w-6 text-center">
+                        <span className="text-sm font-medium w-6 text-center text-black">
                           {item.quantity.toString().padStart(2, '0')}
                         </span>
                         <button
                           onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
                           className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
                         >
-                          <Plus className="w-3 h-3" />
+                          <Plus className="w-3 h-3 text-black" />
                         </button>
                         <button
                           onClick={() => removeFromCart(item.menuItem.id)}
-                          className="p-1 text-gray-400 hover:text-red-500"
+                          className="p-1 text-black hover:text-red-500"
                         >
                           {/* Removed Trash2 icon */}
                         </button>
@@ -528,7 +528,7 @@ export default function QROrderPage() {
                         placeholder="Add special instructions..."
                         value={item.notes}
                         onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent resize-none"
+                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent resize-none text-black"
                         rows={2}
                       />
                     </div>
@@ -543,12 +543,12 @@ export default function QROrderPage() {
             <div className="mt-6 space-y-3">
               <div className="bg-white rounded-lg p-4 shadow-sm">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Items:</span>
-                  <span className="font-semibold">${getCartTotal().toFixed(2)}</span>
+                  <span className="text-black">Items:</span>
+                  <span className="font-semibold text-black">${getCartTotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                  <span className="font-bold text-gray-900">Total Amount:</span>
-                  <span className="font-bold text-green-600">${getCartTotal().toFixed(2)}</span>
+                  <span className="font-bold text-black">Total Amount:</span>
+                  <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
                 </div>
               </div>
 
