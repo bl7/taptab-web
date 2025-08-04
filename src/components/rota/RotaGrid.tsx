@@ -94,7 +94,7 @@ export default function RotaGrid({
   const getStaffTotalHours = (staffId: string) => {
     return shifts
       .filter(shift => shift.staffId === staffId)
-      .reduce((sum, shift) => sum + shift.shiftHours, 0);
+      .reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
   };
 
   const getStaffInitials = (firstName: string, lastName: string) => {
@@ -122,14 +122,14 @@ export default function RotaGrid({
           {/* Header Row */}
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-4 text-left text-sm font-semibold text-black border-r border-gray-200 min-w-[200px]">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-black border-r border-gray-200 min-w-[180px]">
                 STAFF
               </th>
               {dayAbbreviations.map((day, index) => (
-                <th key={day} className="px-4 py-4 text-center text-sm font-semibold text-black border-r border-gray-200 min-w-[120px]">
+                <th key={day} className="px-3 py-3 text-center text-xs font-semibold text-black border-r border-gray-200 min-w-[100px]">
                   <div>
                     <div className="font-bold">{day}</div>
-                    <div className="text-xs text-gray-600">
+                    <div className="text-xs text-gray-500">
                       {format(addDays(currentWeek, index), 'dd')}
                     </div>
                   </div>
@@ -141,16 +141,16 @@ export default function RotaGrid({
             {staff.map((member, staffIndex) => (
               <tr key={member.id} className="hover:bg-gray-50">
                 {/* Staff Column */}
-                <td className="px-6 py-4 border-r border-gray-200">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold ${getStaffColor(staffIndex)}`}>
+                <td className="px-4 py-3 border-r border-gray-200">
+                  <div className="flex items-center space-x-2">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${getStaffColor(staffIndex)}`}>
                       {getStaffInitials(member.firstName, member.lastName)}
                     </div>
                     <div>
-                      <div className="font-semibold text-black">
+                      <div className="font-semibold text-black text-sm">
                         {member.firstName} {member.lastName}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-xs text-gray-600">
                         {getStaffTotalHours(member.id)} hrs
                       </div>
                     </div>
@@ -165,7 +165,7 @@ export default function RotaGrid({
                   return (
                     <td
                       key={dayIndex}
-                      className={`px-3 py-3 border-r border-gray-200 min-h-[100px] relative ${
+                      className={`px-2 py-2 border-r border-gray-200 min-h-[80px] relative ${
                         isDragOver && !readOnly ? 'bg-gray-100 border-gray-300' : ''
                       }`}
                       onDragOver={!readOnly ? (e) => handleDragOver(e, member.id, dayIndex) : undefined}
@@ -176,40 +176,35 @@ export default function RotaGrid({
                         cellShifts.map((shift) => (
                           <div
                             key={shift.id}
-                            className={`mb-2 p-2 bg-black text-white rounded-lg shadow-sm ${
+                            className={`mb-1 p-1.5 bg-black text-white rounded shadow-sm ${
                               !readOnly ? 'cursor-move' : 'cursor-default'
                             }`}
                             draggable={!readOnly}
                             onDragStart={!readOnly ? (e) => handleDragStart(e, shift) : undefined}
                           >
                             {/* Top row - Time and Hours */}
-                            <div className="mb-2">
-                              <div className="text-xs font-semibold text-white">
+                            <div className="mb-1">
+                              <div className="text-xs font-semibold text-white leading-tight">
                                 {formatTime(shift.startTime)} - {formatTime(shift.endTime)}
                               </div>
                               <div className="text-xs text-gray-200">
-                                {shift.shiftHours} hrs
+                                {Number(shift.shiftHours)} hrs
                               </div>
-                              {shift.notes && (
-                                <div className="text-xs text-gray-300 truncate">
-                                  {shift.notes}
-                                </div>
-                              )}
                             </div>
                             {/* Bottom row - Action buttons */}
                             {!readOnly && (
-                              <div className="flex justify-end space-x-1">
+                              <div className="flex justify-end space-x-0.5">
                                 <button
                                   onClick={() => onEditShift(shift)}
-                                  className="p-1 text-white hover:text-gray-300"
+                                  className="p-0.5 text-white hover:text-gray-300"
                                 >
-                                  <Edit className="w-3 h-3" />
+                                  <Edit className="w-2.5 h-2.5" />
                                 </button>
                                 <button
                                   onClick={() => shift.id && onDeleteShift(shift.id)}
-                                  className="p-1 text-red-300 hover:text-red-200"
+                                  className="p-0.5 text-red-300 hover:text-red-200"
                                 >
-                                  <Trash2 className="w-3 h-3" />
+                                  <Trash2 className="w-2.5 h-2.5" />
                                 </button>
                               </div>
                             )}
@@ -219,9 +214,9 @@ export default function RotaGrid({
                         !readOnly && (
                           <button
                             onClick={() => onAddShift(member.id, dayIndex)}
-                            className="w-full h-20 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 hover:border-gray-400 transition-colors"
+                            className="w-full h-16 flex items-center justify-center text-gray-400 hover:text-black hover:bg-gray-50 rounded border border-dashed border-gray-300 hover:border-gray-400 transition-colors"
                           >
-                            <Plus className="w-6 h-6" />
+                            <Plus className="w-4 h-4" />
                           </button>
                         )
                       )}
@@ -233,14 +228,14 @@ export default function RotaGrid({
             
             {/* Daily Total Hours Row */}
             <tr className="bg-gray-50">
-              <td className="px-6 py-4 border-r border-gray-200 font-semibold text-black">
+              <td className="px-4 py-2 border-r border-gray-200 font-semibold text-black text-xs">
                 Daily Total Hours
               </td>
               {Array.from({ length: 7 }, (_, dayIndex) => (
-                <td key={dayIndex} className="px-4 py-4 border-r border-gray-200 text-center">
-                  <div className="flex items-center justify-center space-x-2">
-                    <Clock className="w-4 h-4 text-black" />
-                    <span className="font-semibold text-black">
+                <td key={dayIndex} className="px-2 py-2 border-r border-gray-200 text-center">
+                  <div className="flex items-center justify-center space-x-1">
+                    <Clock className="w-3 h-3 text-black" />
+                    <span className="font-semibold text-black text-xs">
                       {getDailyHours(dayIndex)} hrs
                     </span>
                   </div>

@@ -317,13 +317,13 @@ export default function RotaPage() {
   };
 
   const getTotalHours = () => {
-    return shifts.reduce((sum, shift) => sum + shift.shiftHours, 0);
+    return shifts.reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
   };
 
   const getDailyHours = (dayOfWeek: number) => {
     return shifts
       .filter(shift => shift.dayOfWeek === dayOfWeek)
-      .reduce((sum, shift) => sum + shift.shiftHours, 0);
+      .reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
   };
 
   if (loading) {
@@ -338,17 +338,17 @@ export default function RotaPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-black">Staff Rota</h1>
-              <p className="text-gray-600 mt-2">Manage weekly staff schedules</p>
+              <h1 className="text-4xl font-bold text-black tracking-tight">Staff Rota</h1>
+              <p className="text-gray-600 mt-1">Manage weekly staff schedules</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-3">
               <button
                 onClick={handleSaveRota}
                 disabled={saving || !canEditRota()}
-                className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                className="flex items-center px-4 py-2 bg-gray-100 text-black rounded-md hover:bg-gray-200 disabled:opacity-50 transition-colors text-sm font-medium"
               >
                 <Save className="w-4 h-4 mr-2" />
                 {saving ? 'Saving...' : 'Save Draft'}
@@ -356,33 +356,33 @@ export default function RotaPage() {
               <button
                 onClick={handlePublishRota}
                 disabled={publishing || rotaWeek?.status === 'published' || !canEditRota()}
-                className="flex items-center px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
+                className="flex items-center px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 disabled:opacity-50 transition-colors text-sm font-medium"
               >
                 <Send className="w-4 h-4 mr-2" />
-                {publishing ? 'Publishing...' : 'Publish & Send Emails'}
+                {publishing ? 'Publishing...' : 'Publish'}
               </button>
             </div>
           </div>
         </div>
 
         {/* Week Navigation */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="mb-4">
+          <div className="flex items-center justify-between bg-white rounded-lg shadow-sm border border-gray-200 p-4">
             <button
               onClick={handlePreviousWeek}
-              className="flex items-center text-black hover:text-gray-600 transition-colors"
+              className="flex items-center text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              <ChevronLeft className="w-5 h-5 mr-2" />
-              Previous Week
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous
             </button>
             
             {/* Rota Dropdown */}
             <div className="relative rota-dropdown">
               <button
                 onClick={() => setShowRotaDropdown(!showRotaDropdown)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors bg-white"
               >
-                <span className="text-black font-semibold">
+                <span className="text-black font-semibold text-sm">
                   Week of {format(currentWeek, 'MMMM d, yyyy')}
                 </span>
                 <ChevronDown className="w-4 h-4 text-black" />
@@ -412,50 +412,50 @@ export default function RotaPage() {
                 </div>
               )}
               
-              <p className="text-gray-600 text-sm mt-1">
+              <p className="text-gray-500 text-xs mt-1">
                 {format(currentWeek, 'MMM d')} - {format(addDays(currentWeek, 6), 'MMM d, yyyy')}
               </p>
             </div>
             
             <button
               onClick={handleNextWeek}
-              className="flex items-center text-black hover:text-gray-600 transition-colors"
+              className="flex items-center text-gray-600 hover:text-black transition-colors text-sm font-medium"
             >
-              Next Week
-              <ChevronRight className="w-5 h-5 ml-2" />
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
             </button>
           </div>
         </div>
 
         {/* Status Bar */}
         {rotaWeek && (
-          <div className="mb-6">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="mb-4">
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-8">
-                  <div className="flex items-center">
-                    <Clock className="w-5 h-5 text-black mr-2" />
-                    <span className="text-black">
-                      Total Hours: <strong className="font-semibold">{getTotalHours()}</strong>
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center bg-gray-50 px-3 py-2 rounded-md">
+                    <Clock className="w-4 h-4 text-gray-600 mr-2" />
+                    <span className="text-sm text-gray-700">
+                      <span className="font-medium">Total Hours:</span> <span className="font-semibold text-black">{getTotalHours()}</span>
                     </span>
                   </div>
-                  <div className="flex items-center">
-                    <Users className="w-5 h-5 text-black mr-2" />
-                    <span className="text-black">
-                      Staff: <strong className="font-semibold">{staff.length}</strong>
+                  <div className="flex items-center bg-gray-50 px-3 py-2 rounded-md">
+                    <Users className="w-4 h-4 text-gray-600 mr-2" />
+                    <span className="text-sm text-gray-700">
+                      <span className="font-medium">Staff:</span> <span className="font-semibold text-black">{staff.length}</span>
                     </span>
                   </div>
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-black mr-2" />
-                    <span className="text-black">
-                      Status: <strong className={rotaWeek.status === 'published' ? 'text-green-600' : 'text-yellow-600'}>
+                  <div className="flex items-center bg-gray-50 px-3 py-2 rounded-md">
+                    <Calendar className="w-4 h-4 text-gray-600 mr-2" />
+                    <span className="text-sm text-gray-700">
+                      <span className="font-medium">Status:</span> <span className={`font-semibold ${rotaWeek.status === 'published' ? 'text-gray-700' : 'text-yellow-600'}`}>
                         {rotaWeek.status.charAt(0).toUpperCase() + rotaWeek.status.slice(1)}
-                      </strong>
+                      </span>
                     </span>
                   </div>
                 </div>
                 {rotaWeek.status === 'published' && rotaWeek.publishedAt && (
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs text-gray-500">
                     Published: {format(new Date(rotaWeek.publishedAt), 'MMM d, yyyy h:mm a')}
                   </div>
                 )}
@@ -465,7 +465,7 @@ export default function RotaPage() {
         )}
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Staff Panel */}
           <div className="lg:col-span-1">
             <StaffPanel 
@@ -477,8 +477,8 @@ export default function RotaPage() {
           {/* Rota Grid */}
           <div className="lg:col-span-3">
             {!canEditRota() && (
-              <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-800 text-sm">
+              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-gray-700 text-sm">
                   This week has already ended and cannot be edited. You can view the schedule but cannot make changes.
                 </p>
               </div>

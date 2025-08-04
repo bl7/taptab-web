@@ -74,6 +74,16 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     return pathname.startsWith(href);
   };
 
+  const getNavLinkClasses = (isActive: boolean) => {
+    const baseClasses = "w-full p-3 transition-colors flex items-center";
+    const collapsedClasses = sidebarCollapsed ? 'justify-center group relative' : 'space-x-3';
+    const activeClasses = isActive 
+      ? 'bg-white bg-opacity-20 text-white rounded-lg mx-2' 
+      : 'text-white hover:bg-white hover:bg-opacity-10 mx-2 rounded-lg';
+    
+    return `${baseClasses} ${collapsedClasses} ${activeClasses}`;
+  };
+
   // Show loading state while checking authentication
   if (isLoading) {
     return (
@@ -118,18 +128,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
 
           {/* Navigation Icons */}
-          <nav className="flex flex-col items-center space-y-6 flex-1 w-full px-4">
+          <nav className="flex flex-col items-center flex-1 w-full">
             <Link 
               href="/dashboard" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard'))}
               title="Dashboard"
             >
-              <Home className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Dashboard</span>}
+              <Home className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Dashboard</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Dashboard
@@ -139,15 +145,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/orders" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/orders') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/orders'))}
               title="Orders"
             >
-              <ShoppingCart className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Orders</span>}
+              <ShoppingCart className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Orders</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Orders
@@ -157,15 +159,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/order-taking" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/order-taking') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/order-taking'))}
               title="Take Orders"
             >
-              <Plus className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Take Orders</span>}
+              <Plus className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Take Orders</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Take Orders
@@ -175,15 +173,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/staff" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/staff') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/staff'))}
               title="Staff"
             >
-              <Users className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Staff</span>}
+              <Users className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Staff</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Staff
@@ -193,15 +187,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/rota" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/rota') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/rota'))}
               title="Rota"
             >
-              <Calendar className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Rota</span>}
+              <Calendar className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Rota</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Rota
@@ -211,15 +201,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/menu" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/menu') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/menu'))}
               title="Menu"
             >
-              <Menu className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Menu</span>}
+              <Menu className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Menu</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Menu
@@ -229,15 +215,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/tables" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/tables') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/tables'))}
               title="Tables"
             >
-              <Table className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Tables</span>}
+              <Table className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Tables</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Tables
@@ -247,15 +229,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/analytics" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/analytics') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/analytics'))}
               title="Analytics"
             >
-              <BarChart3 className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Analytics</span>}
+              <BarChart3 className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Analytics</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Analytics
@@ -265,15 +243,11 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             
             <Link 
               href="/dashboard/settings" 
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} ${
-                isActiveLink('/dashboard/settings') 
-                  ? 'bg-green-600 text-white' 
-                  : 'text-white hover:bg-gray-800'
-              }`}
+              className={getNavLinkClasses(isActiveLink('/dashboard/settings'))}
               title="Settings"
             >
-              <Settings className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Settings</span>}
+              <Settings className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Settings</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Settings
@@ -283,14 +257,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </nav>
 
           {/* Bottom Actions */}
-          <div className="flex flex-col items-center space-y-4 w-full px-4">
+          <div className="flex flex-col items-center w-full">
             <button 
               onClick={handleLogout}
-              className={`w-full p-3 rounded-xl transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} text-white hover:bg-gray-800`}
+              className={`w-full p-3 transition-colors flex items-center ${sidebarCollapsed ? 'justify-center group relative' : 'space-x-3'} text-white hover:bg-white hover:bg-opacity-10 mx-2 rounded-lg`}
               title="Logout"
             >
-              <LogOut className="w-6 h-6 flex-shrink-0" />
-              {!sidebarCollapsed && <span className="font-medium">Logout</span>}
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              {!sidebarCollapsed && <span className="font-medium text-sm">Logout</span>}
               {sidebarCollapsed && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
                   Logout
