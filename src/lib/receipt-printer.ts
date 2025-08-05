@@ -197,7 +197,7 @@ export class ReceiptPrinter {
     });
 
     // Authentication response
-    this.socket.on('authenticated', (data) => {
+    this.socket.on('authenticated', () => {
       console.log('✅ WebSocket authenticated successfully');
     });
 

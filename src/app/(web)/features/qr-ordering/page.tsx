@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { QrCode, Smartphone, Tablet, Zap, Shield, Users, Clock } from 'lucide-react';
+import { QrCode, Smartphone, Tablet, Clock } from 'lucide-react';
 
 export default function QROrderingFeaturePage() {
   // const benefits = [

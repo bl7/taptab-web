@@ -102,6 +102,129 @@ export interface AnalyticsOrders {
   completedOrders: number;
 }
 
+// Dashboard interfaces
+export interface DashboardSummary {
+  totalOrders: { value: number; growth: number; period: string };
+  activeOrders: { value: number; status: string };
+  cancelledOrders: { value: number; status: string };
+  totalRevenue: { value: number; growth: number; period: string };
+  totalCustomers: { value: number; newToday: number };
+  avgOrderValue: { value: number; growth: number };
+  paymentMethods: {
+    cash: { count: number; revenue: number };
+    card: { count: number; revenue: number };
+    qr: { count: number; revenue: number };
+    online: { count: number; revenue: number };
+  };
+}
+
+export interface LiveOrder {
+  id: string;
+  tableNumber: string;
+  items: Array<{
+    menuItemName: string;
+    quantity: number;
+    price: number;
+    notes?: string;
+  }>;
+  total: number;
+  status: 'pending' | 'preparing' | 'ready' | 'completed';
+  waiterName: string;
+  createdAt: string;
+  timeAgo: string;
+  customerName?: string;
+  specialInstructions?: string;
+}
+
+export interface RevenueTrend {
+  growth: number;
+  totalRevenue: number;
+  dailyData: Array<{
+    date: string;
+    revenue: number;
+    orders: number;
+  }>;
+}
+
+export interface PeakHours {
+  peakHours: Array<{
+    hour: number;
+    orderCount: number;
+    revenue: number;
+    activity: number;
+  }>;
+}
+
+export interface TopItem {
+  rank: number;
+  menuItemId: string;
+  name: string;
+  quantity: number;
+  revenue: number;
+  orderCount: number;
+  percentage: number;
+}
+
+export interface TopItems {
+  topItems: TopItem[];
+  totalRevenue: number;
+}
+
+export interface StaffPerformance {
+  userId: string;
+  name: string;
+  orderCount: number;
+  totalRevenue: number;
+  avgOrderValue: number;
+  rating: number;
+}
+
+export interface PopularCombination {
+  combination: string;
+  orderCount: number;
+  revenue: number;
+}
+
+export interface ComprehensiveAnalytics {
+  period: {
+    start: string;
+    end: string;
+    type: string;
+  };
+  summary: {
+    totalOrders: number;
+    totalRevenue: number;
+    avgOrderValue: number;
+    uniqueCustomers: number;
+    orderStatus: {
+      pending: number;
+      preparing: number;
+      ready: number;
+      paid: number;
+      cancelled: number;
+    };
+  };
+  growth: {
+    orders: number;
+    revenue: number;
+    avgOrderValue: number;
+    customers: number;
+  };
+  topItems: Array<{
+    menuItemId: string;
+    name: string;
+    quantity: number;
+    revenue: number;
+    orderCount: number;
+  }>;
+  dailyData: Array<{
+    date: string;
+    orders: number;
+    revenue: number;
+    customers: number;
+  }>;
+}
+
 export interface Settings {
   restaurantName: string;
   address: string;
@@ -166,12 +289,12 @@ class APIClient {
     // Get valid token (auto-refresh if needed)
     const token = await tokenManager.getValidToken();
     
-    console.log('🔗 API Request Details:');
-    console.log('  Base URL:', this.baseURL);
-    console.log('  Endpoint:', endpoint);
-    console.log('  Full URL:', `${this.baseURL}${endpoint}`);
-    console.log('  Token exists:', !!token);
-    console.log('  Token preview:', token ? `${token.substring(0, 20)}...` : 'No token');
+    console.log('thisbitch', '🔗 API Request Details:');
+    console.log('thisbitch', '  Base URL:', this.baseURL);
+    console.log('thisbitch', '  Endpoint:', endpoint);
+    console.log('thisbitch', '  Full URL:', `${this.baseURL}${endpoint}`);
+    console.log('thisbitch', '  Token exists:', !!token);
+    console.log('thisbitch', '  Token preview:', token ? `${token.substring(0, 20)}...` : 'No token');
     
     const config: RequestInit = {
       headers: {
@@ -182,21 +305,21 @@ class APIClient {
       ...options,
     };
 
-    console.log('  Request method:', config.method || 'GET');
-    console.log('  Request headers:', config.headers);
+    console.log('thisbitch', '  Request method:', config.method || 'GET');
+    console.log('thisbitch', '  Request headers:', config.headers);
 
     const response = await fetch(`${this.baseURL}${endpoint}`, config);
     const data: APIResponse<T> = await response.json();
 
-    console.log('📡 API Response Details:');
-    console.log('  Status:', response.status);
-    console.log('  Status text:', response.statusText);
-    console.log('  Response data:', data);
-    console.log('  Response data type:', typeof data);
-    console.log('  Response data keys:', Object.keys(data || {}));
+    console.log('thisbitch', '📡 API Response Details:');
+    console.log('thisbitch', '  Status:', response.status);
+    console.log('thisbitch', '  Status text:', response.statusText);
+    console.log('thisbitch', '  Response data:', data);
+    console.log('thisbitch', '  Response data type:', typeof data);
+    console.log('thisbitch', '  Response data keys:', Object.keys(data || {}));
 
     if (!response.ok) {
-      console.error('❌ API Error:', response.status, data);
+      console.error('thisbitch', '❌ API Error:', response.status, data);
       throw new APIError(
         response.status,
         data.error?.code || 'UNKNOWN_ERROR',
@@ -244,10 +367,15 @@ class APIClient {
     categoryId?: string;
     image?: string;
   }): Promise<{ item: MenuItem }> {
+    console.log('🍽️ Creating menu item with data:', data);
+    console.log('🍽️ Image URL being sent:', data.image);
+    
     const response = await this.request<{ item: MenuItem }>('/menu/items', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    
+    console.log('🍽️ Created menu item response:', response);
     return { item: response.item };
   }
 
@@ -591,6 +719,177 @@ class APIClient {
     return response.data;
   }
 
+  // Dashboard endpoints
+  async getDashboardOverview(period: 'week' | 'month' | 'year' = 'month'): Promise<{ summary: DashboardSummary }> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(`/dashboard/overview?period=${period}`);
+    console.log('thisbitch', 'Dashboard overview response:', response);
+    
+    // Handle different response structures
+    if (response.summary) {
+      return { summary: response.summary };
+    } else if (response.data?.summary) {
+      return { summary: response.data.summary };
+    } else {
+      console.error('thisbitch', 'Unexpected dashboard overview response structure:', response);
+              return { summary: {
+          totalOrders: { value: 0, growth: 0, period: "This month" },
+          activeOrders: { value: 0, status: "Currently processing" },
+          cancelledOrders: { value: 0, status: "Cancelled today" },
+          totalRevenue: { value: 0, growth: 0, period: "This month" },
+          totalCustomers: { value: 0, newToday: 0 },
+          avgOrderValue: { value: 0, growth: 0 },
+          paymentMethods: {
+            cash: { count: 0, revenue: 0 },
+            card: { count: 0, revenue: 0 },
+            qr: { count: 0, revenue: 0 },
+            online: { count: 0, revenue: 0 }
+          }
+        }};
+    }
+  }
+
+  async getLiveOrders(): Promise<{ orders: LiveOrder[] }> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>('/dashboard/live-orders');
+    console.log('thisbitch', 'Live orders response:', response);
+    
+    // Handle different response structures
+    if (response.orders) {
+      return { orders: response.orders };
+    } else if (response.data?.orders) {
+      return { orders: response.data.orders };
+    } else {
+      console.error('thisbitch', 'Unexpected live orders response structure:', response);
+      return { orders: [] };
+    }
+  }
+
+  async getRevenueTrend(days: number = 7): Promise<RevenueTrend> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(`/dashboard/revenue-trend?days=${days}`);
+    console.log('thisbitch', 'Revenue trend response:', response);
+    
+    // Handle different response structures
+    if (response.growth !== undefined && response.totalRevenue !== undefined && response.dailyData) {
+      return response;
+    } else if (response.data?.growth !== undefined && response.data?.totalRevenue !== undefined && response.data?.dailyData) {
+      return response.data;
+    } else {
+      console.error('thisbitch', 'Unexpected revenue trend response structure:', response);
+      return {
+        growth: 0,
+        totalRevenue: 0,
+        dailyData: []
+      };
+    }
+  }
+
+  async getPeakHours(days: number = 30): Promise<PeakHours> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(`/dashboard/peak-hours?days=${days}`);
+    console.log('thisbitch', 'Peak hours response:', response);
+    
+    // Handle different response structures
+    if (response.peakHours) {
+      return response;
+    } else if (response.data?.peakHours) {
+      return response.data;
+    } else {
+      console.error('thisbitch', 'Unexpected peak hours response structure:', response);
+      return { peakHours: [] };
+    }
+  }
+
+  async getTopItems(period: 'week' | 'month' | 'year' = 'month', limit: number = 10): Promise<TopItems> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(`/dashboard/top-items?period=${period}&limit=${limit}`);
+    console.log('thisbitch', 'Top items response:', response);
+    
+    // Handle different response structures
+    if (response.topItems && response.totalRevenue !== undefined) {
+      return response;
+    } else if (response.data?.topItems && response.data?.totalRevenue !== undefined) {
+      return response.data;
+    } else {
+      console.error('thisbitch', 'Unexpected top items response structure:', response);
+      return { topItems: [], totalRevenue: 0 };
+    }
+  }
+
+  async getStaffPerformance(period: 'week' | 'month' | 'year' = 'month'): Promise<{ staffPerformance: StaffPerformance[] }> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(`/dashboard/staff-performance?period=${period}`);
+    console.log('thisbitch', 'Staff performance response:', response);
+    
+    // Handle different response structures
+    if (response.staffPerformance) {
+      return { staffPerformance: response.staffPerformance };
+    } else if (response.data?.staffPerformance) {
+      return { staffPerformance: response.data.staffPerformance };
+    } else {
+      console.error('thisbitch', 'Unexpected staff performance response structure:', response);
+      return { staffPerformance: [] };
+    }
+  }
+
+  async getPopularCombinations(limit: number = 5): Promise<{ combinations: PopularCombination[] }> {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(`/dashboard/popular-combinations?limit=${limit}`);
+    console.log('thisbitch', 'Popular combinations response:', response);
+    
+    // Handle different response structures
+    if (response.combinations) {
+      return { combinations: response.combinations };
+    } else if (response.data?.combinations) {
+      return { combinations: response.data.combinations };
+    } else {
+      console.error('thisbitch', 'Unexpected popular combinations response structure:', response);
+      return { combinations: [] };
+    }
+  }
+
+  // Enhanced Analytics endpoints
+  async getComprehensiveAnalytics(params?: {
+    startDate?: string;
+    endDate?: string;
+    period?: 'today' | 'yesterday' | 'week' | 'month' | 'quarter' | 'year' | 'custom';
+  }): Promise<ComprehensiveAnalytics> {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    if (params?.period) queryParams.append('period', params.period);
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/analytics/comprehensive?${queryString}` : '/analytics/comprehensive';
+    
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const response = await this.request<any>(endpoint);
+    console.log('thisbitch', 'Comprehensive analytics response:', response);
+    
+    // Handle different response structures
+    if (response.period && response.summary && response.growth && response.topItems && response.dailyData) {
+      return response;
+    } else if (response.data?.period && response.data?.summary && response.data?.growth && response.data?.topItems && response.data?.dailyData) {
+      return response.data;
+    } else {
+      console.error('thisbitch', 'Unexpected comprehensive analytics response structure:', response);
+      return {
+        period: { start: '', end: '', type: 'week' },
+        summary: {
+          totalOrders: 0,
+          totalRevenue: 0,
+          avgOrderValue: 0,
+          uniqueCustomers: 0,
+          orderStatus: { pending: 0, preparing: 0, ready: 0, paid: 0, cancelled: 0 }
+        },
+        growth: { orders: 0, revenue: 0, avgOrderValue: 0, customers: 0 },
+        topItems: [],
+        dailyData: []
+      };
+    }
+  }
+
   // Settings endpoints
   async getSettings(): Promise<Settings> {
     const response = await this.request<{ data: Settings }>('/settings');
@@ -613,18 +912,70 @@ class APIClient {
     environment: string;
     version: string;
   }> {
-    const response = await this.request<{ data: {
+    console.log('🏥 Performing health check...');
+    const response = await this.request<{
       status: string;
       timestamp: string;
       uptime: number;
       environment: string;
       version: string;
-    } }>('/health');
-    return response.data;
+    }>('/health');
+    console.log('🏥 Health check response:', response);
+    return response;
   }
 
+  async uploadImage(file: File): Promise<string> {
+    console.log('📤 Uploading image to external backend...');
+    
+    const formData = new FormData();
+    formData.append('image', file);
 
+    const token = await tokenManager.getValidToken();
+    const userData = localStorage.getItem('user');
+    let tenantId = '';
 
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        tenantId = user.tenantId || '';
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+      }
+    }
+
+    // For file uploads, we need to handle the request manually
+    // because we can't set Content-Type for multipart/form-data
+    const response = await fetch(`${this.baseURL}/upload/image`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'X-Tenant-ID': tenantId,
+        // Don't set Content-Type - let browser set it for multipart/form-data
+      },
+      body: formData,
+    });
+
+    const data: {
+      url: string;
+      publicId: string;
+      width: number;
+      height: number;
+      format: string;
+      size: number;
+    } = await response.json();
+
+    console.log('📤 Image upload response:', data);
+
+    if (!response.ok) {
+      throw new APIError(
+        response.status,
+        'UPLOAD_ERROR',
+        'Upload failed'
+      );
+    }
+
+    return data.url;
+  }
 }
 
 // Export singleton instance

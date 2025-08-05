@@ -60,6 +60,7 @@ export default function QROrderPage() {
   const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string>('');
   const [availableTables, setAvailableTables] = useState<string[]>([]);
+  const [showMobileCart, setShowMobileCart] = useState(false);
 
 
 
@@ -339,38 +340,282 @@ export default function QROrderPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <div className="bg-white shadow-sm px-6 py-4">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gray-50">
+      {/* Desktop/Tablet Layout */}
+      <div className="hidden md:flex h-screen">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col">
+          {/* Header */}
+          <div className="bg-white shadow-sm px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-black">
+                  {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
+                </h1>
+                <p className="text-sm text-gray-600">Table {tableNumber}</p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search menu items..."
+                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                  />
+                </div>
+                <button className="p-2 text-gray-400 hover:text-gray-600">
+                  <Filter className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Category Filters */}
+            <div className="mt-4 flex items-center space-x-2">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === 'all'
+                    ? 'bg-black text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                All
+              </button>
+              {categories.map(category => (
+                <button
+                  key={category.id}
+                  onClick={() => setSelectedCategory(category.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === category.id
+                      ? 'bg-black text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Desktop Menu Items Grid */}
+          <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredItems.map(item => (
+                <div
+                  key={item.id}
+                  onClick={() => addToCart(item)}
+                  className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 min-h-[280px] flex flex-col group"
+                >
+                  {/* Image Container - Full Size */}
+                  <div className="w-full h-40 rounded-lg mb-4 overflow-hidden">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={400}
+                        height={160}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-200">🍽️</div>
+                    )}
+                  </div>
+                  
+                  {/* Item Details - Clean */}
+                  <div className="flex-1">
+                    <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">{item.name}</div>
+                    
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                      {item.description}
+                    </p>
+                    
+                    {/* Price - Clean */}
+                    <div className="text-2xl font-bold text-gray-900 mb-4">
+                      ${item.price.toFixed(2)}
+                    </div>
+                    
+                    {/* Quick Add Button - Modern */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(item);
+                      }}
+                      className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                    >
+                      <Plus className="w-4 h-4" />
+                      ADD TO ORDER
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Right Sidebar - Order Management */}
+        <div className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-black">My Order</h2>
+              <button
+                onClick={() => setCart([])}
+                className="p-2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto">
+              {cart.length === 0 ? (
+                <div className="text-center py-8">
+                  <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-black text-sm">Your cart is empty</p>
+                  <p className="text-black text-xs">Add items to get started</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {cart.map(item => (
+                    <div key={item.menuItem.id} className="bg-white rounded-lg p-3 shadow-sm">
+                      <div className="flex items-center space-x-3">
+                        {item.menuItem.image ? (
+                          <Image
+                            src={item.menuItem.image}
+                            alt={item.menuItem.name}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                            <span className="text-black text-xs">No</span>
+                          </div>
+                        )}
+                        
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-black text-sm truncate">
+                            {item.menuItem.name}
+                          </h4>
+                          <p className="text-black text-xs">Small Size</p>
+                          <p className="text-black font-semibold text-sm">
+                            ${item.menuItem.price.toFixed(2)}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                            className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                          >
+                            <Minus className="w-3 h-3 text-black" />
+                          </button>
+                          <span className="text-sm font-medium w-6 text-center text-black">
+                            {item.quantity.toString().padStart(2, '0')}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                            className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
+                          >
+                            <Plus className="w-3 h-3 text-black" />
+                          </button>
+                          <button
+                            onClick={() => removeFromCart(item.menuItem.id)}
+                            className="p-1 text-black hover:text-red-500"
+                          >
+                            {/* Removed Trash2 icon */}
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Notes Input */}
+                      <div className="mt-2">
+                        <textarea
+                          placeholder="Add special instructions..."
+                          value={item.notes}
+                          onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
+                          className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent resize-none text-black"
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Order Summary */}
+            {cart.length > 0 && (
+              <div className="mt-6 space-y-3">
+                <div className="bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-black">Items:</span>
+                    <span className="font-semibold text-black">${getCartTotal().toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="font-bold text-black">Total Amount:</span>
+                    <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={submitOrder}
+                  disabled={orderLoading}
+                  className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {orderLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Placing Order...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Place Order
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="md:hidden flex flex-col h-screen">
+        {/* Mobile App Header */}
+        <div className="bg-white shadow-sm px-4 py-4 sticky top-0 z-10">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold text-black">
+              <h1 className="text-xl font-bold text-black">
                 {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
               </h1>
               <p className="text-sm text-gray-600">Table {tableNumber}</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  placeholder="Search menu items..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                />
-              </div>
+            <div className="flex items-center space-x-3">
+              <button className="p-2 text-gray-400 hover:text-gray-600">
+                <Search className="w-5 h-5" />
+              </button>
               <button className="p-2 text-gray-400 hover:text-gray-600">
                 <Filter className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Category Filters */}
-          <div className="mt-4 flex items-center space-x-2">
+          {/* Mobile Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search menu items..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-sm"
+            />
+          </div>
+
+          {/* Mobile Category Filters - Horizontal Scroll */}
+          <div className="flex space-x-2 overflow-x-auto pb-2 -mx-4 px-4">
             <button
               onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                 selectedCategory === 'all'
                   ? 'bg-black text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -382,7 +627,7 @@ export default function QROrderPage() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                   selectedCategory === category.id
                     ? 'bg-black text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -394,184 +639,210 @@ export default function QROrderPage() {
           </div>
         </div>
 
-        {/* Menu Items Grid */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Mobile Menu Items - Single Column */}
+        <div className="flex-1 px-4 py-4 overflow-y-auto">
+          <div className="space-y-4">
             {filteredItems.map(item => (
-              <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                <div className="relative">
-                  {item.image ? (
-                    <Image
-                      src={item.image}
-                      alt={item.name}
-                      width={256}
-                      height={128}
-                      className="w-full h-32 object-cover rounded-lg mb-3"
-                    />
-                  ) : (
-                    <div className="w-full h-32 bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">No Image</span>
-                    </div>
-                  )}
-                  <button className="absolute top-2 right-2 p-1 bg-white rounded-full shadow-sm hover:bg-gray-50">
-                    {/* Removed Heart icon */}
-                  </button>
-                </div>
-                
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between">
-                    <h3 className="font-semibold text-gray-900 text-sm">{item.name}</h3>
-                    <span className="text-green-600 font-bold text-sm">${item.price.toFixed(2)}</span>
+              <div
+                key={item.id}
+                onClick={() => addToCart(item)}
+                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 active:scale-95"
+              >
+                <div className="flex items-start space-x-4">
+                  {/* Mobile Image */}
+                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-2xl">🍽️</div>
+                    )}
                   </div>
                   
-                  <p className="text-gray-500 text-xs line-clamp-2">
-                    {item.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1">
-                      {/* Removed Star icon */}
-                      <span className="text-xs text-gray-600">5.0</span>
+                  {/* Mobile Item Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-semibold text-gray-900 text-base truncate">{item.name}</h3>
+                      <span className="text-green-600 font-bold text-lg ml-2">${item.price.toFixed(2)}</span>
                     </div>
-                                         <button
-                       onClick={() => addToCart(item)}
-                       className="bg-black text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors"
-                     >
-                       Add to cart
-                     </button>
+                    
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                      {item.description}
+                    </p>
+                    
+                    {/* Mobile Add Button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(item);
+                      }}
+                      className="w-full bg-black text-white py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      <Plus className="w-4 h-4" />
+                      ADD TO ORDER
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-      </div>
 
-      {/* Right Sidebar - Order Management */}
-      <div className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col">
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-black">My Order</h2>
-            <button
-              onClick={() => setCart([])}
-              className="p-2 text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Cart Items */}
-          <div className="flex-1 overflow-y-auto">
-            {cart.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-black text-sm">Your cart is empty</p>
-                <p className="text-black text-xs">Add items to get started</p>
+        {/* Mobile Bottom Cart Bar */}
+        {cart.length > 0 && (
+          <div className="bg-white border-t border-gray-200 px-4 py-4 sticky bottom-0 z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">
+                  {cart.length} item{cart.length !== 1 ? 's' : ''} in cart
+                </p>
+                <p className="text-lg font-bold text-black">
+                  ${getCartTotal().toFixed(2)}
+                </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {cart.map(item => (
-                  <div key={item.menuItem.id} className="bg-white rounded-lg p-3 shadow-sm">
-                    <div className="flex items-center space-x-3">
-                      {item.menuItem.image ? (
-                        <Image
-                          src={item.menuItem.image}
-                          alt={item.menuItem.name}
-                          width={48}
-                          height={48}
-                          className="w-12 h-12 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                          <span className="text-black text-xs">No</span>
+              <button
+                onClick={() => setShowMobileCart(true)}
+                className="bg-black text-white px-6 py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors"
+              >
+                View Cart
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Cart Modal */}
+        {showMobileCart && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end z-50">
+            <div className="bg-white w-full h-[85vh] rounded-t-3xl p-6 overflow-hidden flex flex-col">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-black">My Order</h2>
+                <button
+                  onClick={() => setShowMobileCart(false)}
+                  className="p-2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Cart Items */}
+              <div className="flex-1 overflow-y-auto">
+                {cart.length === 0 ? (
+                  <div className="text-center py-8">
+                    <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-black text-sm">Your cart is empty</p>
+                    <p className="text-black text-xs">Add items to get started</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {cart.map(item => (
+                      <div key={item.menuItem.id} className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-center space-x-3 mb-3">
+                          {item.menuItem.image ? (
+                            <Image
+                              src={item.menuItem.image}
+                              alt={item.menuItem.name}
+                              width={48}
+                              height={48}
+                              className="w-12 h-12 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
+                              <span className="text-black text-xs">No</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-medium text-black text-sm truncate">
+                              {item.menuItem.name}
+                            </h4>
+                            <p className="text-black font-semibold text-sm">
+                              ${item.menuItem.price.toFixed(2)}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                              className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50"
+                            >
+                              <Minus className="w-3 h-3 text-black" />
+                            </button>
+                            <span className="text-sm font-medium w-8 text-center text-black">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                              className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50"
+                            >
+                              <Plus className="w-3 h-3 text-black" />
+                            </button>
+                            <button
+                              onClick={() => removeFromCart(item.menuItem.id)}
+                              className="p-1 text-red-500 hover:text-red-700"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-medium text-black text-sm truncate">
-                          {item.menuItem.name}
-                        </h4>
-                        <p className="text-black text-xs">Small Size</p>
-                        <p className="text-black font-semibold text-sm">
-                          ${item.menuItem.price.toFixed(2)}
-                        </p>
+                        
+                        {/* Notes Input */}
+                        <div>
+                          <textarea
+                            placeholder="Add special instructions..."
+                            value={item.notes}
+                            onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
+                            className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black"
+                            rows={2}
+                          />
+                        </div>
                       </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
-                          className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-                        >
-                          <Minus className="w-3 h-3 text-black" />
-                        </button>
-                        <span className="text-sm font-medium w-6 text-center text-black">
-                          {item.quantity.toString().padStart(2, '0')}
-                        </span>
-                        <button
-                          onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
-                          className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
-                        >
-                          <Plus className="w-3 h-3 text-black" />
-                        </button>
-                        <button
-                          onClick={() => removeFromCart(item.menuItem.id)}
-                          className="p-1 text-black hover:text-red-500"
-                        >
-                          {/* Removed Trash2 icon */}
-                        </button>
-                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Order Summary and Place Order Button */}
+              {cart.length > 0 && (
+                <div className="mt-6 space-y-4">
+                  <div className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-black text-sm">Items:</span>
+                      <span className="font-semibold text-black">${getCartTotal().toFixed(2)}</span>
                     </div>
-                    
-                    {/* Notes Input */}
-                    <div className="mt-2">
-                      <textarea
-                        placeholder="Add special instructions..."
-                        value={item.notes}
-                        onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
-                        className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent resize-none text-black"
-                        rows={2}
-                      />
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                      <span className="font-bold text-black">Total Amount:</span>
+                      <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
 
-          {/* Order Summary */}
-          {cart.length > 0 && (
-            <div className="mt-6 space-y-3">
-              <div className="bg-white rounded-lg p-4 shadow-sm">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-black">Items:</span>
-                  <span className="font-semibold text-black">${getCartTotal().toFixed(2)}</span>
+                  <button
+                    onClick={submitOrder}
+                    disabled={orderLoading}
+                    className="w-full bg-black text-white py-4 rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {orderLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Placing Order...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Place Order
+                      </>
+                    )}
+                  </button>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                  <span className="font-bold text-black">Total Amount:</span>
-                  <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
-                </div>
-              </div>
-
-                             <button
-                 onClick={submitOrder}
-                 disabled={orderLoading}
-                 className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-               >
-                 {orderLoading ? (
-                   <>
-                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                     Placing Order...
-                   </>
-                 ) : (
-                   <>
-                     <CheckCircle className="h-4 w-4" />
-                     Place Order
-                   </>
-                 )}
-               </button>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -265,47 +265,49 @@ export default function EditOrderModal({ order, onClose, onModifyOrder }: EditOr
             </div>
 
             {/* Menu Items Grid */}
-            <div className="flex-1 p-4 overflow-y-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {searchFilteredItems.map(item => (
-                  <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
-                    <div className="relative">
+                  <div
+                    key={item.id}
+                    onClick={() => addToCart(item)}
+                    className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 min-h-[280px] flex flex-col group"
+                  >
+                    {/* Image Container - Full Size */}
+                    <div className="w-full h-40 rounded-lg mb-4 overflow-hidden">
                       {item.image ? (
                         <Image
                           src={item.image}
                           alt={item.name}
-                          width={256}
-                          height={128}
-                          className="w-full h-32 object-cover rounded-lg mb-3"
+                          width={400}
+                          height={160}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
                       ) : (
-                        <div className="w-full h-32 bg-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">No Image</span>
-                        </div>
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-200">🍽️</div>
                       )}
                     </div>
                     
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <h3 className="font-semibold text-gray-900 text-sm">{item.name}</h3>
-                        <span className="text-green-600 font-bold text-sm">${item.price.toFixed(2)}</span>
+                    {/* Item Details - Clean */}
+                    <div className="flex-1">
+                      <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">{item.name}</div>
+                      
+                      {/* Price - Clean */}
+                      <div className="text-2xl font-bold text-gray-900 mb-4">
+                        ${item.price.toFixed(2)}
                       </div>
                       
-                      <p className="text-gray-500 text-xs line-clamp-2">
-                        {item.description}
-                      </p>
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-1">
-                          <span className="text-xs text-gray-600">5.0</span>
-                        </div>
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="bg-black text-white px-3 py-1 rounded-lg text-xs font-medium hover:bg-gray-800 transition-colors"
-                        >
-                          Add to cart
-                        </button>
-                      </div>
+                      {/* Quick Add Button - Modern */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(item);
+                        }}
+                        className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        ADD TO ORDER
+                      </button>
                     </div>
                   </div>
                 ))}

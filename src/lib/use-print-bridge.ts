@@ -53,7 +53,7 @@ export const usePrintBridge = () => {
           if (data.success !== undefined) {
             setLastPrintResult(data);
           }
-        } catch (error) {
+        } catch {
           // Error parsing PrintBridge message
         }
       };

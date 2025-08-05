@@ -14,6 +14,7 @@ import {
   FileText
 } from 'lucide-react';
 import { api, MenuItem, MenuCategory } from '@/lib/api';
+import { ImageUpload } from '@/components/ImageUpload';
 
 export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -96,9 +97,13 @@ export default function MenuPage() {
     categoryId?: string;
     image?: string;
   }) => {
+    console.log('🍽️ handleCreateItem called with data:', itemData);
+    console.log('🍽️ Image URL in itemData:', itemData.image);
+    
     setApiLoading(true);
     try {
       const response = await api.createMenuItem(itemData);
+      console.log('🍽️ API response:', response);
       setMenuItems(prev => [response.item, ...prev]);
       setShowAddModal(false);
     } catch (error) {
@@ -110,16 +115,26 @@ export default function MenuPage() {
   };
 
   const handleUpdateItem = async (id: string, itemData: Partial<MenuItem>) => {
+    console.log('checkthis', '📤 Sending to API:', itemData);
+    console.log('checkthis', '🔍 === UPDATE ITEM DEBUG ===');
+    console.log('checkthis', '1. Item ID:', id);
+    console.log('checkthis', '2. Item data:', itemData);
+    console.log('checkthis', '3. Image field:', itemData.image);
+    console.log('checkthis', '4. Image field type:', typeof itemData.image);
+    console.log('checkthis', '5. Image field length:', itemData.image?.length || 0);
+    console.log('checkthis', '================================');
+    
     setApiLoading(true);
     try {
       const response = await api.updateMenuItem(id, itemData);
+      console.log('checkthis', '✅ API Response:', response);
       setMenuItems(prev => prev.map(item => 
         item.id === id ? response.item : item
       ));
       setShowEditModal(false);
       setSelectedItem(null);
     } catch (error) {
-      console.error('Error updating menu item:', error);
+      console.error('❌ Error updating menu item:', error);
       alert(error instanceof Error ? error.message : 'Failed to update menu item');
     } finally {
       setApiLoading(false);
@@ -392,18 +407,49 @@ function AddItemModal({
     categoryId: '',
     image: '',
   });
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
+    setUploadError(null);
+    
+    console.log('🍽️ Current formData state:', formData);
+    console.log('🍽️ formData.image value:', formData.image);
+    console.log('🍽️ formData.image type:', typeof formData.image);
+    console.log('🍽️ formData.image length:', formData.image?.length);
+    
+    const submitData = {
       ...formData,
       price: parseFloat(formData.price),
-    });
+    };
+    
+    console.log('🍽️ AddItemModal handleSubmit called with data:', submitData);
+    console.log('🍽️ Image URL in formData:', formData.image);
+    console.log('🍽️ Image URL in submitData:', submitData.image);
+    
+    onSubmit(submitData);
+  };
+
+  const handleImageChange = (url: string) => {
+    console.log('checkthis', '✅ Image uploaded successfully! URL:', url);
+    setFormData({ ...formData, image: url });
+    setUploadError(null);
+    
+    // Debug check
+    console.log('checkthis', '🔍 === IMAGE UPLOAD DEBUG ===');
+    console.log('checkthis', '1. Current formData:', formData);
+    console.log('checkthis', '2. Image URL received:', url);
+    console.log('checkthis', '3. Upload error:', uploadError);
+    console.log('checkthis', '================================');
+  };
+
+  const handleImageError = (error: string) => {
+    setUploadError(error);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Add Menu Item</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -469,18 +515,18 @@ function AddItemModal({
             </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Image URL (optional)
-            </label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          <ImageUpload
+            value={formData.image}
+            onChange={handleImageChange}
+            onError={handleImageError}
+            disabled={loading}
+          />
+
+          {uploadError && (
+            <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+              {uploadError}
+            </div>
+          )}
 
           <div className="flex space-x-3 pt-4">
             <button
@@ -527,18 +573,50 @@ function EditItemModal({
     image: item.image || '',
     isActive: item.isActive,
   });
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('checkthis', '🍽️ EditItemModal handleSubmit - formData:', formData);
+    console.log('checkthis', '🍽️ EditItemModal handleSubmit - image URL:', formData.image);
+    
     onSubmit({
-      ...formData,
+      name: formData.name,
+      description: formData.description,
       price: parseFloat(formData.price),
+      categoryId: formData.categoryId,
+      image: formData.image, // Make sure image is included
+      isActive: formData.isActive,
     });
+  };
+
+  const handleImageChange = (url: string) => {
+    console.log('checkthis', '🍽️ EditItemModal handleImageChange called with URL:', url);
+    console.log('checkthis', '🍽️ EditItemModal handleImageChange - previous formData:', formData);
+    console.log('checkthis', '🍽️ EditItemModal handleImageChange - URL length:', url.length);
+    console.log('checkthis', '🍽️ EditItemModal handleImageChange - URL is empty?', url === '');
+    
+    setFormData({ ...formData, image: url });
+    setUploadError(null);
+    setIsUploading(false); // Upload completed
+    
+    console.log('checkthis', '🍽️ EditItemModal handleImageChange - updated formData should have image:', url);
+  };
+
+  const handleImageError = (error: string) => {
+    setUploadError(error);
+    setIsUploading(false);
+  };
+
+  const handleImageUploadStart = () => {
+    setIsUploading(true);
+    console.log('checkthis', '🍽️ EditItemModal - Upload started, disabling submit button');
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <h2 className="text-xl font-semibold mb-4">Edit Menu Item</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -604,18 +682,19 @@ function EditItemModal({
             </div>
           </div>
           
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Image URL (optional)
-            </label>
-            <input
-              type="url"
-              value={formData.image}
-              onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
+          <ImageUpload
+            value={formData.image}
+            onChange={handleImageChange}
+            onError={handleImageError}
+            onUploadStart={handleImageUploadStart}
+            disabled={loading}
+          />
+
+          {uploadError && (
+            <div className="text-red-600 text-sm bg-red-50 p-2 rounded">
+              {uploadError}
+            </div>
+          )}
           
           <div className="flex items-center">
             <input
@@ -641,10 +720,10 @@ function EditItemModal({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || isUploading}
               className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
             >
-              {loading ? 'Updating...' : 'Update Item'}
+              {loading ? 'Updating...' : isUploading ? 'Uploading...' : 'Update Item'}
             </button>
           </div>
         </form>

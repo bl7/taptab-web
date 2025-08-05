@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { QrCode, Users } from 'lucide-react';
+
 
 export default function HeroSection() {
   return (
