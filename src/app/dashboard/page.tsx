@@ -370,11 +370,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 p-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back! Here&apos;s what&apos;s happening today.</p>
-      </div>
+
 
       {/* Quick Actions */}
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">

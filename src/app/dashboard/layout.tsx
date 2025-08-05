@@ -19,7 +19,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { PrintBridgeProvider } from '@/contexts/PrintBridgeContext';
-import { UnifiedStatusPanel } from '@/components/UnifiedStatusPanel';
+import { DashboardHeader } from '@/components/DashboardHeader';
 import { useAuth } from '@/lib/use-auth';
 
 interface DashboardLayoutProps {
@@ -320,15 +320,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
+          {/* Dashboard Header */}
+          <DashboardHeader 
+            jwtToken={jwtToken} 
+            userRole={userRole}
+          />
+          
           {/* Main Content */}
           <main className="flex-1 overflow-auto bg-gray-50">
             {children}
           </main>
         </div>
       </div>
-
-      {/* WebSocket Status Panel */}
-      <UnifiedStatusPanel jwtToken={jwtToken} userRole={userRole} />
     </PrintBridgeProvider>
   );
 } 

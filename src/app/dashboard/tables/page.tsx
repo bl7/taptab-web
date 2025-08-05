@@ -167,7 +167,7 @@ export default function TablesPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div>
-                      <h1 className="text-2xl font-bold text-black">Table Management</h1>
+              
         <p className="text-sm text-black mt-1">
                 Manage restaurant tables and generate QR codes for ordering
               </p>
