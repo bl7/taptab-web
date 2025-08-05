@@ -320,7 +320,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
-          {/* Dashboard Header */}
+          {/* Dashboard Header - Only shown for tenant admin and kitchen */}
           <DashboardHeader 
             jwtToken={jwtToken} 
             userRole={userRole}

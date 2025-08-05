@@ -18,7 +18,10 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
   const [title, setTitle] = useState<string>('Dashboard');
   const [subtitle, setSubtitle] = useState<string>('Manage your restaurant operations');
   const panelRef = useRef<HTMLDivElement>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioRef = useRef<{ play: () => void } | null>(null);
+
+  // Check if user should see the header (only tenant admin and kitchen)
+  const shouldShowHeader = userRole === 'TENANT_ADMIN' || userRole === 'KITCHEN';
   
   const { 
     connect, 
@@ -43,6 +46,7 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
   // Initialize audio element with a simple notification sound
   useEffect(() => {
     // Create a simple notification sound using Web Audio API
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
@@ -60,26 +64,30 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
     
-         // Store the audio context for reuse
-     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-     audioRef.current = { play: () => {
-      const newOscillator = audioContext.createOscillator();
-      const newGainNode = audioContext.createGain();
-      
-      newOscillator.connect(newGainNode);
-      newGainNode.connect(audioContext.destination);
-      
-      newOscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-      newOscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
-      newOscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
-      
-      newGainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      newGainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-      
-      newOscillator.start(audioContext.currentTime);
-      newOscillator.stop(audioContext.currentTime + 0.3);
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-     } } as any;
+             // Store the audio context for reuse
+    audioRef.current = { 
+      play: () => {
+        try {
+          const newOscillator = audioContext.createOscillator();
+          const newGainNode = audioContext.createGain();
+          
+          newOscillator.connect(newGainNode);
+          newGainNode.connect(audioContext.destination);
+          
+          newOscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          newOscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+          newOscillator.frequency.setValueAtTime(800, audioContext.currentTime + 0.2);
+          
+          newGainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          newGainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+          
+          newOscillator.start(audioContext.currentTime);
+          newOscillator.stop(audioContext.currentTime + 0.3);
+        } catch (error) {
+          console.log('thisbitch', 'Audio play failed:', error);
+        }
+      }
+    };
   }, []);
 
   // Play notification sound when new notifications arrive
@@ -87,9 +95,7 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
     if (notifications.length > 0 && shouldReceivePrints) {
       const unreadCount = notifications.filter(n => !n.isRead).length;
       if (unreadCount > 0 && audioRef.current) {
-        audioRef.current.play().catch(error => {
-          console.log('thisbitch', 'Audio play failed:', error);
-        });
+        audioRef.current.play();
       }
     }
   }, [notifications, shouldReceivePrints]);
@@ -180,6 +186,12 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
+  // If user shouldn't see header, return null (header doesn't exist)
+  if (!shouldShowHeader) {
+    console.log('thisbitch', 'Header hidden for user role:', userRole);
+    return null;
+  }
+
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
       <div className="flex items-center justify-between">
@@ -251,9 +263,7 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
                 testNotification();
                 // Also play sound immediately for testing
                 if (audioRef.current) {
-                  audioRef.current.play().catch(error => {
-                    console.log('thisbitch', 'Test audio play failed:', error);
-                  });
+                  audioRef.current.play();
                 }
               }}
               className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded-lg transition-colors"
