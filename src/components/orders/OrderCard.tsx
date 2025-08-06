@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { User, MapPin, AlertTriangle } from 'lucide-react';
-import { Order } from '@/lib/orders-api';
+import React from "react";
+import { User, MapPin, AlertTriangle, Scissors } from "lucide-react";
+import { Order } from "@/lib/orders-api";
 
 interface OrderCardProps {
   order: Order;
@@ -14,25 +14,32 @@ interface OrderCardProps {
   onCancelModal: (order: Order) => void;
   onEditOrder: (order: Order) => void;
   onPrintReceipt: (order: Order) => void;
+  onMoveTable?: (order: Order) => void;
+  onSplitOrder?: (order: Order) => void;
 }
 
-export default function OrderCard({ 
-  order, 
-  waitTime, 
-  isUrgent, 
-  onClick, 
+export default function OrderCard({
+  order,
+  waitTime,
+  isUrgent,
+  onClick,
   onPaymentModal,
   onEditOrder,
-  onPrintReceipt
+  onPrintReceipt,
+  onMoveTable,
+  onSplitOrder,
 }: OrderCardProps) {
-  const totalAmount = order.totalAmount || order.finalAmount || order.total || 
+  const totalAmount =
+    order.totalAmount ||
+    order.finalAmount ||
+    order.total ||
     order.items.reduce((sum, item) => sum + (item.total || 0), 0);
 
   return (
     <div
       onClick={() => onClick(order)}
       className={`relative bg-white rounded-xl border-2 shadow-lg p-6 cursor-pointer transition-all duration-300 hover:shadow-xl ${
-        isUrgent ? 'border-red-300 bg-red-50' : 'border-gray-200'
+        isUrgent ? "border-red-300 bg-red-50" : "border-gray-200"
       }`}
     >
       {/* Urgent Indicator */}
@@ -48,7 +55,9 @@ export default function OrderCard({
           {/* Order number removed */}
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-green-600">${totalAmount.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-green-600">
+            ${totalAmount.toFixed(2)}
+          </div>
           <div className="text-sm text-gray-500">{waitTime} min ago</div>
         </div>
       </div>
@@ -58,12 +67,14 @@ export default function OrderCard({
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-gray-400" />
           <span className="text-sm text-gray-600">
-            {order.customerName || 'Walk-in Customer'}
+            {order.customerName || "Walk-in Customer"}
           </span>
         </div>
         <div className="flex items-center space-x-2">
           <MapPin className="h-4 w-4 text-gray-400" />
-          <span className="text-sm text-gray-600">Table {order.tableNumber}</span>
+          <span className="text-sm text-gray-600">
+            Table {order.tableNumber}
+          </span>
         </div>
       </div>
 
@@ -76,7 +87,9 @@ export default function OrderCard({
                 {item.quantity}x {item.menuItemName}
               </span>
               {item.notes && (
-                <span className="text-xs text-gray-500 italic">({item.notes})</span>
+                <span className="text-xs text-gray-500 italic">
+                  ({item.notes})
+                </span>
               )}
             </div>
             <span className="font-medium text-gray-900">
@@ -87,37 +100,71 @@ export default function OrderCard({
       </div>
 
       {/* Action Buttons - Only show for active orders */}
-      {order.status === 'active' && (
-        <div className="flex space-x-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPaymentModal(order);
-            }}
-            className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
-          >
-            Mark as Paid
-          </button>
-          
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditOrder(order);
-            }}
-            className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
-          >
-            Edit Order
-          </button>
+      {order.status === "active" && (
+        <div className="space-y-2">
+          {/* Primary Actions Row */}
+          <div className="flex space-x-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPaymentModal(order);
+              }}
+              className="flex-1 bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
+            >
+              Mark as Paid
+            </button>
 
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrintReceipt(order);
-            }}
-            className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
-          >
-            Print Receipt
-          </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditOrder(order);
+              }}
+              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
+            >
+              Edit Order
+            </button>
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPrintReceipt(order);
+              }}
+              className="flex-1 bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium"
+            >
+              Print Receipt
+            </button>
+          </div>
+
+          {/* Secondary Actions Row */}
+          {(onMoveTable || onSplitOrder) && (
+            <div className="flex justify-center gap-2">
+              {onMoveTable && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveTable(order);
+                  }}
+                  className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <MapPin className="h-4 w-4" />
+                  Move Table
+                </button>
+              )}
+
+              {onSplitOrder && order.items.length > 1 && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSplitOrder(order);
+                  }}
+                  className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  <Scissors className="h-4 w-4" />
+                  Split Order
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -138,7 +185,7 @@ export default function OrderCard({
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-gray-400" />
           <span className="text-sm text-gray-600">
-            {order.waiterName || order.sourceDetails || 'Unknown Waiter'}
+            {order.waiterName || order.sourceDetails || "Unknown Waiter"}
           </span>
         </div>
         {order.orderSource && (
@@ -149,4 +196,4 @@ export default function OrderCard({
       </div>
     </div>
   );
-} 
+}

@@ -380,14 +380,48 @@ class APIClient {
       ...options,
     };
 
-    const response = await fetch(`${this.baseURL}${endpoint}`, config);
-    const data: APIResponse<T> = await response.json();
+    let response: Response;
+    let data: APIResponse<T>;
+
+    try {
+      response = await fetch(`${this.baseURL}${endpoint}`, config);
+    } catch (fetchError: unknown) {
+      console.error("❌ Network error:", fetchError);
+      throw new APIError(
+        0,
+        "NETWORK_ERROR",
+        `Network error: ${
+          (fetchError as Error)?.message || "Unable to connect to server"
+        }`
+      );
+    }
+
+    try {
+      data = await response.json();
+    } catch (parseError: unknown) {
+      console.error("❌ JSON parse error:", parseError);
+      throw new APIError(
+        response.status,
+        "PARSE_ERROR",
+        `Invalid response format: ${
+          (parseError as Error)?.message || "Unable to parse response"
+        }`
+      );
+    }
 
     if (!response.ok) {
+      console.error("❌ HTTP Error Response:", {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        headers: Object.fromEntries(response.headers.entries()),
+        responseData: data,
+      });
+
       throw new APIError(
         response.status,
         data.error?.code || "UNKNOWN_ERROR",
-        data.error?.message || "An unknown error occurred"
+        data.error?.message || `HTTP ${response.status}: ${response.statusText}`
       );
     }
 
@@ -1130,6 +1164,234 @@ class APIClient {
     };
   }
 
+  // Move Order to Table endpoint
+  async moveOrderToTable(
+    orderId: string,
+    data: {
+      tableId: string;
+      reason: string;
+    }
+  ): Promise<{
+    success: boolean;
+    data: {
+      order: Order;
+      moveDetails: {
+        orderId: string;
+        fromTable: string;
+        toTable: string;
+        reason: string;
+        movedBy: string;
+        movedAt: string;
+      };
+    };
+    message: string;
+  }> {
+    console.log("🔄 API: Moving order to table:", {
+      orderId,
+      tableId: data.tableId,
+      reason: data.reason,
+      url: `${this.baseURL}/v1/orders/${orderId}/move-table`,
+    });
+
+    try {
+      // Make a direct fetch call with detailed logging for move table
+      const token = await (
+        await import("./token-manager")
+      ).tokenManager.getValidToken();
+      const fullUrl = `${this.baseURL}/orders/${orderId}/move-table`;
+
+      console.log("🔍 Making direct fetch call:", {
+        url: fullUrl,
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      });
+
+      const rawResponse = await fetch(fullUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      });
+
+      console.log("📥 Raw response:", {
+        status: rawResponse.status,
+        statusText: rawResponse.statusText,
+        ok: rawResponse.ok,
+        headers: Object.fromEntries(rawResponse.headers.entries()),
+      });
+
+      const responseText = await rawResponse.text();
+      console.log("📄 Raw response text:", responseText);
+
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText);
+        console.log("✅ Parsed response:", parsedResponse);
+      } catch (parseError) {
+        console.error("❌ Failed to parse response:", parseError);
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+
+      if (!rawResponse.ok) {
+        throw new Error(
+          `HTTP ${rawResponse.status}: ${
+            parsedResponse?.error?.message ||
+            parsedResponse?.message ||
+            rawResponse.statusText
+          }`
+        );
+      }
+
+      return parsedResponse;
+    } catch (error: unknown) {
+      console.error("❌ API: Move order failed:", {
+        error,
+        orderId,
+        tableId: data.tableId,
+        reason: data.reason,
+        url: `${this.baseURL}/orders/${orderId}/move-table`,
+        errorType: error?.constructor?.name,
+        errorMessage: (error as Record<string, unknown>)?.message,
+        errorStatus: (error as Record<string, unknown>)?.status,
+        errorCode: (error as Record<string, unknown>)?.code,
+      });
+
+      // Re-throw with additional context
+      throw new Error(
+        `Move order API failed: ${
+          (error as Error)?.message || "Unknown error"
+        } (Order: ${orderId}, Table: ${data.tableId})`
+      );
+    }
+  }
+
+  // Split Order endpoint
+  async splitOrder(
+    orderId: string,
+    data: {
+      itemsToSplit: Array<{
+        itemId: string;
+        quantity: number;
+      }>;
+      newTableId?: string;
+      customerName?: string;
+      customerPhone?: string;
+      specialInstructions?: string;
+      reason?: string;
+    }
+  ): Promise<{
+    success: boolean;
+    data: {
+      newOrder: Order;
+      updatedSourceOrder: Order;
+      splitDetails: {
+        sourceOrderId: string;
+        newOrderId: string;
+        itemsSplit: number;
+        totalSplitAmount: number;
+        sourceOrderRemainingTotal: number;
+        fromTable: string;
+        toTable: string;
+        reason: string;
+        splitBy: string;
+        splitAt: string;
+      };
+    };
+    message: string;
+  }> {
+    console.log("🔄 API: Splitting order:", {
+      orderId,
+      itemsToSplit: data.itemsToSplit,
+      newTableId: data.newTableId,
+      reason: data.reason,
+      url: `${this.baseURL}/orders/${orderId}/split`,
+    });
+
+    try {
+      // Make a direct fetch call with detailed logging for split order
+      const token = await (
+        await import("./token-manager")
+      ).tokenManager.getValidToken();
+      const fullUrl = `${this.baseURL}/orders/${orderId}/split`;
+
+      console.log("🔍 Making direct fetch call for split:", {
+        url: fullUrl,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      });
+
+      const rawResponse = await fetch(fullUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(data),
+      });
+
+      console.log("📥 Raw split response:", {
+        status: rawResponse.status,
+        statusText: rawResponse.statusText,
+        ok: rawResponse.ok,
+        headers: Object.fromEntries(rawResponse.headers.entries()),
+      });
+
+      const responseText = await rawResponse.text();
+      console.log("📄 Raw split response text:", responseText);
+
+      let parsedResponse;
+      try {
+        parsedResponse = JSON.parse(responseText);
+        console.log("✅ Parsed split response:", parsedResponse);
+      } catch (parseError) {
+        console.error("❌ Failed to parse split response:", parseError);
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+
+      if (!rawResponse.ok) {
+        throw new Error(
+          `HTTP ${rawResponse.status}: ${
+            parsedResponse?.error?.message ||
+            parsedResponse?.message ||
+            rawResponse.statusText
+          }`
+        );
+      }
+
+      return parsedResponse;
+    } catch (error: unknown) {
+      console.error("❌ API: Split order failed:", {
+        error,
+        orderId,
+        itemsToSplit: data.itemsToSplit,
+        newTableId: data.newTableId,
+        reason: data.reason,
+        url: `${this.baseURL}/orders/${orderId}/split`,
+        errorType: error?.constructor?.name,
+        errorMessage: (error as Record<string, unknown>)?.message,
+        errorStatus: (error as Record<string, unknown>)?.status,
+        errorCode: (error as Record<string, unknown>)?.code,
+      });
+
+      // Re-throw with additional context
+      throw new Error(
+        `Split order API failed: ${
+          (error as Error)?.message || "Unknown error"
+        } (Order: ${orderId}, Items: ${data.itemsToSplit.length})`
+      );
+    }
+  }
+
   // Tables endpoints
   async getTables(): Promise<{ tables: Table[] }> {
     console.log("🔍 Fetching tables from:", `${this.baseURL}/tables`);
@@ -1141,6 +1403,153 @@ class APIClient {
       console.log("📋 First table example:", response.tables[0]);
     }
     return { tables: response.tables };
+  }
+
+  // Merge Bills API Methods
+  async getAllOrders(): Promise<{
+    orders: Order[];
+    orderGroups: Array<{
+      id: string;
+      name: string;
+      orders: string[];
+      totalAmount: number;
+      customerName?: string;
+    }>;
+    summary: {
+      totalOrders: number;
+      totalAmount: number;
+      canMerge: boolean;
+      mergeRestrictions: string[];
+    };
+  }> {
+    return this.request<{
+      orders: Order[];
+      orderGroups: Array<{
+        id: string;
+        name: string;
+        orders: string[];
+        totalAmount: number;
+        customerName?: string;
+      }>;
+      summary: {
+        totalOrders: number;
+        totalAmount: number;
+        canMerge: boolean;
+        mergeRestrictions: string[];
+      };
+    }>("/orders/all");
+  }
+
+  async getTableOrders(tableId: string): Promise<{
+    table: {
+      id: string;
+      number: string;
+      order_count: number;
+    };
+    orders: Order[];
+    orderGroups: Array<{
+      id: string;
+      name: string;
+      orders: string[];
+      totalAmount: number;
+      customerName?: string;
+    }>;
+    tableSummary: {
+      totalOrders: number;
+      totalAmount: number;
+      canMerge: boolean;
+      mergeRestrictions: string[];
+    };
+  }> {
+    return this.request<{
+      table: {
+        id: string;
+        number: string;
+        order_count: number;
+      };
+      orders: Order[];
+      orderGroups: Array<{
+        id: string;
+        name: string;
+        orders: string[];
+        totalAmount: number;
+        customerName?: string;
+      }>;
+      tableSummary: {
+        totalOrders: number;
+        totalAmount: number;
+        canMerge: boolean;
+        mergeRestrictions: string[];
+      };
+    }>(`/orders/table/${tableId}`);
+  }
+
+  async validateMerge(data: { sourceOrderIds: string[] }): Promise<{
+    canMerge: boolean;
+    restrictions: string[];
+    warnings: string[];
+    preview: {
+      mergedOrder: Order;
+      totalAmount: number;
+      itemCount: number;
+    };
+  }> {
+    console.log("🔍 Validating merge with data:", data);
+    const response = await this.request<{
+      canMerge: boolean;
+      restrictions: string[];
+      warnings: string[];
+      preview: {
+        mergedOrder: Order;
+        totalAmount: number;
+        itemCount: number;
+      };
+    }>("/orders/validate-merge", {
+      method: "POST",
+      body: JSON.stringify({
+        sourceOrderIds: data.sourceOrderIds,
+      }),
+    });
+    console.log("✅ Validate merge response:", response);
+    return response;
+  }
+
+  async mergeOrders(data: {
+    sourceOrderIds: string[];
+    targetOrderId?: string;
+    mergeStrategy: "append" | "create_new";
+    tableId?: string;
+    customerName?: string;
+    customerPhone?: string;
+    specialInstructions?: string;
+    waiterId?: string;
+    waiterName?: string;
+    createNewOrder?: boolean;
+  }): Promise<{
+    mergedOrder: Order;
+    sourceOrders: Order[];
+    mergeSummary: {
+      totalItems: number;
+      totalAmount: number;
+      itemCount: number;
+      customerCount: number;
+      ordersMerged: number;
+    };
+  }> {
+    return this.request<{
+      mergedOrder: Order;
+      sourceOrders: Order[];
+      mergeSummary: {
+        totalItems: number;
+        totalAmount: number;
+        itemCount: number;
+        customerCount: number;
+        ordersMerged: number;
+      };
+    }>("/orders/merge", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
   }
 
   async createTable(data: {

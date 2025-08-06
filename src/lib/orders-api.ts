@@ -1,8 +1,8 @@
 // Import the main API client
-import { api } from './api';
+import { api } from "./api";
 
 // Types based on the API documentation
-export type OrderStatus = 'active' | 'paid' | 'cancelled';
+export type OrderStatus = "active" | "paid" | "cancelled";
 
 export interface OrderItem {
   id: string;
@@ -12,7 +12,7 @@ export interface OrderItem {
   price: number;
   total?: number;
   notes?: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served';
+  status: "pending" | "preparing" | "ready" | "served";
 }
 
 export interface Order {
@@ -106,11 +106,11 @@ export class OrdersApi {
     try {
       const response = await api.getOrders({
         status: params?.status,
-        tableId: params?.table
+        tableId: params?.table,
       });
-      
-      console.log('LOOKFORTHIS 🔍 Raw orders from API:', response.orders);
-      
+
+      console.log("LOOKFORTHIS 🔍 Raw orders from API:", response.orders);
+
       // Log each order's total fields to debug
       response.orders.forEach((order, index) => {
         console.log(`LOOKFORTHIS 🔍 Order ${index + 1} total fields:`, {
@@ -118,7 +118,10 @@ export class OrdersApi {
           totalAmount: order.totalAmount,
           finalAmount: order.finalAmount,
           total: order.total,
-          calculatedTotal: order.items.reduce((sum, item) => sum + (item.total || 0), 0),
+          calculatedTotal: order.items.reduce(
+            (sum, item) => sum + (item.total || 0),
+            0
+          ),
           waiterName: order.waiterName,
           sourceDetails: order.sourceDetails,
           waiterId: order.waiterId,
@@ -127,19 +130,20 @@ export class OrdersApi {
           hasWaiterFields: {
             hasWaiterName: !!order.waiterName,
             hasSourceDetails: !!order.sourceDetails,
-            hasWaiterId: !!order.waiterId
+            hasWaiterId: !!order.waiterId,
           },
-          orderKeys: Object.keys(order)
+          orderKeys: Object.keys(order),
         });
       });
-      
+
       // Transform the data to match expected format
-      const transformedOrders = response.orders.map(order => {
+      const transformedOrders = response.orders.map((order) => {
         // Calculate order total from items if not provided
-        const calculatedOrderTotal = order.items.reduce((sum, item) => 
-          sum + (item.total || (item.price * item.quantity)), 0
+        const calculatedOrderTotal = order.items.reduce(
+          (sum, item) => sum + (item.total || item.price * item.quantity),
+          0
         );
-        
+
         const transformedOrder = {
           ...order,
           // API returns 'total' but we need 'totalAmount' for consistency
@@ -151,50 +155,59 @@ export class OrdersApi {
           sourceDetails: order.sourceDetails,
           waiterId: order.waiterId,
           // Transform items to include totals
-          items: order.items.map(item => ({
+          items: order.items.map((item) => ({
             ...item,
-            total: item.total || (item.price * item.quantity)
-          }))
+            total: item.total || item.price * item.quantity,
+          })),
         };
-        
+
         return transformedOrder;
       });
-      
-      console.log('LOOKFORTHIS 🔍 Transformed orders:', transformedOrders);
-      
+
+      console.log("LOOKFORTHIS 🔍 Transformed orders:", transformedOrders);
+
       return {
         success: true,
         data: {
-          orders: transformedOrders
+          orders: transformedOrders,
         },
-        message: 'Orders retrieved successfully',
-        timestamp: new Date().toISOString()
+        message: "Orders retrieved successfully",
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error("Error fetching orders:", error);
       throw error;
     }
   }
 
   // Try to get orders from public API (fallback)
-  static async getOrdersFromPublicAPI(tenantSlug: string): Promise<OrdersResponse> {
-    const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`);
-    
-    console.log('🌐 Public Orders API URL:', url.toString());
+  static async getOrdersFromPublicAPI(
+    tenantSlug: string
+  ): Promise<OrdersResponse> {
+    const url = new URL(
+      `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`
+    );
+
+    console.log("🌐 Public Orders API URL:", url.toString());
 
     const response = await fetch(url.toString(), {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
     });
 
-    console.log('📡 Public Orders API response status:', response.status);
-    console.log('📡 Public Orders API response status text:', response.statusText);
+    console.log("📡 Public Orders API response status:", response.status);
+    console.log(
+      "📡 Public Orders API response status text:",
+      response.statusText
+    );
 
     const data = await response.json();
-    
+
     if (!response.ok) {
-      throw new Error(data.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+      throw new Error(
+        data.error?.message || `HTTP ${response.status}: ${response.statusText}`
+      );
     }
 
     return data as OrdersResponse;
@@ -205,28 +218,30 @@ export class OrdersApi {
     try {
       // Note: The main API client doesn't have getOrder method yet
       // This would need to be added to the main API client
-      throw new Error('getOrder method not implemented in main API client');
+      throw new Error("getOrder method not implemented in main API client");
     } catch (error) {
-      console.error('Error fetching order:', error);
+      console.error("Error fetching order:", error);
       throw error;
     }
   }
 
   // Create a new order
-  static async createOrder(orderData: CreateOrderRequest): Promise<OrderResponse> {
+  static async createOrder(
+    orderData: CreateOrderRequest
+  ): Promise<OrderResponse> {
     try {
       const response = await api.createOrder(orderData);
-      
+
       return {
         success: true,
         data: {
-          order: response.order
+          order: response.order,
         },
-        message: 'Order created successfully',
-        timestamp: new Date().toISOString()
+        message: "Order created successfully",
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error("Error creating order:", error);
       throw error;
     }
   }
@@ -236,44 +251,50 @@ export class OrdersApi {
     try {
       // Note: The main API client doesn't have updateOrder method yet
       // This would need to be added to the main API client
-      throw new Error('updateOrder method not implemented in main API client');
+      throw new Error("updateOrder method not implemented in main API client");
     } catch (error) {
-      console.error('Error updating order:', error);
+      console.error("Error updating order:", error);
       throw error;
     }
   }
 
   // Cancel an order
-  static async cancelOrder(orderId: string, reason: string = 'Admin decision'): Promise<{ success: boolean; message: string }> {
+  static async cancelOrder(
+    orderId: string,
+    reason: string = "Admin decision"
+  ): Promise<{ success: boolean; message: string }> {
     try {
       const response = await api.cancelOrder(orderId, reason);
-      
+
       return {
         success: response.success,
-        message: 'Order cancelled successfully'
+        message: "Order cancelled successfully",
       };
     } catch (error) {
-      console.error('Error cancelling order:', error);
+      console.error("Error cancelling order:", error);
       throw error;
     }
   }
 
   // Update order status (convenience method)
-  static async updateOrderStatus(orderId: string, status: OrderStatus): Promise<OrderResponse> {
+  static async updateOrderStatus(
+    orderId: string,
+    status: OrderStatus
+  ): Promise<OrderResponse> {
     try {
       const response = await api.updateOrderStatus(orderId, status);
-      
+
       return {
         success: true,
         data: {
-          order: response.order
+          order: response.order,
         },
-        message: 'Order status updated successfully',
-        timestamp: new Date().toISOString()
+        message: "Order status updated successfully",
+        timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Error updating order status:', error);
+      console.error("Error updating order status:", error);
       throw error;
     }
   }
-} 
+}

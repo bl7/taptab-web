@@ -1,28 +1,28 @@
-'use client';
+"use client";
 
-import { useState, useEffect, Suspense } from 'react';
-import { Button } from '@/components/ui/button';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock } from 'lucide-react';
-import Image from 'next/image';
-import { tokenManager } from '@/lib/token-manager';
+import { useState, useEffect, Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock } from "lucide-react";
+import Image from "next/image";
+import { tokenManager } from "@/lib/token-manager";
 
 function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
   const [isResending, setIsResending] = useState(false);
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const successMessage = searchParams.get('message');
+    const successMessage = searchParams.get("message");
     if (successMessage) {
       setMessage(successMessage);
     }
@@ -30,21 +30,24 @@ function LoginForm() {
     // Check if user is already authenticated
     const checkAuth = async () => {
       // Add a small delay to ensure tokenManager is initialized
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       if (tokenManager.isAuthenticated()) {
-        console.log('🔐 User already authenticated, redirecting to dashboard');
-        router.push('/dashboard');
+        console.log("🔐 User already authenticated, redirecting to dashboard");
+        router.push("/dashboard");
         return;
       }
-      
+
       // Also check localStorage directly as fallback
-      const token = localStorage.getItem('token') || localStorage.getItem('bossToken');
-      const refreshToken = localStorage.getItem('refreshToken');
-      
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("bossToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+
       if (token && refreshToken) {
-        console.log('🔐 Found tokens in localStorage, redirecting to dashboard');
-        router.push('/dashboard');
+        console.log(
+          "🔐 Found tokens in localStorage, redirecting to dashboard"
+        );
+        router.push("/dashboard");
       }
     };
 
@@ -63,30 +66,31 @@ function LoginForm() {
 
   const handleResendOTP = async () => {
     if (resendCountdown > 0) return;
-    
+
     setIsResending(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action: 'requestOTP', email }),
+        body: JSON.stringify({ action: "requestOTP", email }),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to resend OTP');
+        throw new Error(data.error || "Failed to resend OTP");
       }
-      
+
       // Start countdown timer (60 seconds)
       setResendCountdown(60);
-      setMessage('OTP resent successfully!');
+      setMessage("OTP resent successfully!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to resend OTP';
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to resend OTP";
       setError(errorMessage);
     } finally {
       setIsResending(false);
@@ -95,33 +99,59 @@ function LoginForm() {
 
   const handleRequestOTP = async () => {
     if (!email) {
-      setError('Please enter your email');
+      setError("Please enter your email");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
+      // Warm up the server to prevent cold start issues on Vercel
+      try {
+        console.log("🔥 Warming up server before OTP request...");
+        const warmupResponse = await fetch("/api/warmup", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (warmupResponse.ok) {
+          console.log("✅ Server warmed up successfully");
+        } else {
+          console.log("⚠️ Warm-up response not ok, but continuing...");
+        }
+      } catch (warmupError) {
+        console.log(
+          "⚠️ Warm-up failed, continuing with OTP request:",
+          warmupError
+        );
+      }
+
+      // Small delay to ensure server is ready
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action: 'requestOTP', email }),
+        body: JSON.stringify({ action: "requestOTP", email }),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send OTP');
+        throw new Error(data.error || "Failed to send OTP");
       }
-      
+
       setShowOtpInput(true);
       // Start countdown timer (60 seconds)
       setResendCountdown(60);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send OTP';
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to send OTP";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -130,45 +160,46 @@ function LoginForm() {
 
   const handleVerifyOTP = async () => {
     if (!otp || otp.length !== 6) {
-      setError('Please enter a valid 6-digit OTP');
+      setError("Please enter a valid 6-digit OTP");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
+      const response = await fetch("/api/login", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action: 'verifyOTP', email, otp, rememberMe }),
+        body: JSON.stringify({ action: "verifyOTP", email, otp, rememberMe }),
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.error || 'Invalid OTP');
+        throw new Error(data.error || "Invalid OTP");
       }
-      
+
       // Store tokens in localStorage (in production, use secure storage)
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('refreshToken', data.refreshToken || '');
-      localStorage.setItem('user', JSON.stringify(data.user));
-      
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("refreshToken", data.refreshToken || "");
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       // Console log the token for debugging
-      console.log('🔐 Login successful!');
-      console.log('📧 User email:', data.user.email);
-      console.log('👤 User role:', data.user.role);
-      console.log('🏪 Tenant:', data.user.tenant?.name || 'N/A');
-      console.log('🔑 Token:', data.token);
-      console.log('📝 Full user data:', data.user);
-      
+      console.log("🔐 Login successful!");
+      console.log("📧 User email:", data.user.email);
+      console.log("👤 User role:", data.user.role);
+      console.log("🏪 Tenant:", data.user.tenant?.name || "N/A");
+      console.log("🔑 Token:", data.token);
+      console.log("📝 Full user data:", data.user);
+
       // Redirect to dashboard
-      router.push('/dashboard/staff');
+      router.push("/dashboard/staff");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Invalid OTP';
+      const errorMessage =
+        error instanceof Error ? error.message : "Invalid OTP";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -182,10 +213,10 @@ function LoginForm() {
           {/* Header with Logo and Text */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center">
-              <Image 
-                src="/icon.png" 
-                alt="TapTab Logo" 
-                width={40} 
+              <Image
+                src="/icon.png"
+                alt="TapTab Logo"
+                width={40}
                 height={40}
                 className="rounded-lg"
               />
@@ -196,7 +227,9 @@ function LoginForm() {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-black mb-2">Sign in to your account</h2>
+            <h2 className="text-3xl font-bold text-black mb-2">
+              Sign in to your account
+            </h2>
             <p className="text-gray-600">Access your restaurant dashboard</p>
           </div>
 
@@ -214,7 +247,10 @@ function LoginForm() {
 
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-black mb-2"
+              >
                 Email Address
               </label>
               <div className="relative">
@@ -237,12 +273,15 @@ function LoginForm() {
                 disabled={isLoading}
                 className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
               >
-                {isLoading ? 'Sending...' : 'Send Login Code'}
+                {isLoading ? "Sending..." : "Send Login Code"}
               </Button>
             ) : (
               <>
                 <div>
-                  <label htmlFor="otp" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="otp"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Enter 6-digit code
                   </label>
                   <div className="relative">
@@ -251,7 +290,9 @@ function LoginForm() {
                       id="otp"
                       type="text"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      onChange={(e) =>
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                      }
                       className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-center text-lg tracking-widest text-black placeholder-gray-500"
                       placeholder="000000"
                       maxLength={6}
@@ -276,7 +317,10 @@ function LoginForm() {
                     onChange={(e) => setRememberMe(e.target.checked)}
                     className="h-4 w-4 text-black border-gray-300 rounded focus:ring-black"
                   />
-                  <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                  <label
+                    htmlFor="rememberMe"
+                    className="ml-2 block text-sm text-gray-700"
+                  >
                     Remember me
                   </label>
                 </div>
@@ -287,27 +331,30 @@ function LoginForm() {
                     disabled={isLoading || otp.length !== 6}
                     className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
                   >
-                    {isLoading ? 'Verifying...' : 'Sign In'}
+                    {isLoading ? "Verifying..." : "Sign In"}
                   </Button>
-                  
+
                   <Button
                     onClick={handleResendOTP}
                     disabled={resendCountdown > 0 || isResending}
                     variant="outline"
                     className="w-full !text-white border-gray-400 text-black hover:bg-gray-50 hover:!text-black disabled:opacity-50"
                   >
-                    {isResending ? 'Resending...' : 
-                     resendCountdown > 0 ? `Resend in ${resendCountdown}s` : 'Resend OTP'}
+                    {isResending
+                      ? "Resending..."
+                      : resendCountdown > 0
+                      ? `Resend in ${resendCountdown}s`
+                      : "Resend OTP"}
                   </Button>
-                  
+
                   <div className="text-center">
                     <button
                       type="button"
                       onClick={() => {
                         setShowOtpInput(false);
-                        setOtp('');
-                        setError('');
-                        setMessage('');
+                        setOtp("");
+                        setError("");
+                        setMessage("");
                         setResendCountdown(0);
                       }}
                       className="text-sm text-gray-600 hover:text-black underline"
@@ -322,8 +369,11 @@ function LoginForm() {
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don&apos;t have an account?{' '}
-              <a href="/signup" className="text-black hover:text-gray-700 font-medium">
+              Don&apos;t have an account?{" "}
+              <a
+                href="/signup"
+                className="text-black hover:text-gray-700 font-medium"
+              >
                 Create restaurant account
               </a>
             </p>
@@ -340,4 +390,4 @@ export default function LoginPage() {
       <LoginForm />
     </Suspense>
   );
-} 
+}
