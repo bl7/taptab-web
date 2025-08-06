@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { Order, Table } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface MergeBillsModalProps {
   isOpen: boolean;
@@ -364,12 +365,12 @@ export default function MergeBillsModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black text-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-blue-600" />
+            <Users className="h-6 w-6 text-gray-800" />
             <div>
               <h2 className="text-xl font-bold text-gray-900">Merge Bills</h2>
               <p className="text-sm text-gray-600">
@@ -377,12 +378,14 @@ export default function MergeBillsModal({
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600"
           >
             <X className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
 
         <div className="flex h-[calc(90vh-120px)]">
@@ -395,25 +398,25 @@ export default function MergeBillsModal({
 
               {/* Table Summary */}
               {tableSummary && (
-                <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                <div className="bg-muted rounded-lg p-4 mb-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-blue-900">
+                      <p className="text-sm font-medium text-gray-900">
                         {tableSummary.totalOrders} active orders • $
                         {Number(tableSummary.totalAmount || 0).toFixed(2)} total
                       </p>
-                      <p className="text-xs text-blue-600 mt-1">
+                      <p className="text-xs text-gray-600 mt-1">
                         Only active orders (not paid or cancelled) are shown for
                         merging
                       </p>
                       {tableSummary.mergeRestrictions.length > 0 && (
-                        <p className="text-xs text-red-600 mt-1">
+                        <p className="text-xs text-destructive mt-1">
                           Restrictions:{" "}
                           {tableSummary.mergeRestrictions.join(", ")}
                         </p>
                       )}
                     </div>
-                    <DollarSign className="h-5 w-5 text-blue-600" />
+                    <DollarSign className="h-5 w-5 text-gray-700" />
                   </div>
                 </div>
               )}
@@ -433,7 +436,7 @@ export default function MergeBillsModal({
                             key={order.id}
                             className={`border rounded-lg p-3 cursor-pointer transition-colors ${
                               selectedOrders.includes(order.id)
-                                ? "border-blue-500 bg-blue-50"
+                                ? "border-gray-400 bg-muted"
                                 : "border-gray-200 hover:border-gray-300"
                             }`}
                             onClick={() => handleOrderSelect(order.id)}
@@ -459,7 +462,7 @@ export default function MergeBillsModal({
                                         ? "bg-green-100 text-green-800"
                                         : order.status === "paid"
                                         ? "bg-blue-100 text-blue-800"
-                                        : "bg-red-100 text-red-800"
+                                        : "bg-gray-100 text-gray-800"
                                     }`}
                                   >
                                     {order.status}
@@ -510,7 +513,7 @@ export default function MergeBillsModal({
                                   ? "bg-green-100 text-green-800"
                                   : order.status === "paid"
                                   ? "bg-blue-100 text-blue-800"
-                                  : "bg-red-100 text-red-800"
+                                  : "bg-gray-100 text-gray-800"
                               }`}
                             >
                               {order.status}
@@ -569,7 +572,7 @@ export default function MergeBillsModal({
                     setTargetOrder(null);
                     setSelectedTableId("");
                   }}
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 >
                   <option value="append">Append to existing order</option>
                   <option value="create_new">Create new order</option>
@@ -585,7 +588,7 @@ export default function MergeBillsModal({
                   <select
                     value={selectedTableId}
                     onChange={(e) => setSelectedTableId(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                     required
                   >
                     <option value="">Choose a table...</option>
@@ -609,7 +612,7 @@ export default function MergeBillsModal({
                   <select
                     value={targetOrder || ""}
                     onChange={(e) => setTargetOrder(e.target.value || null)}
-                    className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     <option value="">Auto-select</option>
                     {(() => {
@@ -672,7 +675,7 @@ export default function MergeBillsModal({
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Combined customer name"
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
@@ -685,7 +688,7 @@ export default function MergeBillsModal({
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
                   placeholder="Primary phone number"
-                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                 />
               </div>
 
@@ -706,20 +709,20 @@ export default function MergeBillsModal({
               {validationResult && (
                 <div
                   className={`rounded-lg p-4 mb-4 ${
-                    validationResult.canMerge ? "bg-green-50" : "bg-red-50"
+                    validationResult.canMerge ? "bg-muted" : "bg-muted"
                   }`}
                 >
                   <div className="flex items-center gap-2 mb-2">
                     {validationResult.canMerge ? (
-                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <CheckCircle className="h-5 w-5 text-success" />
                     ) : (
-                      <AlertTriangle className="h-5 w-5 text-red-600" />
+                      <AlertTriangle className="h-5 w-5 text-destructive" />
                     )}
                     <span
                       className={`font-medium ${
                         validationResult.canMerge
-                          ? "text-green-900"
-                          : "text-red-900"
+                          ? "text-gray-900"
+                          : "text-gray-900"
                       }`}
                     >
                       {validationResult.canMerge ? "Can Merge" : "Cannot Merge"}
@@ -741,10 +744,10 @@ export default function MergeBillsModal({
 
                   {validationResult.restrictions.length > 0 && (
                     <div className="mb-2">
-                      <p className="text-sm font-medium text-red-800">
+                      <p className="text-sm font-medium text-gray-800">
                         Restrictions:
                       </p>
-                      <ul className="text-sm text-red-700 list-disc list-inside">
+                      <ul className="text-sm text-gray-700 list-disc list-inside">
                         {validationResult.restrictions.map(
                           (restriction, index) => (
                             <li key={index}>{restriction}</li>
@@ -770,27 +773,28 @@ export default function MergeBillsModal({
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <button
+                <Button
+                  variant="secondary"
                   onClick={handleValidateMerge}
                   disabled={
                     selectedOrders.length < 2 || !tableSummary?.canMerge
                   }
-                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1"
                 >
                   Validate Merge
-                </button>
+                </Button>
 
-                <button
+                <Button
                   onClick={handleMergeOrders}
                   disabled={
                     !validationResult?.canMerge ||
                     merging ||
                     !tableSummary?.canMerge
                   }
-                  className="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1"
                 >
                   {merging ? "Merging..." : "Merge Orders"}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

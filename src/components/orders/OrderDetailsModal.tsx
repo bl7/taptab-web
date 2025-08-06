@@ -1,8 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { X, User, MapPin, Clock, Tag, CheckCircle, XCircle } from 'lucide-react';
-import { Order } from '@/lib/orders-api';
+import React from "react";
+import {
+  X,
+  User,
+  MapPin,
+  Clock,
+  Tag,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import { Order } from "@/lib/orders-api";
+import { Button } from "@/components/ui/button";
 
 interface OrderDetailsModalProps {
   order: Order | null;
@@ -17,14 +26,19 @@ export default function OrderDetailsModal({
   isOpen,
   onClose,
   onPaymentModal,
-  onCancelModal
+  onCancelModal,
 }: OrderDetailsModalProps) {
   if (!isOpen || !order) return null;
 
-  const totalAmount = order.totalAmount || order.finalAmount || order.total || 
+  const totalAmount =
+    order.totalAmount ||
+    order.finalAmount ||
+    order.total ||
     order.items.reduce((sum, item) => sum + (item.total || 0), 0);
 
-  const waitTime = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60));
+  const waitTime = Math.floor(
+    (Date.now() - new Date(order.createdAt).getTime()) / (1000 * 60)
+  );
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -33,29 +47,35 @@ export default function OrderDetailsModal({
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Order Details</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Order Details
+              </h2>
               <p className="text-sm text-gray-600">
                 Order #{order.orderNumber || order.id.slice(-8)}
               </p>
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="text-gray-400 hover:text-gray-600"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
           </div>
 
           {/* Order Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div className="flex items-center space-x-2">
               <MapPin className="h-4 w-4 text-gray-400" />
-              <span className="text-sm text-gray-600">Table {order.tableNumber}</span>
+              <span className="text-sm text-gray-600">
+                Table {order.tableNumber}
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <User className="h-4 w-4 text-gray-400" />
               <span className="text-sm text-gray-600">
-                {order.customerName || 'Walk-in Customer'}
+                {order.customerName || "Walk-in Customer"}
               </span>
             </div>
             <div className="flex items-center space-x-2">
@@ -67,13 +87,13 @@ export default function OrderDetailsModal({
             <div className="flex items-center space-x-2">
               <User className="h-4 w-4 text-gray-400" />
               <span className="text-sm text-gray-600">
-                {order.waiterName || order.sourceDetails || 'Unknown Waiter'}
+                {order.waiterName || order.sourceDetails || "Unknown Waiter"}
               </span>
             </div>
             <div className="flex items-center space-x-2">
               <Tag className="h-4 w-4 text-gray-400" />
               <span className="text-sm text-gray-600">
-                {order.orderSource || 'Unknown Source'}
+                {order.orderSource || "Unknown Source"}
               </span>
             </div>
           </div>
@@ -120,38 +140,41 @@ export default function OrderDetailsModal({
           </div>
 
           {/* Total Amount */}
-          <div className="flex justify-between items-center mb-6 p-4 bg-green-50 rounded-lg">
-            <span className="text-lg font-bold text-gray-900">Total Amount:</span>
-            <span className="text-2xl font-bold text-green-600">
+          <div className="flex justify-between items-center mb-6 p-4 bg-muted rounded-lg">
+            <span className="text-lg font-bold text-gray-900">
+              Total Amount:
+            </span>
+            <span className="text-2xl font-bold text-gray-900">
               ${totalAmount.toFixed(2)}
             </span>
           </div>
 
           {/* Action Buttons */}
           <div className="flex space-x-3 flex-wrap gap-2">
-            {order.status === 'active' && (
+            {order.status === "active" && (
               <>
-                <button
+                <Button
                   onClick={() => {
                     onPaymentModal(order);
                     onClose();
                   }}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center"
+                  className="flex-1 py-3"
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Mark as Paid
-                </button>
-                
-                <button
+                </Button>
+
+                <Button
+                  variant="destructive"
                   onClick={() => {
                     onCancelModal(order);
                     onClose();
                   }}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-3 rounded-lg text-sm font-medium flex items-center justify-center"
+                  className="flex-1 py-3"
                 >
                   <XCircle className="h-4 w-4 mr-2" />
                   Cancel Order
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -159,4 +182,4 @@ export default function OrderDetailsModal({
       </div>
     </div>
   );
-} 
+}

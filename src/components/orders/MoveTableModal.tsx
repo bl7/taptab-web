@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, MapPin, AlertCircle } from "lucide-react";
 import { Order, Table, api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface MoveTableModalProps {
   order: Order | null;
@@ -167,11 +168,11 @@ export default function MoveTableModal({
       "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium";
     switch (status.toLowerCase()) {
       case "available":
-        return `${baseClasses} bg-green-100 text-green-800`;
+        return `${baseClasses} bg-gray-100 text-gray-800`;
       case "occupied":
-        return `${baseClasses} bg-red-100 text-red-800`;
+        return `${baseClasses} bg-gray-200 text-gray-900`;
       case "reserved":
-        return `${baseClasses} bg-yellow-100 text-yellow-800`;
+        return `${baseClasses} bg-gray-100 text-gray-700`;
       case "cleaning":
         return `${baseClasses} bg-gray-100 text-gray-800`;
       default:
@@ -182,28 +183,30 @@ export default function MoveTableModal({
   if (!isOpen || !order) return null;
 
   return (
-    <div className="fixed inset-0 bg-black text-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-blue-600" />
+            <MapPin className="h-5 w-5 text-gray-800" />
             <h3 className="text-lg font-semibold text-gray-900">
               Move Order to Different Table
             </h3>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600"
           >
             <X className="h-6 w-6" />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Order Information */}
-          <div className="bg-gray-50 rounded-lg p-4">
+          <div className="bg-muted rounded-lg p-4">
             <h4 className="text-sm font-medium text-gray-900 mb-3">
               Order Details
             </h4>
@@ -233,11 +236,11 @@ export default function MoveTableModal({
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     order.status === "active"
-                      ? "bg-green-100 text-green-800"
+                      ? "bg-gray-100 text-gray-800"
                       : order.status === "paid"
-                      ? "bg-blue-100 text-blue-800"
+                      ? "bg-gray-200 text-gray-900"
                       : order.status === "cancelled"
-                      ? "bg-red-100 text-red-800"
+                      ? "bg-gray-100 text-gray-700"
                       : "bg-gray-100 text-gray-800"
                   }`}
                 >
@@ -250,7 +253,7 @@ export default function MoveTableModal({
           {/* Table Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select New Table <span className="text-red-500">*</span>
+              Select New Table <span className="text-destructive">*</span>
             </label>
             <select
               value={selectedTableId}
@@ -258,7 +261,7 @@ export default function MoveTableModal({
                 setSelectedTableId(e.target.value);
                 setError("");
               }}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               required
             >
               <option value="">Choose a table...</option>
@@ -300,7 +303,7 @@ export default function MoveTableModal({
           {/* Reason Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Reason for Move <span className="text-red-500">*</span>
+              Reason for Move <span className="text-destructive">*</span>
             </label>
             <select
               value={reason}
@@ -309,7 +312,7 @@ export default function MoveTableModal({
                 if (e.target.value) setCustomReason("");
                 setError("");
               }}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent mb-3"
+              className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent mb-3"
             >
               <option value="">Select a reason...</option>
               {PREDEFINED_REASONS.map((reasonOption) => (
@@ -330,7 +333,7 @@ export default function MoveTableModal({
                   setError("");
                 }}
                 maxLength={200}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full p-3 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               <div className="text-xs text-gray-500 mt-1">
                 {customReason.length}/200 characters
@@ -340,27 +343,28 @@ export default function MoveTableModal({
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <AlertCircle className="h-4 w-4 text-red-600" />
-              <span className="text-sm text-red-700">{error}</span>
+            <div className="flex items-center gap-2 p-3 bg-muted border border-gray-200 rounded-lg">
+              <AlertCircle className="h-4 w-4 text-destructive" />
+              <span className="text-sm text-gray-700">{error}</span>
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
+              variant="secondary"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleMove}
               disabled={
                 !selectedTableId || (!reason && !customReason.trim()) || loading
               }
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1"
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
@@ -373,7 +377,7 @@ export default function MoveTableModal({
                   Move to Table
                 </div>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

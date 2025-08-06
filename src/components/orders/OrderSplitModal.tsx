@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, Scissors, AlertCircle, Plus, Minus } from "lucide-react";
 import { Order, Table, api } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 interface OrderSplitModalProps {
   order: Order | null;
@@ -392,28 +393,30 @@ export default function OrderSplitModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b bg-gray-50">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <Scissors className="h-5 w-5 text-orange-600" />
+            <Scissors className="h-5 w-5 text-gray-800" />
             <h3 className="text-lg font-semibold text-gray-900">Split Order</h3>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 hover:text-gray-600"
           >
             <X className="h-6 w-6" />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
           <div className="p-6 space-y-6">
             {/* Source Order Information */}
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium text-blue-900 mb-3">
+            <div className="bg-muted rounded-lg p-4">
+              <h4 className="text-sm font-medium text-gray-900 mb-3">
                 Source Order Details
               </h4>
-              <div className="grid grid-cols-2 gap-4 text-sm text-blue-800">
+              <div className="grid grid-cols-2 gap-4 text-sm text-gray-700">
                 <div>
                   <span className="font-medium">Order ID:</span>{" "}
                   <span className="font-mono">
@@ -437,11 +440,11 @@ export default function OrderSplitModal({
 
             {/* Debug Info */}
             {selectedItems.length > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                <h4 className="text-sm font-medium text-blue-900 mb-2">
+              <div className="bg-muted border border-gray-300 rounded-lg p-3 mb-4">
+                <h4 className="text-sm font-medium text-gray-900 mb-2">
                   Current Selection Debug
                 </h4>
-                <div className="text-xs text-blue-800 space-y-1">
+                <div className="text-xs text-gray-700 space-y-1">
                   <div>
                     Total Order: $
                     {(order.totalAmount || order.total || 0).toFixed(2)}
@@ -471,9 +474,10 @@ export default function OrderSplitModal({
                   Split Equally by Amount
                 </h5>
                 <div className="flex gap-2 flex-wrap">
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={splitIntoThreeOrders}
-                    className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors"
+                    className="px-3 py-2 text-sm"
                     title="Creates 2 new orders with equal amounts (~${(order.totalAmount || order.total || 0) / 3}.toFixed(2)} each)"
                   >
                     Split Evenly (3 ways)
@@ -482,10 +486,11 @@ export default function OrderSplitModal({
                       {((order.totalAmount || order.total || 0) / 3).toFixed(2)}{" "}
                       each
                     </span>
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="secondary"
                     onClick={splitIntoFourOrders}
-                    className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors"
+                    className="px-3 py-2 text-sm"
                     title="Creates 3 new orders with equal amounts (~${(order.totalAmount || order.total || 0) / 4}.toFixed(2)} each)"
                   >
                     Split Evenly (4 ways)
@@ -494,10 +499,11 @@ export default function OrderSplitModal({
                       {((order.totalAmount || order.total || 0) / 4).toFixed(2)}{" "}
                       each
                     </span>
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="secondary"
                     onClick={() => splitEvenly(2)}
-                    className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors"
+                    className="px-3 py-2 text-sm"
                     title="Split order in half by amount"
                   >
                     Split Evenly (2 ways)
@@ -506,7 +512,7 @@ export default function OrderSplitModal({
                       {((order.totalAmount || order.total || 0) / 2).toFixed(2)}{" "}
                       each
                     </span>
-                  </button>
+                  </Button>
                 </div>
               </div>
 
@@ -526,20 +532,21 @@ export default function OrderSplitModal({
                     onChange={(e) =>
                       setCustomSplitAmount(parseFloat(e.target.value) || 0)
                     }
-                    className="w-20 p-1 text-black border border-gray-300 rounded text-sm"
+                    className="w-20 p-1 border border-input rounded text-sm focus:ring-2 focus:ring-ring focus:border-transparent"
                     placeholder="0.00"
                   />
-                  <button
+                  <Button
+                    variant="secondary"
                     onClick={splitByCustomAmount}
                     disabled={
                       customSplitAmount <= 0 ||
                       customSplitAmount >=
                         (order.totalAmount || order.total || 0)
                     }
-                    className="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition-colors disabled:opacity-50"
+                    className="px-3 py-1 text-sm"
                   >
                     Split Amount
-                  </button>
+                  </Button>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                   Remaining: $
@@ -554,12 +561,13 @@ export default function OrderSplitModal({
                 <h5 className="text-xs font-medium text-gray-700 mb-2">
                   Itemized Split (Manual Selection)
                 </h5>
-                <button
+                <Button
+                  variant="secondary"
                   onClick={() => setSelectedItems([])}
-                  className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                  className="px-3 py-1 text-sm"
                 >
                   Clear Selection
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -582,7 +590,7 @@ export default function OrderSplitModal({
                         <div className="font-medium text-gray-900">
                           {item.menuItemName}
                           {selectedQty > 0 && (
-                            <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            <span className="ml-2 px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
                               {selectedQty} selected
                             </span>
                           )}
@@ -601,7 +609,9 @@ export default function OrderSplitModal({
                       <div className="flex items-center gap-3">
                         {/* Quantity Controls */}
                         <div className="flex items-center gap-2">
-                          <button
+                          <Button
+                            variant="secondary"
+                            size="icon"
                             onClick={() =>
                               handleItemSelection(
                                 item,
@@ -609,10 +619,10 @@ export default function OrderSplitModal({
                               )
                             }
                             disabled={selectedQty === 0}
-                            className="w-8 h-8 flex items-center justify-center text-black border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-8 h-8"
                           >
                             <Minus className="h-4 w-4" />
-                          </button>
+                          </Button>
 
                           <input
                             type="number"
@@ -628,10 +638,12 @@ export default function OrderSplitModal({
                                 )
                               )
                             }
-                            className="w-16 text-center text-black border border-gray-300 rounded px-2 py-1"
+                            className="w-16 text-center border border-input rounded px-2 py-1 focus:ring-2 focus:ring-ring focus:border-transparent"
                           />
 
-                          <button
+                          <Button
+                            variant="secondary"
+                            size="icon"
                             onClick={() =>
                               handleItemSelection(
                                 item,
@@ -639,10 +651,10 @@ export default function OrderSplitModal({
                               )
                             }
                             disabled={selectedQty >= item.quantity}
-                            className="w-8 h-8 flex items-center justify-center text-black border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-8 h-8"
                           >
                             <Plus className="h-4 w-4" />
-                          </button>
+                          </Button>
                         </div>
 
                         {/* Split Total for this item */}
@@ -651,7 +663,7 @@ export default function OrderSplitModal({
                             ${(selectedQty * itemPrice).toFixed(2)}
                           </div>
                           {selectedQty > 0 && (
-                            <div className="text-xs text-green-600">
+                            <div className="text-xs text-gray-600">
                               {selectedQty} selected
                             </div>
                           )}
@@ -710,7 +722,7 @@ export default function OrderSplitModal({
                   <select
                     value={newTableId}
                     onChange={(e) => setNewTableId(e.target.value)}
-                    className="w-full p-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     <option value="">Same table as source order</option>
                     {availableTables.map((table) => (
@@ -732,7 +744,7 @@ export default function OrderSplitModal({
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder={order.customerName || "Enter customer name"}
-                    className="w-full p-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
 
@@ -746,7 +758,7 @@ export default function OrderSplitModal({
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     placeholder={order.customerPhone || "Enter phone number"}
-                    className="w-full p-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   />
                 </div>
 
@@ -761,7 +773,7 @@ export default function OrderSplitModal({
                       setReason(e.target.value);
                       if (e.target.value) setCustomReason("");
                     }}
-                    className="w-full p-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full p-2 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-transparent"
                   >
                     <option value="">Select a reason...</option>
                     {PREDEFINED_REASONS.map((reasonOption) => (
@@ -811,16 +823,16 @@ export default function OrderSplitModal({
 
             {/* Error Message */}
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <AlertCircle className="h-4 w-4 text-red-600" />
-                <span className="text-sm text-red-700">{error}</span>
+              <div className="flex items-center gap-2 p-3 bg-muted border border-gray-200 rounded-lg">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <span className="text-sm text-gray-700">{error}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
+        <div className="flex items-center justify-between p-6 border-t border-gray-200">
           <div className="text-sm text-gray-600">
             {selectedItems.length > 0 ? (
               <span>
@@ -833,17 +845,12 @@ export default function OrderSplitModal({
           </div>
 
           <div className="flex gap-3">
-            <button
-              onClick={onClose}
-              disabled={loading}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
+            <Button variant="secondary" onClick={onClose} disabled={loading}>
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleSplit}
               disabled={selectedItems.length === 0 || loading}
-              className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <div className="flex items-center gap-2">
@@ -856,7 +863,7 @@ export default function OrderSplitModal({
                   Split Order (${calculateSplitTotal().toFixed(2)})
                 </div>
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
