@@ -1,20 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams } from 'next/navigation';
-import Image from 'next/image';
-import { 
-  Plus, 
-  Minus, 
-  ShoppingCart, 
+import { useState, useEffect, useCallback } from "react";
+import { useParams } from "next/navigation";
+import Image from "next/image";
+import {
+  Plus,
+  Minus,
+  ShoppingCart,
   X,
   CheckCircle,
   AlertCircle,
   Clock,
   Search,
-  Filter
-} from 'lucide-react';
-
+  Filter,
+} from "lucide-react";
 
 interface MenuItem {
   id: string;
@@ -24,6 +23,30 @@ interface MenuItem {
   categoryId?: string;
   image?: string;
   isActive: boolean;
+  ingredients?: Array<{
+    id: string;
+    ingredientId: string;
+    quantity: number;
+    unit: string;
+    ingredient?: {
+      id: string;
+      name: string;
+      description: string;
+      unit: string;
+      costPerUnit: number;
+    };
+  }>;
+  allergens?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+    isStandard: boolean;
+    sources?: Array<{
+      ingredientId: string;
+      ingredientName: string;
+    }>;
+  }>;
 }
 
 interface MenuCategory {
@@ -41,7 +64,7 @@ interface CartItem {
 
 interface OrderStatus {
   orderId: string;
-  status: 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered';
+  status: "pending" | "confirmed" | "preparing" | "ready" | "delivered";
   total: number;
   items: CartItem[];
 }
@@ -49,61 +72,88 @@ interface OrderStatus {
 export default function QROrderPage() {
   const params = useParams();
   const tenantSlug = params.tenantSlug as string;
-  const tableNumber = (params.tableNumber as string).replace(/\s+/g, '-'); // Remove spaces, replace with hyphens
+  const tableNumber = (params.tableNumber as string).replace(/\s+/g, "-"); // Remove spaces, replace with hyphens
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
-  const [error, setError] = useState<string>('');
+  const [error, setError] = useState<string>("");
   const [availableTables, setAvailableTables] = useState<string[]>([]);
   const [showMobileCart, setShowMobileCart] = useState(false);
 
-
+  // Helper function to get severity color
+  const getSeverityColor = (
+    severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
+  ) => {
+    switch (severity) {
+      case "LOW":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "MEDIUM":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "HIGH":
+        return "bg-orange-100 text-orange-800 border-orange-200";
+      case "CRITICAL":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
 
   // Load menu data
   const loadMenuData = useCallback(async () => {
-    console.log('🔄 Loading menu data for:', tenantSlug);
+    console.log("🔄 Loading menu data for:", tenantSlug);
     setLoading(true);
-    setError('');
+    setError("");
 
     try {
       // Fetch menu items and categories using public API
-      const [menuResponse, categoriesResponse, tablesResponse] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/menu/items?tenant=${tenantSlug}`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/menu/categories?tenant=${tenantSlug}`),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/tables?tenant=${tenantSlug}`)
-      ]);
+      const [menuResponse, categoriesResponse, tablesResponse] =
+        await Promise.all([
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/public/menu/items?tenant=${tenantSlug}`
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/public/menu/categories?tenant=${tenantSlug}`
+          ),
+          fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/public/tables?tenant=${tenantSlug}`
+          ),
+        ]);
 
       if (!menuResponse.ok) {
         throw new Error(`Failed to load menu items: ${menuResponse.status}`);
       }
       if (!categoriesResponse.ok) {
-        throw new Error(`Failed to load categories: ${categoriesResponse.status}`);
+        throw new Error(
+          `Failed to load categories: ${categoriesResponse.status}`
+        );
       }
 
       const menuData = await menuResponse.json();
       const categoriesData = await categoriesResponse.json();
       const tablesData = await tablesResponse.json();
 
-      console.log('✅ Menu data loaded:', menuData);
-      console.log('✅ Categories loaded:', categoriesData);
-      console.log('✅ Tables loaded:', tablesData);
+      console.log("✅ Menu data loaded:", menuData);
+      console.log("✅ Categories loaded:", categoriesData);
+      console.log("✅ Tables loaded:", tablesData);
 
       setMenuItems(menuData.data?.items || []);
       setCategories(categoriesData.data?.categories || []);
-      
+
       // Extract table numbers for reference
-      const tableNumbers = (tablesData.data?.tables || []).map((table: { number: string }) => table.number);
+      const tableNumbers = (tablesData.data?.tables || []).map(
+        (table: { number: string }) => table.number
+      );
       setAvailableTables(tableNumbers);
-      
-      console.log('📋 Available tables:', tableNumbers);
+
+      console.log("📋 Available tables:", tableNumbers);
     } catch (error) {
-      console.error('❌ Error loading menu:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load menu');
+      console.error("❌ Error loading menu:", error);
+      setError(error instanceof Error ? error.message : "Failed to load menu");
     } finally {
       setLoading(false);
     }
@@ -115,22 +165,24 @@ export default function QROrderPage() {
 
   // Cart management functions
   const addToCart = (menuItem: MenuItem) => {
-    setCart(prev => {
-      const existingItem = prev.find(item => item.menuItem.id === menuItem.id);
+    setCart((prev) => {
+      const existingItem = prev.find(
+        (item) => item.menuItem.id === menuItem.id
+      );
       if (existingItem) {
-        return prev.map(item => 
-          item.menuItem.id === menuItem.id 
+        return prev.map((item) =>
+          item.menuItem.id === menuItem.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       } else {
-        return [...prev, { menuItem, quantity: 1, notes: '' }];
+        return [...prev, { menuItem, quantity: 1, notes: "" }];
       }
     });
   };
 
   const removeFromCart = (menuItemId: string) => {
-    setCart(prev => prev.filter(item => item.menuItem.id !== menuItemId));
+    setCart((prev) => prev.filter((item) => item.menuItem.id !== menuItemId));
   };
 
   const updateQuantity = (menuItemId: string, quantity: number) => {
@@ -138,64 +190,76 @@ export default function QROrderPage() {
       removeFromCart(menuItemId);
       return;
     }
-    
-    setCart(prev => prev.map(item => 
-      item.menuItem.id === menuItemId 
-        ? { ...item, quantity }
-        : item
-    ));
+
+    setCart((prev) =>
+      prev.map((item) =>
+        item.menuItem.id === menuItemId ? { ...item, quantity } : item
+      )
+    );
   };
 
   const updateNotes = (menuItemId: string, notes: string) => {
-    setCart(prev => prev.map(item => 
-      item.menuItem.id === menuItemId 
-        ? { ...item, notes }
-        : item
-    ));
+    setCart((prev) =>
+      prev.map((item) =>
+        item.menuItem.id === menuItemId ? { ...item, notes } : item
+      )
+    );
   };
 
   const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.menuItem.price * item.quantity), 0);
+    return cart.reduce(
+      (total, item) => total + item.menuItem.price * item.quantity,
+      0
+    );
   };
 
   // Submit order
   const submitOrder = async () => {
     if (cart.length === 0) return;
-    
+
     setOrderLoading(true);
-    setError('');
+    setError("");
 
     try {
       const orderData = {
         tableNumber: tableNumber, // Keep as string, don't parseInt
-        items: cart.map(item => ({
+        items: cart.map((item) => ({
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
-          notes: item.notes
+          notes: item.notes,
         })),
         customerName: "Walk-in Customer",
-        customerPhone: ""
+        customerPhone: "",
       };
 
-      console.log('📦 Submitting order:', orderData);
-      console.log('🌐 API URL:', `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`);
-      console.log('📦 Order data being sent:', JSON.stringify(orderData, null, 2));
+      console.log("📦 Submitting order:", orderData);
+      console.log(
+        "🌐 API URL:",
+        `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`
+      );
+      console.log(
+        "📦 Order data being sent:",
+        JSON.stringify(orderData, null, 2)
+      );
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData)
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(orderData),
+        }
+      );
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response status text:', response.statusText);
+      console.log("📡 Response status:", response.status);
+      console.log("📡 Response status text:", response.statusText);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('❌ Error response body:', errorText);
-        
+        console.error("❌ Error response body:", errorText);
+
         // Try to parse the error response as JSON
         let errorMessage = `Order submission failed: ${response.status}`;
         try {
@@ -207,34 +271,38 @@ export default function QROrderPage() {
           }
         } catch {
           // If JSON parsing fails, use the raw error text
-          errorMessage = errorText || `Order submission failed: ${response.status}`;
+          errorMessage =
+            errorText || `Order submission failed: ${response.status}`;
         }
-        
+
         throw new Error(errorMessage);
       }
 
       const orderResult = await response.json();
-      console.log('✅ Order submitted:', orderResult);
+      console.log("✅ Order submitted:", orderResult);
 
       setOrderStatus({
-        orderId: orderResult.data?.orderId || 'unknown',
-        status: 'pending',
+        orderId: orderResult.data?.orderId || "unknown",
+        status: "pending",
         total: getCartTotal(),
-        items: [...cart]
+        items: [...cart],
       });
 
       setCart([]);
     } catch (error) {
-      console.error('❌ Error submitting order:', error);
-      setError(error instanceof Error ? error.message : 'Failed to submit order');
+      console.error("❌ Error submitting order:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to submit order"
+      );
     } finally {
       setOrderLoading(false);
     }
   };
 
-  const filteredItems = selectedCategory === 'all' 
-    ? menuItems 
-    : menuItems.filter(item => item.categoryId === selectedCategory);
+  const filteredItems =
+    selectedCategory === "all"
+      ? menuItems
+      : menuItems.filter((item) => item.categoryId === selectedCategory);
 
   // Loading state
   if (loading) {
@@ -254,12 +322,16 @@ export default function QROrderPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
           <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                  <h1 className="text-2xl font-bold text-black mb-2">Error Loading Menu</h1>
-        <p className="text-black mb-6">{error}</p>
-          
-          {error.includes('Table not found') && availableTables.length > 0 && (
+          <h1 className="text-2xl font-bold text-black mb-2">
+            Error Loading Menu
+          </h1>
+          <p className="text-black mb-6">{error}</p>
+
+          {error.includes("Table not found") && availableTables.length > 0 && (
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-black mb-2">Available tables for this restaurant:</p>
+              <p className="text-sm text-black mb-2">
+                Available tables for this restaurant:
+              </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {availableTables.map((tableNum) => (
                   <a
@@ -273,7 +345,7 @@ export default function QROrderPage() {
               </div>
             </div>
           )}
-          
+
           <button
             onClick={loadMenuData}
             className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800"
@@ -292,14 +364,20 @@ export default function QROrderPage() {
         <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
           <div className="text-center mb-6">
             <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-                    <h1 className="text-2xl font-bold text-black mb-2">Order Placed!</h1>
-        <p className="text-black">Your order has been successfully submitted.</p>
+            <h1 className="text-2xl font-bold text-black mb-2">
+              Order Placed!
+            </h1>
+            <p className="text-black">
+              Your order has been successfully submitted.
+            </p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-4 mb-6">
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-black">Order ID:</span>
-              <span className="font-mono text-sm text-black">{orderStatus.orderId}</span>
+              <span className="font-mono text-sm text-black">
+                {orderStatus.orderId}
+              </span>
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-black">Table:</span>
@@ -307,7 +385,9 @@ export default function QROrderPage() {
             </div>
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm text-black">Total:</span>
-              <span className="font-bold text-black">${orderStatus.total.toFixed(2)}</span>
+              <span className="font-bold text-black">
+                ${orderStatus.total.toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm text-black">Status:</span>
@@ -322,8 +402,12 @@ export default function QROrderPage() {
             <h3 className="font-semibold text-black">Order Items:</h3>
             {orderStatus.items.map((item, index) => (
               <div key={index} className="flex justify-between text-sm">
-                <span className="text-black">{item.menuItem.name} x{item.quantity}</span>
-                <span className="text-black">${(item.menuItem.price * item.quantity).toFixed(2)}</span>
+                <span className="text-black">
+                  {item.menuItem.name} x{item.quantity}
+                </span>
+                <span className="text-black">
+                  ${(item.menuItem.price * item.quantity).toFixed(2)}
+                </span>
               </div>
             ))}
           </div>
@@ -372,23 +456,23 @@ export default function QROrderPage() {
             {/* Category Filters */}
             <div className="mt-4 flex items-center space-x-2">
               <button
-                onClick={() => setSelectedCategory('all')}
+                onClick={() => setSelectedCategory("all")}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  selectedCategory === 'all'
-                    ? 'bg-black text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  selectedCategory === "all"
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 All
               </button>
-              {categories.map(category => (
+              {categories.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => setSelectedCategory(category.id)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                     selectedCategory === category.id
-                      ? 'bg-black text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      ? "bg-black text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {category.name}
@@ -400,7 +484,7 @@ export default function QROrderPage() {
           {/* Desktop Menu Items Grid */}
           <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredItems.map(item => (
+              {filteredItems.map((item) => (
                 <div
                   key={item.id}
                   onClick={() => addToCart(item)}
@@ -417,23 +501,52 @@ export default function QROrderPage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-200">🍽️</div>
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-200">
+                        🍽️
+                      </div>
                     )}
                   </div>
-                  
+
                   {/* Item Details - Clean */}
                   <div className="flex-1">
-                    <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">{item.name}</div>
-                    
+                    <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">
+                      {item.name}
+                    </div>
+
                     <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                       {item.description}
                     </p>
-                    
+
+                    {/* Allergens */}
+                    {item.allergens && item.allergens.length > 0 && (
+                      <div className="mb-4">
+                        <div className="flex flex-wrap gap-1">
+                          {item.allergens.map((allergen) => (
+                            <span
+                              key={allergen.id}
+                              className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
+                                allergen.severity
+                              )}`}
+                              title={`${allergen.description}${
+                                allergen.sources?.length
+                                  ? ` - Sources: ${allergen.sources
+                                      .map((s) => s.ingredientName)
+                                      .join(", ")}`
+                                  : ""
+                              }`}
+                            >
+                              {allergen.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Price - Clean */}
                     <div className="text-2xl font-bold text-gray-900 mb-4">
                       ${item.price.toFixed(2)}
                     </div>
-                    
+
                     {/* Quick Add Button - Modern */}
                     <button
                       onClick={(e) => {
@@ -475,8 +588,11 @@ export default function QROrderPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cart.map(item => (
-                    <div key={item.menuItem.id} className="bg-white rounded-lg p-3 shadow-sm">
+                  {cart.map((item) => (
+                    <div
+                      key={item.menuItem.id}
+                      className="bg-white rounded-lg p-3 shadow-sm"
+                    >
                       <div className="flex items-center space-x-3">
                         {item.menuItem.image ? (
                           <Image
@@ -491,7 +607,7 @@ export default function QROrderPage() {
                             <span className="text-black text-xs">No</span>
                           </div>
                         )}
-                        
+
                         <div className="flex-1 min-w-0">
                           <h4 className="font-medium text-black text-sm truncate">
                             {item.menuItem.name}
@@ -501,19 +617,29 @@ export default function QROrderPage() {
                             ${item.menuItem.price.toFixed(2)}
                           </p>
                         </div>
-                        
+
                         <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                            onClick={() =>
+                              updateQuantity(
+                                item.menuItem.id,
+                                item.quantity - 1
+                              )
+                            }
                             className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
                           >
                             <Minus className="w-3 h-3 text-black" />
                           </button>
                           <span className="text-sm font-medium w-6 text-center text-black">
-                            {item.quantity.toString().padStart(2, '0')}
+                            {item.quantity.toString().padStart(2, "0")}
                           </span>
                           <button
-                            onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                            onClick={() =>
+                              updateQuantity(
+                                item.menuItem.id,
+                                item.quantity + 1
+                              )
+                            }
                             className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200"
                           >
                             <Plus className="w-3 h-3 text-black" />
@@ -526,13 +652,15 @@ export default function QROrderPage() {
                           </button>
                         </div>
                       </div>
-                      
+
                       {/* Notes Input */}
                       <div className="mt-2">
                         <textarea
                           placeholder="Add special instructions..."
                           value={item.notes}
-                          onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
+                          onChange={(e) =>
+                            updateNotes(item.menuItem.id, e.target.value)
+                          }
                           className="w-full px-2 py-1 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-black focus:border-transparent resize-none text-black"
                           rows={2}
                         />
@@ -549,11 +677,15 @@ export default function QROrderPage() {
                 <div className="bg-white rounded-lg p-4 shadow-sm">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-black">Items:</span>
-                    <span className="font-semibold text-black">${getCartTotal().toFixed(2)}</span>
+                    <span className="font-semibold text-black">
+                      ${getCartTotal().toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200">
                     <span className="font-bold text-black">Total Amount:</span>
-                    <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
+                    <span className="font-bold text-black">
+                      ${getCartTotal().toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
@@ -614,23 +746,23 @@ export default function QROrderPage() {
           {/* Mobile Category Filters - Horizontal Scroll */}
           <div className="flex space-x-2 overflow-x-auto pb-2 -mx-4 px-4">
             <button
-              onClick={() => setSelectedCategory('all')}
+              onClick={() => setSelectedCategory("all")}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
-                selectedCategory === 'all'
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                selectedCategory === "all"
+                  ? "bg-black text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
               }`}
             >
               All
             </button>
-            {categories.map(category => (
+            {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
                   selectedCategory === category.id
-                    ? 'bg-black text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? "bg-black text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                 }`}
               >
                 {category.name}
@@ -642,7 +774,7 @@ export default function QROrderPage() {
         {/* Mobile Menu Items - Single Column */}
         <div className="flex-1 px-4 py-4 overflow-y-auto">
           <div className="space-y-4">
-            {filteredItems.map(item => (
+            {filteredItems.map((item) => (
               <div
                 key={item.id}
                 onClick={() => addToCart(item)}
@@ -660,21 +792,27 @@ export default function QROrderPage() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-2xl">🍽️</div>
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-2xl">
+                        🍽️
+                      </div>
                     )}
                   </div>
-                  
+
                   {/* Mobile Item Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900 text-base truncate">{item.name}</h3>
-                      <span className="text-green-600 font-bold text-lg ml-2">${item.price.toFixed(2)}</span>
+                      <h3 className="font-semibold text-gray-900 text-base truncate">
+                        {item.name}
+                      </h3>
+                      <span className="text-green-600 font-bold text-lg ml-2">
+                        ${item.price.toFixed(2)}
+                      </span>
                     </div>
-                    
+
                     <p className="text-sm text-gray-600 line-clamp-2 mb-3">
                       {item.description}
                     </p>
-                    
+
                     {/* Mobile Add Button */}
                     <button
                       onClick={(e) => {
@@ -699,7 +837,7 @@ export default function QROrderPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">
-                  {cart.length} item{cart.length !== 1 ? 's' : ''} in cart
+                  {cart.length} item{cart.length !== 1 ? "s" : ""} in cart
                 </p>
                 <p className="text-lg font-bold text-black">
                   ${getCartTotal().toFixed(2)}
@@ -736,12 +874,17 @@ export default function QROrderPage() {
                   <div className="text-center py-8">
                     <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-black text-sm">Your cart is empty</p>
-                    <p className="text-black text-xs">Add items to get started</p>
+                    <p className="text-black text-xs">
+                      Add items to get started
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {cart.map(item => (
-                      <div key={item.menuItem.id} className="bg-gray-50 rounded-xl p-4">
+                    {cart.map((item) => (
+                      <div
+                        key={item.menuItem.id}
+                        className="bg-gray-50 rounded-xl p-4"
+                      >
                         <div className="flex items-center space-x-3 mb-3">
                           {item.menuItem.image ? (
                             <Image
@@ -756,7 +899,7 @@ export default function QROrderPage() {
                               <span className="text-black text-xs">No</span>
                             </div>
                           )}
-                          
+
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-black text-sm truncate">
                               {item.menuItem.name}
@@ -765,10 +908,15 @@ export default function QROrderPage() {
                               ${item.menuItem.price.toFixed(2)}
                             </p>
                           </div>
-                          
+
                           <div className="flex items-center space-x-2">
                             <button
-                              onClick={() => updateQuantity(item.menuItem.id, item.quantity - 1)}
+                              onClick={() =>
+                                updateQuantity(
+                                  item.menuItem.id,
+                                  item.quantity - 1
+                                )
+                              }
                               className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50"
                             >
                               <Minus className="w-3 h-3 text-black" />
@@ -777,7 +925,12 @@ export default function QROrderPage() {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.menuItem.id, item.quantity + 1)}
+                              onClick={() =>
+                                updateQuantity(
+                                  item.menuItem.id,
+                                  item.quantity + 1
+                                )
+                              }
                               className="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50"
                             >
                               <Plus className="w-3 h-3 text-black" />
@@ -790,13 +943,15 @@ export default function QROrderPage() {
                             </button>
                           </div>
                         </div>
-                        
+
                         {/* Notes Input */}
                         <div>
                           <textarea
                             placeholder="Add special instructions..."
                             value={item.notes}
-                            onChange={(e) => updateNotes(item.menuItem.id, e.target.value)}
+                            onChange={(e) =>
+                              updateNotes(item.menuItem.id, e.target.value)
+                            }
                             className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent resize-none text-black"
                             rows={2}
                           />
@@ -813,11 +968,17 @@ export default function QROrderPage() {
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-black text-sm">Items:</span>
-                      <span className="font-semibold text-black">${getCartTotal().toFixed(2)}</span>
+                      <span className="font-semibold text-black">
+                        ${getCartTotal().toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                      <span className="font-bold text-black">Total Amount:</span>
-                      <span className="font-bold text-black">${getCartTotal().toFixed(2)}</span>
+                      <span className="font-bold text-black">
+                        Total Amount:
+                      </span>
+                      <span className="font-bold text-black">
+                        ${getCartTotal().toFixed(2)}
+                      </span>
                     </div>
                   </div>
 
@@ -846,4 +1007,4 @@ export default function QROrderPage() {
       </div>
     </div>
   );
-} 
+}
