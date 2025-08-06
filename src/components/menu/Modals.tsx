@@ -1,20 +1,27 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Trash2, DollarSign } from "lucide-react";
-import { MenuCategory, Ingredient, Allergen } from "@/lib/api";
+import { Plus, Trash2, DollarSign, ChevronDown, X } from "lucide-react";
+import { MenuCategory, Ingredient, Allergen, MenuTag } from "@/lib/api";
 import { api } from "@/lib/api";
 import { ImageUpload } from "@/components/ImageUpload";
+
+// Re-export edit modals
+export { EditIngredientModal } from "./EditIngredientModal";
+export { EditCategoryModal } from "./EditCategoryModal";
+export { EditMenuItemModal } from "./EditMenuItemModal";
 
 // Add Item Modal Component
 export function AddItemModal({
   categories,
+  availableTags,
   onClose,
   onSubmit,
   loading,
   onCreateIngredient,
 }: {
   categories: MenuCategory[];
+  availableTags?: MenuTag[];
   onClose: () => void;
   onSubmit: (data: {
     name: string;
@@ -25,8 +32,9 @@ export function AddItemModal({
     ingredients?: Array<{
       ingredientId: string;
       quantity: number;
-      unit: string;
+      unit?: string;
     }>;
+    tags?: string[];
   }) => void;
   loading: boolean;
   onCreateIngredient: (data: {
@@ -50,9 +58,10 @@ export function AddItemModal({
     Array<{
       ingredientId: string;
       quantity: number;
-      unit: string;
+      unit?: string;
     }>
   >([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [loadingIngredients, setLoadingIngredients] = useState(false);
   const [showAddIngredientModal, setShowAddIngredientModal] = useState(false);
 
@@ -78,7 +87,7 @@ export function AddItemModal({
       {
         ingredientId: "",
         quantity: 1,
-        unit: "pieces",
+        unit: "pieces", // Default unit, but optional
       },
     ]);
   };
@@ -107,6 +116,7 @@ export function AddItemModal({
       ingredients: selectedIngredients.filter(
         (ing) => ing.ingredientId && ing.quantity > 0
       ),
+      tags: selectedTags,
     };
 
     onSubmit(submitData);
@@ -255,7 +265,8 @@ export function AddItemModal({
                       <option value="">Select ingredient</option>
                       {ingredients.map((ing) => (
                         <option key={ing.id} value={ing.id}>
-                          {ing.name} (${ing.costPerUnit.toFixed(2)}/{ing.unit})
+                          {ing.name} (${Number(ing.costPerUnit || 0).toFixed(2)}
+                          /{ing.unit})
                         </option>
                       ))}
                     </select>
@@ -298,11 +309,47 @@ export function AddItemModal({
 
                 {selectedIngredients.length === 0 && (
                   <div className="text-sm text-gray-500 text-center py-4">
-                    No ingredients added. Click &quot;Add Ingredient&quot; to get started.
+                    No ingredients added. Click &quot;Add Ingredient&quot; to
+                    get started.
                   </div>
                 )}
               </div>
             )}
+          </div>
+
+          {/* Tags Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Tags
+              </label>
+            </div>
+            <div className="space-y-2">
+              {availableTags?.map((tag) => (
+                <label key={tag.id} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={selectedTags.includes(tag.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedTags([...selectedTags, tag.id]);
+                      } else {
+                        setSelectedTags(
+                          selectedTags.filter((id) => id !== tag.id)
+                        );
+                      }
+                    }}
+                    className="rounded border-gray-300 text-black focus:ring-black"
+                  />
+                  <span className="text-sm text-gray-700">{tag.name}</span>
+                </label>
+              ))}
+              {(!availableTags || availableTags.length === 0) && (
+                <div className="text-sm text-gray-500 text-center py-2">
+                  No tags available
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex space-x-3 pt-4">
@@ -380,6 +427,7 @@ export function AddIngredientModal({
   const [allergens, setAllergens] = useState<Allergen[]>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [loadingAllergens, setLoadingAllergens] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Load allergens when modal opens
   useEffect(() => {
@@ -408,11 +456,35 @@ export function AddIngredientModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate ingredient data before submission
+    const errors: string[] = [];
+
+    if (!formData.name?.trim()) {
+      errors.push("Name is required");
+    }
+
+    if (!formData.unit?.trim()) {
+      errors.push("Unit is required");
+    }
+
+    const costPerUnit = parseFloat(formData.costPerUnit);
+    if (isNaN(costPerUnit)) {
+      errors.push("Cost per unit must be a valid number");
+    } else if (costPerUnit < 0) {
+      errors.push("Cost per unit cannot be negative");
+    }
+
+    if (errors.length > 0) {
+      alert("Please fix the following errors:\n" + errors.join("\n"));
+      return;
+    }
+
     onSubmit({
-      name: formData.name,
-      description: formData.description,
-      unit: formData.unit,
-      costPerUnit: parseFloat(formData.costPerUnit),
+      name: formData.name.trim(),
+      description: formData.description.trim(),
+      unit: formData.unit.trim(),
+      costPerUnit: costPerUnit,
       allergens: selectedAllergens,
     });
   };
@@ -496,60 +568,127 @@ export function AddIngredientModal({
               </span>
             </div>
 
-            {loadingAllergens ? (
-              <div className="text-sm text-gray-500">Loading allergens...</div>
-            ) : (
-              <div className="space-y-2">
-                {allergens.map((allergen) => (
-                  <label
-                    key={allergen.id}
-                    className="flex items-center space-x-3 p-2 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedAllergens.includes(allergen.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedAllergens([
-                            ...selectedAllergens,
-                            allergen.id,
-                          ]);
-                        } else {
-                          setSelectedAllergens(
-                            selectedAllergens.filter((id) => id !== allergen.id)
-                          );
-                        }
-                      }}
-                      className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-900">
-                          {allergen.name}
-                        </span>
-                        <span
-                          className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
-                            allergen.severity
-                          )}`}
+            <div className="relative">
+              {/* Selected allergens display */}
+              {selectedAllergens.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {selectedAllergens.map((allergenId) => {
+                    const allergen = allergens.find((a) => a.id === allergenId);
+                    return allergen ? (
+                      <span
+                        key={allergenId}
+                        className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full"
+                      >
+                        {allergen.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedAllergens(
+                              selectedAllergens.filter(
+                                (id) => id !== allergenId
+                              )
+                            )
+                          }
+                          className="text-gray-500 hover:text-gray-700"
                         >
-                          {allergen.severity}
-                        </span>
-                      </div>
-                      {allergen.description && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          {allergen.description}
-                        </p>
-                      )}
-                    </div>
-                  </label>
-                ))}
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
 
-                {allergens.length === 0 && (
-                  <div className="text-sm text-gray-500 text-center py-4">
-                    No allergens available. Create allergens first.
-                  </div>
-                )}
-              </div>
+              {/* Dropdown trigger */}
+              <button
+                type="button"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                disabled={loadingAllergens}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-left bg-white flex items-center justify-between disabled:opacity-50"
+              >
+                <span className="text-gray-700">
+                  {loadingAllergens
+                    ? "Loading allergens..."
+                    : selectedAllergens.length === 0
+                    ? "Select allergens..."
+                    : `${selectedAllergens.length} allergen${
+                        selectedAllergens.length === 1 ? "" : "s"
+                      } selected`}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-400 transition-transform ${
+                    dropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && !loadingAllergens && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {allergens.length === 0 ? (
+                    <div className="px-3 py-2 text-sm text-gray-500 text-center">
+                      No allergens available. Create allergens first.
+                    </div>
+                  ) : (
+                    allergens.map((allergen) => (
+                      <div
+                        key={allergen.id}
+                        onClick={() => {
+                          if (selectedAllergens.includes(allergen.id)) {
+                            setSelectedAllergens(
+                              selectedAllergens.filter(
+                                (id) => id !== allergen.id
+                              )
+                            );
+                          } else {
+                            setSelectedAllergens([
+                              ...selectedAllergens,
+                              allergen.id,
+                            ]);
+                          }
+                        }}
+                        className="px-3 py-2 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={selectedAllergens.includes(allergen.id)}
+                              onChange={() => {}} // Handled by parent div onClick
+                              className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded pointer-events-none"
+                            />
+                            <div>
+                              <span className="text-sm font-medium text-gray-900">
+                                {allergen.name}
+                              </span>
+                              {allergen.description && (
+                                <p className="text-xs text-gray-600">
+                                  {allergen.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span
+                            className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
+                              allergen.severity
+                            )}`}
+                          >
+                            {allergen.severity}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Click outside to close dropdown */}
+            {dropdownOpen && (
+              <div
+                className="fixed inset-0 z-0"
+                onClick={() => setDropdownOpen(false)}
+              />
             )}
           </div>
 

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { api, MenuItem, MenuCategory, Ingredient, Allergen } from "@/lib/api";
+import {
+  api,
+  MenuItem,
+  MenuCategory,
+  Ingredient,
+  Allergen,
+  MenuTag,
+} from "@/lib/api";
 import toast from "react-hot-toast";
 import CategoriesTab from "@/components/menu/CategoriesTab";
 import MenuTab from "@/components/menu/MenuTab";
@@ -10,8 +17,11 @@ import AllergensTab from "@/components/menu/AllergensTab";
 import {
   AddItemModal,
   AddIngredientModal,
+  EditIngredientModal,
   AddAllergenModal,
   EditAllergenModal,
+  EditCategoryModal,
+  EditMenuItemModal,
 } from "@/components/menu/Modals";
 
 export default function MenuPage() {
@@ -20,25 +30,33 @@ export default function MenuPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [allergens, setAllergens] = useState<Allergen[]>([]);
+  const [menuTags, setMenuTags] = useState<MenuTag[]>([]);
 
   // Debug allergens state changes
-  useEffect(() => {
-    console.log("sup allergen list - Allergens state changed:", allergens);
-    console.log("sup allergen list - Allergens state count:", allergens.length);
-  }, [allergens]);
+
   const [loading, setLoading] = useState(true);
   const [apiLoading, setApiLoading] = useState(false);
 
   // UI state
   const [activeTab, setActiveTab] = useState<
     "menu" | "categories" | "ingredients" | "allergens"
-  >("menu");
+  >("categories");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [showAddIngredientModal, setShowAddIngredientModal] = useState(false);
+  const [showEditIngredientModal, setShowEditIngredientModal] = useState(false);
+  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(
+    null
+  );
   const [showAddAllergenModal, setShowAddAllergenModal] = useState(false);
   const [showEditAllergenModal, setShowEditAllergenModal] = useState(false);
   const [editingAllergen, setEditingAllergen] = useState<Allergen | null>(null);
+  const [showEditMenuItemModal, setShowEditMenuItemModal] = useState(false);
+  const [editingMenuItem, setEditingMenuItem] = useState<MenuItem | null>(null);
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<MenuCategory | null>(
+    null
+  );
 
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,50 +75,51 @@ export default function MenuPage() {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      console.log("sup allergen list - Starting data load...");
 
       try {
         // Load allergens separately first
-        console.log("sup allergen list - Loading allergens...");
         const allergensResult = await api.getAllergens();
-        console.log("sup allergen list - Allergens result:", allergensResult);
-
         const allergensArray = allergensResult?.allergens || [];
-      console.log(
-          "sup allergen list - Extracted allergens array:",
-          allergensArray
-      );
-        console.log(
-          "sup allergen list - Allergens count:",
-          allergensArray.length
-        );
-
-        // Set allergens immediately
         setAllergens(allergensArray);
 
         // Load other data
-        const [menuResponse, categoriesResponse, ingredientsResponse] =
-          await Promise.all([
-            api.getMenuItems().catch(() => ({ items: [] })),
-            api.getMenuCategories().catch(() => ({ categories: [] })),
-            api.getIngredients().catch(() => ({ ingredients: [] })),
-          ]);
+        const [
+          menuResponse,
+          categoriesResponse,
+          ingredientsResponse,
+          menuTagsResponse,
+        ] = await Promise.all([
+          api.getMenuItems().catch(() => ({ items: [] })),
+          api.getMenuCategories().catch(() => ({ categories: [] })),
+          (async () => {
+            try {
+              const result = await api.getIngredients();
+              return result;
+            } catch {
+              return {
+                ingredients: [],
+                pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+              };
+            }
+          })(),
+          api.getMenuTags().catch(() => ({ tags: [] })),
+        ]);
 
         // Set other state
         setMenuItems(menuResponse?.items || []);
         setCategories(categoriesResponse?.categories || []);
         setIngredients(ingredientsResponse?.ingredients || []);
+        setMenuTags(menuTagsResponse?.tags || []);
 
         // Expand all categories by default
         setExpandedCategories(
           new Set((categoriesResponse?.categories || []).map((c) => c.id))
         );
-    } catch (error) {
-        console.error("sup allergen list - Error loading data:", error);
+      } catch {
         // Don't reset allergens since they're loaded separately
-    } finally {
-      setLoading(false);
-    }
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadData();
@@ -116,33 +135,86 @@ export default function MenuPage() {
     ingredients?: Array<{
       ingredientId: string;
       quantity: number;
-      unit: string;
+      unit?: string;
     }>;
+    tags?: string[];
   }) => {
+    // Transform ingredients to match API format
+    const transformedData = {
+      ...itemData,
+      ingredients: itemData.ingredients?.map((ing) => ({
+        ingredientId: ing.ingredientId,
+        quantity: parseFloat(ing.quantity.toString()), // ✅ Ensure it's a number
+        unit: ing.unit || undefined, // ✅ Optional unit string
+      })),
+      tags: itemData.tags || [], // ✅ Array of tag ID strings
+    };
+
     setApiLoading(true);
     try {
-      const response = await api.createMenuItem(itemData);
+      const response = await api.createMenuItem(transformedData);
       setMenuItems((prev) => [...prev, response.item]);
       setShowAddModal(false);
       toast.success("Menu item created successfully!");
     } catch (error) {
       console.error("Error creating menu item:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create menu item"
-      );
+
+      // ✅ BETTER ERROR HANDLING - Show specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes("already exists")) {
+          toast.error("A menu item with this name already exists");
+        } else if (error.message.includes("validation")) {
+          toast.error("Please check your input data");
+        } else if (error.message.includes("Invalid response structure")) {
+          toast.error("Server response error. Please try again.");
+        } else {
+          toast.error(error.message || "Failed to create menu item");
+        }
+      } else {
+        toast.error("Failed to create menu item");
+      }
     } finally {
       setApiLoading(false);
     }
   };
 
-  const handleUpdateItem = async (id: string, itemData: Partial<MenuItem>) => { // eslint-disable-line @typescript-eslint/no-unused-vars
+  const handleUpdateItem = async (
+    id: string,
+    itemData: {
+      name?: string;
+      description?: string;
+      price?: number;
+      categoryId?: string;
+      image?: string;
+      isActive?: boolean;
+      ingredients?: Array<{
+        ingredientId: string;
+        quantity: number;
+        unit?: string;
+      }>;
+      tags?: string[];
+    }
+  ) => {
+    // Transform ingredients to match API format
+    const transformedData = {
+      ...itemData,
+      ingredients: itemData.ingredients?.map((ing) => ({
+        ingredientId: ing.ingredientId,
+        quantity: parseFloat(ing.quantity.toString()), // ✅ Ensure it's a number
+        unit: ing.unit || undefined, // ✅ Optional unit string
+      })),
+      tags: itemData.tags || [], // ✅ Array of tag ID strings
+    };
+
     setApiLoading(true);
     try {
-      const response = await api.updateMenuItem(id, itemData);
+      const response = await api.updateMenuItem(id, transformedData);
       setMenuItems((prev) =>
         prev.map((item) => (item.id === id ? response.item : item))
       );
       toast.success("Menu item updated successfully!");
+      setShowEditMenuItemModal(false);
+      setEditingMenuItem(null);
     } catch (error) {
       console.error("Error updating menu item:", error);
       toast.error(
@@ -172,7 +244,8 @@ export default function MenuPage() {
   };
 
   // Category handlers
-  const handleCreateCategory = async (categoryData: { // eslint-disable-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleCreateCategory = async (categoryData: {
     name: string;
     sortOrder?: number;
   }) => {
@@ -192,7 +265,7 @@ export default function MenuPage() {
     }
   };
 
-  const handleUpdateCategory = async ( // eslint-disable-line @typescript-eslint/no-unused-vars
+  const handleUpdateCategory = async (
     id: string,
     categoryData: Partial<MenuCategory>
   ) => {
@@ -205,6 +278,8 @@ export default function MenuPage() {
         )
       );
       toast.success("Category updated successfully!");
+      setShowEditCategoryModal(false);
+      setEditingCategory(null);
     } catch (error) {
       console.error("Error updating category:", error);
       toast.error(
@@ -279,7 +354,7 @@ export default function MenuPage() {
     }
   };
 
-  const handleUpdateIngredient = async ( // eslint-disable-line @typescript-eslint/no-unused-vars
+  const handleUpdateIngredient = async (
     id: string,
     ingredientData: Partial<Ingredient>
   ) => {
@@ -292,6 +367,8 @@ export default function MenuPage() {
         )
       );
       toast.success("Ingredient updated successfully!");
+      setShowEditIngredientModal(false);
+      setEditingIngredient(null);
     } catch (error) {
       console.error("Error updating ingredient:", error);
       toast.error(
@@ -391,11 +468,6 @@ export default function MenuPage() {
           return { ...currentAllergen, id, ...allergenData };
         })();
 
-      console.log(
-        "sup allergen list - Final updated allergen:",
-        updatedAllergen
-      );
-
       setAllergens((prev) =>
         prev.map((allergen) =>
           allergen.id === id ? updatedAllergen : allergen
@@ -405,7 +477,6 @@ export default function MenuPage() {
       setEditingAllergen(null);
       toast.success("Allergen updated successfully!");
     } catch (error) {
-      console.error("sup allergen list - Error updating allergen:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to update allergen"
       );
@@ -417,15 +488,12 @@ export default function MenuPage() {
   const handleDeleteAllergen = async (id: string) => {
     if (!confirm("Are you sure you want to delete this allergen?")) return;
 
-    console.log("sup allergen list - Deleting allergen with ID:", id);
     setApiLoading(true);
     try {
       await api.deleteAllergen(id);
-      console.log("sup allergen list - Allergen deleted successfully:", id);
       setAllergens((prev) => prev.filter((allergen) => allergen.id !== id));
       toast.success("Allergen deleted successfully!");
     } catch (error) {
-      console.error("sup allergen list - Error deleting allergen:", error);
       toast.error(
         error instanceof Error ? error.message : "Failed to delete allergen"
       );
@@ -472,12 +540,12 @@ export default function MenuPage() {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
-              { id: "menu", label: "Menu Items", count: menuItems.length },
               {
                 id: "categories",
                 label: "Categories",
                 count: categories.length,
               },
+              { id: "menu", label: "Menu Items", count: menuItems.length },
               {
                 id: "ingredients",
                 label: "Ingredients",
@@ -485,35 +553,35 @@ export default function MenuPage() {
               },
               { id: "allergens", label: "Allergens", count: allergens.length },
             ].map((tab) => (
-          <button
+              <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
-                ? "border-black text-black"
+                    ? "border-black text-black"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
                 {tab.label}
                 <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
                   {tab.count}
-                              </span>
-                            </button>
+                </span>
+              </button>
             ))}
           </nav>
-                          </div>
-                          </div>
+        </div>
+      </div>
 
       {/* Tab Content */}
-        {activeTab === "menu" && (
+      {activeTab === "menu" && (
         <MenuTab
           menuItems={menuItems}
           categories={categories}
           apiLoading={apiLoading}
           onShowAddModal={() => setShowAddModal(true)}
           onShowEditModal={(item) => {
-            // TODO: Implement edit modal
-            console.log("Edit item:", item);
+            setEditingMenuItem(item);
+            setShowEditMenuItemModal(true);
           }}
           onDeleteItem={handleDeleteItem}
           searchTerm={searchTerm}
@@ -527,43 +595,43 @@ export default function MenuPage() {
 
       {activeTab === "categories" && (
         <CategoriesTab
-                categories={categories}
+          categories={categories}
           apiLoading={apiLoading}
           onShowAddModal={() => setShowAddCategoryModal(true)}
           onShowEditModal={(category) => {
-            // TODO: Implement edit modal
-            console.log("Edit category:", category);
+            setEditingCategory(category);
+            setShowEditCategoryModal(true);
           }}
           onDeleteCategory={handleDeleteCategory}
           searchTerm={categorySearchTerm}
           onSearchChange={setCategorySearchTerm}
         />
-        )}
+      )}
 
-        {activeTab === "ingredients" && (
+      {activeTab === "ingredients" && (
         <IngredientsTab
           ingredients={ingredients}
           apiLoading={apiLoading}
           onShowAddModal={() => setShowAddIngredientModal(true)}
           onShowEditModal={(ingredient) => {
-            // TODO: Implement edit modal
-            console.log("Edit ingredient:", ingredient);
+            setEditingIngredient(ingredient);
+            setShowEditIngredientModal(true);
           }}
           onDeleteIngredient={handleDeleteIngredient}
           searchTerm={ingredientSearchTerm}
           onSearchChange={setIngredientSearchTerm}
         />
-        )}
+      )}
 
-        {activeTab === "allergens" && (
+      {activeTab === "allergens" && (
         <AllergensTab
           allergens={allergens}
           apiLoading={apiLoading}
           onShowAddModal={() => setShowAddAllergenModal(true)}
           onShowEditModal={(allergen) => {
             setEditingAllergen(allergen);
-                                  setShowEditAllergenModal(true);
-                                }}
+            setShowEditAllergenModal(true);
+          }}
           onDeleteAllergen={handleDeleteAllergen}
           searchTerm={allergenSearchTerm}
           onSearchChange={setAllergenSearchTerm}
@@ -576,6 +644,7 @@ export default function MenuPage() {
       {showAddModal && (
         <AddItemModal
           categories={categories}
+          availableTags={menuTags}
           onClose={() => setShowAddModal(false)}
           onSubmit={handleCreateItem}
           loading={apiLoading}
@@ -588,6 +657,21 @@ export default function MenuPage() {
           onClose={() => setShowAddIngredientModal(false)}
           onSubmit={handleCreateIngredient}
           loading={apiLoading}
+        />
+      )}
+
+      {showEditIngredientModal && editingIngredient && (
+        <EditIngredientModal
+          ingredient={editingIngredient}
+          onClose={() => {
+            setShowEditIngredientModal(false);
+            setEditingIngredient(null);
+          }}
+          onSubmit={(ingredientData) =>
+            handleUpdateIngredient(editingIngredient.id, ingredientData)
+          }
+          loading={apiLoading}
+          availableAllergens={allergens}
         />
       )}
 
@@ -611,7 +695,32 @@ export default function MenuPage() {
         />
       )}
 
-      {/* TODO: Add other modals as needed */}
+      {showEditMenuItemModal && editingMenuItem && (
+        <EditMenuItemModal
+          menuItem={editingMenuItem}
+          categories={categories}
+          availableIngredients={ingredients}
+          availableMenuTags={menuTags}
+          onClose={() => {
+            setShowEditMenuItemModal(false);
+            setEditingMenuItem(null);
+          }}
+          onSubmit={(data) => handleUpdateItem(editingMenuItem.id, data)}
+          loading={apiLoading}
+        />
+      )}
+
+      {showEditCategoryModal && editingCategory && (
+        <EditCategoryModal
+          category={editingCategory}
+          onClose={() => {
+            setShowEditCategoryModal(false);
+            setEditingCategory(null);
+          }}
+          onSubmit={(data) => handleUpdateCategory(editingCategory.id, data)}
+          loading={apiLoading}
+        />
+      )}
     </div>
   );
 }

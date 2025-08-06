@@ -1,7 +1,14 @@
 "use client";
 
 import React from "react";
-import { Plus, Edit, Trash2, Search, Image as ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Search,
+  Image as ImageIcon,
+  AlertTriangle,
+} from "lucide-react";
 import { MenuItem, MenuCategory } from "@/lib/api";
 
 interface MenuTabProps {
@@ -212,6 +219,54 @@ function MenuItemCard({
               ${item.price.toFixed(2)}
             </span>
           </div>
+
+          {/* Tags */}
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2">
+              {item.tags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="px-2 py-1 rounded-full text-xs font-medium"
+                  style={{
+                    backgroundColor: tag.color + "20",
+                    color: tag.color,
+                  }}
+                >
+                  {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Allergens */}
+          {item.allergens && item.allergens.length > 0 && (
+            <div className="mt-2">
+              <div className="flex items-center gap-1 mb-1">
+                <AlertTriangle className="h-3 w-3 text-orange-500" />
+                <span className="text-xs font-medium text-orange-700">
+                  Allergens:
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {item.allergens.map((allergen) => (
+                  <span
+                    key={allergen.id}
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      allergen.severity === "CRITICAL"
+                        ? "bg-red-100 text-red-800"
+                        : allergen.severity === "HIGH"
+                        ? "bg-orange-100 text-orange-800"
+                        : allergen.severity === "MEDIUM"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-blue-100 text-blue-800"
+                    }`}
+                  >
+                    {allergen.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex items-center space-x-1">
           <button

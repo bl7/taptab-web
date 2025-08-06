@@ -27,6 +27,7 @@ export interface MenuItem {
   updatedAt: string;
   ingredients?: MenuItemIngredient[];
   allergens?: MenuItemAllergen[];
+  tags?: MenuTag[];
 }
 
 export interface MenuCategory {
@@ -93,6 +94,24 @@ export interface MenuItemAllergen {
     ingredientId: string;
     ingredientName: string;
   }>;
+}
+
+export interface MenuTag {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MenuItemTag {
+  id: string;
+  menuItemId: string;
+  tagId: string;
+  assignedAt: string;
+  tag?: MenuTag;
 }
 
 export interface PaginationInfo {
@@ -352,17 +371,6 @@ class APIClient {
     // Get valid token (auto-refresh if needed)
     const token = await tokenManager.getValidToken();
 
-    console.log("thisbitch", "🔗 API Request Details:");
-    console.log("thisbitch", "  Base URL:", this.baseURL);
-    console.log("thisbitch", "  Endpoint:", endpoint);
-    console.log("thisbitch", "  Full URL:", `${this.baseURL}${endpoint}`);
-    console.log("thisbitch", "  Token exists:", !!token);
-    console.log(
-      "thisbitch",
-      "  Token preview:",
-      token ? `${token.substring(0, 20)}...` : "No token"
-    );
-
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
@@ -372,21 +380,10 @@ class APIClient {
       ...options,
     };
 
-    console.log("thisbitch", "  Request method:", config.method || "GET");
-    console.log("thisbitch", "  Request headers:", config.headers);
-
     const response = await fetch(`${this.baseURL}${endpoint}`, config);
     const data: APIResponse<T> = await response.json();
 
-    console.log("thisbitch", "📡 API Response Details:");
-    console.log("thisbitch", "  Status:", response.status);
-    console.log("thisbitch", "  Status text:", response.statusText);
-    console.log("thisbitch", "  Response data:", data);
-    console.log("thisbitch", "  Response data type:", typeof data);
-    console.log("thisbitch", "  Response data keys:", Object.keys(data || {}));
-
     if (!response.ok) {
-      console.error("❌ API Error:", response.status, data);
       throw new APIError(
         response.status,
         data.error?.code || "UNKNOWN_ERROR",
@@ -416,19 +413,9 @@ class APIClient {
   // Menu endpoints
   async getMenuItems(categoryId?: string): Promise<{ items: MenuItem[] }> {
     const params = categoryId ? `?category=${categoryId}` : "";
-    console.log(
-      "🍽️ Fetching menu items from:",
-      `${this.baseURL}/menu/items${params}`
-    );
     const response = await this.request<{ items: MenuItem[] }>(
       `/menu/items${params}`
     );
-    console.log("🍽️ Menu items response:", response);
-    console.log("🍽️ Menu items array:", response.items);
-    console.log("🍽️ Number of menu items:", response.items?.length || 0);
-    if (response.items && response.items.length > 0) {
-      console.log("🍽️ First menu item example:", response.items[0]);
-    }
     return { items: response.items };
   }
 
@@ -440,19 +427,21 @@ class APIClient {
     image?: string;
     ingredients?: Array<{
       ingredientId: string;
-      quantity: number;
-      unit: string;
+      quantity: number; // ✅ Numeric value
+      unit?: string; // ✅ Optional text unit
     }>;
+    tags?: string[];
   }): Promise<{ item: MenuItem }> {
-    console.log("🍽️ Creating menu item with data:", data);
-    console.log("🍽️ Image URL being sent:", data.image);
-
     const response = await this.request<{ item: MenuItem }>("/menu/items", {
       method: "POST",
       body: JSON.stringify(data),
     });
 
-    console.log("🍽️ Created menu item response:", response);
+    // ✅ ROBUST - Handle all possible response structures
+    if (!response || !response.item) {
+      throw new Error("Invalid response structure from server");
+    }
+
     return { item: response.item };
   }
 
@@ -468,8 +457,9 @@ class APIClient {
       ingredients?: Array<{
         ingredientId: string;
         quantity: number;
-        unit: string;
+        unit?: string;
       }>;
+      tags?: string[];
     }
   ): Promise<{ item: MenuItem }> {
     const response = await this.request<{ item: MenuItem }>(
@@ -479,6 +469,12 @@ class APIClient {
         body: JSON.stringify(data),
       }
     );
+
+    // ✅ ROBUST - Handle all possible response structures
+    if (!response || !response.item) {
+      throw new Error("Invalid response structure from server");
+    }
+
     return { item: response.item };
   }
 
@@ -493,19 +489,9 @@ class APIClient {
   }
 
   async getMenuCategories(): Promise<{ categories: MenuCategory[] }> {
-    console.log(
-      "📂 Fetching menu categories from:",
-      `${this.baseURL}/menu/categories`
-    );
     const response = await this.request<{ categories: MenuCategory[] }>(
       "/menu/categories"
     );
-    console.log("📂 Menu categories response:", response);
-    console.log("📂 Menu categories array:", response.categories);
-    console.log("📂 Number of categories:", response.categories?.length || 0);
-    if (response.categories && response.categories.length > 0) {
-      console.log("📂 First category example:", response.categories[0]);
-    }
     return { categories: response.categories };
   }
 
@@ -565,17 +551,43 @@ class APIClient {
     const endpoint = `/ingredients${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
+
     const response = await this.request<{
-      data: { ingredients: Ingredient[]; pagination: PaginationInfo };
+      ingredients: Ingredient[];
+      pagination?: PaginationInfo;
     }>(endpoint);
-    return response.data;
+
+    // Handle response structure based on your API format
+    if (response && response.ingredients) {
+      // Format ingredients to handle string costPerUnit from DB
+      const formattedIngredients = response.ingredients.map((ingredient) => ({
+        ...ingredient,
+        costPerUnit: parseFloat(String(ingredient.costPerUnit || "0")),
+        isActive: Boolean(ingredient.isActive),
+      }));
+
+      return {
+        ingredients: formattedIngredients,
+        pagination: response.pagination || {
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+        },
+      };
+    }
+
+    return {
+      ingredients: [],
+      pagination: { total: 0, page: 1, limit: 10, totalPages: 0 },
+    };
   }
 
   async getIngredient(id: string): Promise<{ ingredient: Ingredient }> {
-    const response = await this.request<{ data: { ingredient: Ingredient } }>(
+    const response = await this.request<{ ingredient: Ingredient }>(
       `/ingredients/${id}`
     );
-    return response.data;
+    return response;
   }
 
   async createIngredient(data: {
@@ -584,14 +596,39 @@ class APIClient {
     unit: string;
     costPerUnit: number;
   }): Promise<{ ingredient: Ingredient }> {
-    const response = await this.request<{ data: { ingredient: Ingredient } }>(
+    // Prepare data for API (ensure numbers are sent as numbers)
+    const apiData = {
+      name: data.name,
+      description: data.description || "",
+      unit: data.unit || "",
+      costPerUnit: Number(data.costPerUnit) || 0,
+      isActive: true,
+    };
+
+    console.log(
+      "🔍 INGREDIENTS DEBUG - Creating ingredient with data:",
+      apiData
+    );
+
+    const response = await this.request<{ ingredient: Ingredient }>(
       "/ingredients",
       {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiData),
       }
     );
-    return response.data;
+
+    // Format the response to handle string costPerUnit from DB
+    if (response && response.ingredient) {
+      const formattedIngredient = {
+        ...response.ingredient,
+        costPerUnit: parseFloat(String(response.ingredient.costPerUnit || "0")),
+        isActive: Boolean(response.ingredient.isActive),
+      };
+      return { ingredient: formattedIngredient };
+    }
+
+    throw new Error("Invalid response structure from server");
   }
 
   async updateIngredient(
@@ -604,14 +641,34 @@ class APIClient {
       isActive?: boolean;
     }
   ): Promise<{ ingredient: Ingredient }> {
-    const response = await this.request<{ data: { ingredient: Ingredient } }>(
+    // Prepare data for API (ensure numbers are sent as numbers)
+    const apiData = {
+      ...data,
+      costPerUnit:
+        data.costPerUnit !== undefined ? Number(data.costPerUnit) : undefined,
+      isActive:
+        data.isActive !== undefined ? Boolean(data.isActive) : undefined,
+    };
+
+    const response = await this.request<{ ingredient: Ingredient }>(
       `/ingredients/${id}`,
       {
         method: "PUT",
-        body: JSON.stringify(data),
+        body: JSON.stringify(apiData),
       }
     );
-    return response.data;
+
+    // Format the response to handle string costPerUnit from DB
+    if (response && response.ingredient) {
+      const formattedIngredient = {
+        ...response.ingredient,
+        costPerUnit: parseFloat(String(response.ingredient.costPerUnit || "0")),
+        isActive: Boolean(response.ingredient.isActive),
+      };
+      return { ingredient: formattedIngredient };
+    }
+
+    throw new Error("Invalid response structure from server");
   }
 
   async deleteIngredient(id: string): Promise<{ success: boolean }> {
@@ -638,31 +695,12 @@ class APIClient {
     const endpoint = `/allergens${
       queryParams.toString() ? `?${queryParams.toString()}` : ""
     }`;
-    console.log("sup allergen list - Making request to endpoint:", endpoint);
-    const rawResponse = await this.request<{ data: { allergens: Allergen[] } }>(endpoint);
-    console.log("sup allergen list - Raw API response:", rawResponse);
-    console.log("sup allergen list - Raw response type:", typeof rawResponse);
-    console.log(
-      "sup allergen list - Raw response keys:",
-      rawResponse ? Object.keys(rawResponse) : "null/undefined"
-    );
+    const rawResponse = await this.request<{ allergens: Allergen[] }>(endpoint);
 
-    // Based on your API docs, the response should be { data: { allergens: [...] } }
-    if (rawResponse && rawResponse.data && rawResponse.data.allergens) {
-      console.log(
-        "sup allergen list - Found allergens array:",
-        rawResponse.data.allergens
-      );
-      console.log(
-        "sup allergen list - Allergens count:",
-        rawResponse.data.allergens.length
-      );
-      return { allergens: rawResponse.data.allergens };
+    // The API is returning { allergens: [...] } directly, not nested in data
+    if (rawResponse && rawResponse.allergens) {
+      return { allergens: rawResponse.allergens };
     } else {
-      console.log(
-        "sup allergen list - No allergens property found, full response:",
-        rawResponse
-      );
       return { allergens: [] };
     }
   }
@@ -818,6 +856,52 @@ class APIClient {
       data: { allergens: MenuItemAllergen[] };
     }>(`/ingredient-allergens/menu-items/${menuItemId}`);
     return response.data;
+  }
+
+  // Menu Tags endpoints (Global - read only)
+  async getMenuTags(): Promise<{ tags: MenuTag[] }> {
+    const response = await this.request<{ tags: MenuTag[] }>("/menu-tags");
+    return response;
+  }
+
+  async getMenuTag(id: string): Promise<{ tag: MenuTag }> {
+    const response = await this.request<{ tag: MenuTag }>(`/menu-tags/${id}`);
+    return response;
+  }
+
+  // Menu Item Tags endpoints
+  async getMenuItemTags(menuItemId: string): Promise<{ tags: MenuItemTag[] }> {
+    const response = await this.request<{ tags: MenuItemTag[] }>(
+      `/menu-item-tags/${menuItemId}`
+    );
+    return response;
+  }
+
+  async addTagToMenuItem(
+    menuItemId: string,
+    tagId: string
+  ): Promise<{ menuItemTag: MenuItemTag }> {
+    const response = await this.request<{ menuItemTag: MenuItemTag }>(
+      `/menu-item-tags/${menuItemId}`,
+      {
+        method: "POST",
+        body: JSON.stringify({ tagId }),
+      }
+    );
+    return response;
+  }
+
+  async removeTagFromMenuItem(
+    menuItemId: string,
+    tagId: string
+  ): Promise<{ success: boolean }> {
+    const response = await this.request<{ success: boolean }>(
+      `/menu-item-tags/${menuItemId}/${tagId}`,
+      {
+        method: "DELETE",
+      }
+    );
+    return { success: response.success };
   }
 
   // Orders endpoints

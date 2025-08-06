@@ -2,7 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { X, Plus, Minus, Trash2, Search, Filter } from "lucide-react";
+import {
+  X,
+  Plus,
+  Minus,
+  Trash2,
+  Search,
+  Filter,
+  AlertTriangle,
+} from "lucide-react";
 import {
   Order,
   MenuItem,
@@ -341,9 +349,33 @@ export default function EditOrderModal({
                         {item.name}
                       </div>
 
+                      {/* Tags */}
+                      {item.tags && item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {item.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="px-2 py-1 rounded-full text-xs font-medium"
+                              style={{
+                                backgroundColor: tag.color + "20",
+                                color: tag.color,
+                              }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Allergens */}
                       {item.allergens && item.allergens.length > 0 && (
-                        <div className="mb-4">
+                        <div className="mb-3">
+                          <div className="flex items-center gap-1 mb-1">
+                            <AlertTriangle className="h-3 w-3 text-orange-500" />
+                            <span className="text-xs font-medium text-orange-700">
+                              Allergens:
+                            </span>
+                          </div>
                           <div className="flex flex-wrap gap-1">
                             {item.allergens.map((allergen) => (
                               <span

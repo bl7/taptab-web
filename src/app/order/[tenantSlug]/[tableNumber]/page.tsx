@@ -13,6 +13,7 @@ import {
   Clock,
   Search,
   Filter,
+  AlertTriangle,
 } from "lucide-react";
 
 interface MenuItem {
@@ -35,6 +36,11 @@ interface MenuItem {
       unit: string;
       costPerUnit: number;
     };
+  }>;
+  tags?: Array<{
+    id: string;
+    name: string;
+    color: string;
   }>;
   allergens?: Array<{
     id: string;
@@ -513,13 +519,37 @@ export default function QROrderPage() {
                       {item.name}
                     </div>
 
-                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {item.description}
                     </p>
 
+                    {/* Tags */}
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {item.tags.map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="px-2 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: tag.color + "20",
+                              color: tag.color,
+                            }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     {/* Allergens */}
                     {item.allergens && item.allergens.length > 0 && (
-                      <div className="mb-4">
+                      <div className="mb-3">
+                        <div className="flex items-center gap-1 mb-1">
+                          <AlertTriangle className="h-3 w-3 text-orange-500" />
+                          <span className="text-xs font-medium text-orange-700">
+                            Allergens:
+                          </span>
+                        </div>
                         <div className="flex flex-wrap gap-1">
                           {item.allergens.map((allergen) => (
                             <span
@@ -809,9 +839,58 @@ export default function QROrderPage() {
                       </span>
                     </div>
 
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                       {item.description}
                     </p>
+
+                    {/* Tags */}
+                    {item.tags && item.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {item.tags.map((tag) => (
+                          <span
+                            key={tag.id}
+                            className="px-2 py-1 rounded-full text-xs font-medium"
+                            style={{
+                              backgroundColor: tag.color + "20",
+                              color: tag.color,
+                            }}
+                          >
+                            {tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Allergens */}
+                    {item.allergens && item.allergens.length > 0 && (
+                      <div className="mb-2">
+                        <div className="flex items-center gap-1 mb-1">
+                          <AlertTriangle className="h-3 w-3 text-orange-500" />
+                          <span className="text-xs font-medium text-orange-700">
+                            Allergens:
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {item.allergens.map((allergen) => (
+                            <span
+                              key={allergen.id}
+                              className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
+                                allergen.severity
+                              )}`}
+                              title={`${allergen.description}${
+                                allergen.sources?.length
+                                  ? ` - Sources: ${allergen.sources
+                                      .map((s) => s.ingredientName)
+                                      .join(", ")}`
+                                  : ""
+                              }`}
+                            >
+                              {allergen.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Mobile Add Button */}
                     <button

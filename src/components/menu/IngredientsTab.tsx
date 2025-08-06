@@ -84,7 +84,8 @@ export default function IngredientsTab({
                       {ingredient.isActive ? "Active" : "Inactive"}
                     </span>
                     <span className="text-xs text-gray-500">
-                      {ingredient.unit} • ${ingredient.costPerUnit.toFixed(2)}
+                      {ingredient.unit} • $
+                      {Number(ingredient.costPerUnit || 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
