@@ -13,6 +13,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { showToast } from "@/lib/utils";
 
 interface MenuItem {
   id: string;
@@ -135,7 +136,7 @@ export default function OrderTakingPage() {
 
   const addToCart = (item: MenuItem) => {
     if (!selectedTable) {
-      alert("Please select a table first");
+      showToast.warning("Please select a table first");
       return;
     }
 
@@ -191,12 +192,12 @@ export default function OrderTakingPage() {
 
   const submitOrder = async () => {
     if (!selectedTable) {
-      alert("Please select a table first");
+      showToast.warning("Please select a table first");
       return;
     }
 
     if (cart.length === 0) {
-      alert("Please add items to cart");
+      showToast.warning("Please add items to cart");
       return;
     }
 
@@ -217,7 +218,7 @@ export default function OrderTakingPage() {
       };
 
       await api.createOrder(orderData);
-      alert("Order placed successfully!");
+      showToast.success("Order placed successfully!");
 
       // Clear cart and reset
       setCart([]);
@@ -226,7 +227,7 @@ export default function OrderTakingPage() {
       console.error("Error placing order:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to place order";
-      alert(`Error: ${errorMessage}`);
+      showToast.error(`Error: ${errorMessage}`);
     } finally {
       setSubmitting(false);
     }

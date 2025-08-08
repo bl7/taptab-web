@@ -5,6 +5,7 @@ import { ArrowLeft, Users, Clock, X, RefreshCw, User } from "lucide-react";
 import { Order } from "@/lib/orders-api";
 import { Table, api, OrderModificationChange } from "@/lib/api";
 import { ReceiptGenerator } from "@/lib/receipt-generator";
+import { showToast } from "@/lib/utils";
 
 import OrderCard from "./OrderCard";
 import OrderDetailsModal from "./OrderDetailsModal";
@@ -150,18 +151,18 @@ export default function TableOrdersView({
         console.log(`🖨️ Printing receipt for order:`, orderData.orderNumber);
         ws.send(JSON.stringify(printData));
         ws.close();
-        alert("Receipt printed successfully!");
+        showToast.success("Receipt printed successfully!");
       };
 
       ws.onerror = () => {
         console.warn("⚠️ PrintBridge not connected");
-        alert(
+        showToast.error(
           "PrintBridge not connected. Please start the PrintBridge server."
         );
       };
     } catch (error) {
       console.error("❌ Error printing receipt:", error);
-      alert("Failed to print receipt. Please try again.");
+      showToast.error("Failed to print receipt. Please try again.");
     }
   };
 
@@ -185,7 +186,7 @@ export default function TableOrdersView({
       }
     } catch (error) {
       console.error("Error modifying order:", error);
-      alert("Failed to modify order. Please try again.");
+      showToast.error("Failed to modify order. Please try again.");
     }
   };
 
@@ -200,43 +201,56 @@ export default function TableOrdersView({
   };
 
   const handlePaymentWithMethod = async (
-    paymentMethod: "CASH" | "CARD" | "QR" | "ONLINE"
+    paymentMethod: "CASH" | "CARD" | "QR" | "STRIPE"
   ) => {
     if (!orderToAction) return;
 
     try {
-      // First mark the order as paid
+      // Mark the order as paid
       await api.markOrderAsPaid(orderToAction.id, paymentMethod);
 
-      // Then update the order status to 'paid'
-      await api.updateOrderStatus(orderToAction.id, "paid");
+      // Close the order after payment for all order types
+      await api.closeOrder(orderToAction.id, "Customer finished dining");
+      showToast.success(
+        `Order paid via ${paymentMethod} and closed successfully`
+      );
 
-      alert(`Order marked as paid via ${paymentMethod}`);
       onRefresh();
       setShowPaymentModal(false);
       setOrderToAction(null);
     } catch (error) {
-      console.error("Error marking order as paid:", error);
-      alert("Failed to mark order as paid");
+      console.error("Error processing payment:", error);
+      showToast.error("Failed to process payment");
     }
   };
 
   const handleCancelWithReason = async () => {
     if (!orderToAction || !cancelReason.trim()) {
-      alert("Please provide a reason for cancellation");
+      showToast.warning("Please provide a reason for cancellation");
       return;
     }
 
     try {
       await api.cancelOrder(orderToAction.id, cancelReason.trim());
-      alert("Order cancelled successfully");
+      showToast.success("Order cancelled successfully");
       onRefresh();
       setShowCancelModal(false);
       setCancelReason("");
       setOrderToAction(null);
     } catch (error) {
       console.error("Failed to cancel order:", error);
-      alert("Failed to cancel order");
+      showToast.error("Failed to cancel order");
+    }
+  };
+
+  const handleCloseOrder = async (order: Order) => {
+    try {
+      await api.closeOrder(order.id, "Customer finished dining");
+      showToast.success("Order closed successfully");
+      onRefresh();
+    } catch (error) {
+      console.error("Failed to close order:", error);
+      showToast.error("Failed to close order");
     }
   };
 
@@ -332,7 +346,7 @@ export default function TableOrdersView({
         );
         ws.send(JSON.stringify(printData));
         ws.close();
-        alert(
+        showToast.success(
           `${
             type.charAt(0).toUpperCase() + type.slice(1)
           } receipt printed successfully!`
@@ -341,13 +355,13 @@ export default function TableOrdersView({
 
       ws.onerror = () => {
         console.warn("⚠️ PrintBridge not connected");
-        alert(
+        showToast.error(
           "PrintBridge not connected. Please start the PrintBridge server."
         );
       };
     } catch (error) {
       console.error("❌ Error printing receipt:", error);
-      alert("Failed to print receipt. Please try again.");
+      showToast.error("Failed to print receipt. Please try again.");
     } finally {
       setPrintingReceipt(false);
       closePrintReceiptModal();
@@ -367,7 +381,7 @@ export default function TableOrdersView({
     console.log("✅ Order moved successfully:", { updatedOrder, moveDetails });
 
     // Show success notification
-    alert(
+    showToast.success(
       `Order moved successfully from Table ${moveDetails.fromTable} to Table ${moveDetails.toTable}`
     );
 
@@ -402,7 +416,7 @@ export default function TableOrdersView({
     });
 
     // Show success notification
-    alert(
+    showToast.success(
       `Order split successfully! New order: ${
         newOrder.orderNumber || newOrder.id
       } (${splitDetails.itemsSplit} items, $${splitDetails.totalSplitAmount})`
@@ -476,6 +490,7 @@ export default function TableOrdersView({
               onCancelModal={openCancelModal}
               onEditOrder={handleEditOrder}
               onPrintReceipt={handlePrintReceipt}
+              onCloseOrder={handleCloseOrder}
               onMoveTable={handleMoveTable}
               onSplitOrder={handleSplitOrder}
             />
@@ -539,10 +554,10 @@ export default function TableOrdersView({
                   QR
                 </button>
                 <button
-                  onClick={() => handlePaymentWithMethod("ONLINE")}
+                  onClick={() => handlePaymentWithMethod("STRIPE")}
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg text-sm font-medium"
                 >
-                  Online
+                  Stripe
                 </button>
               </div>
 

@@ -12,6 +12,8 @@ import {
 import { api } from "@/lib/api";
 import { Order, Table } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { isQROrder } from "@/lib/order-utils";
+import { showToast } from "@/lib/utils";
 
 interface MergeBillsModalProps {
   isOpen: boolean;
@@ -78,7 +80,7 @@ export default function MergeBillsModal({
       if (existingOrders.orders && existingOrders.orders.length > 0) {
         console.log("handle orderslist - Using existing orders from API");
         const activeOrders = existingOrders.orders.filter(
-          (order) => order.status === "active"
+          (order) => order.status === "active" && !isQROrder(order)
         );
         console.log(
           "handle orderslist - Active orders from existing API:",
@@ -290,7 +292,7 @@ export default function MergeBillsModal({
 
   const handleValidateMerge = async () => {
     if (selectedOrders.length < 2) {
-      alert("Please select at least 2 orders to merge");
+      showToast.warning("Please select at least 2 orders to merge");
       return;
     }
 
@@ -303,19 +305,21 @@ export default function MergeBillsModal({
       setValidationResult(result);
     } catch (error) {
       console.error("❌ handleValidateMerge - Error:", error);
-      alert("Error validating merge. Please try again.");
+      showToast.error("Error validating merge. Please try again.");
     }
   };
 
   const handleMergeOrders = async () => {
     if (!validationResult?.canMerge) {
-      alert("Cannot merge selected orders. Please check restrictions.");
+      showToast.error(
+        "Cannot merge selected orders. Please check restrictions."
+      );
       return;
     }
 
     // Validation for create_new strategy
     if (mergeStrategy === "create_new" && !selectedTableId) {
-      alert("Please select a table for the new order.");
+      showToast.warning("Please select a table for the new order.");
       return;
     }
 
@@ -332,7 +336,7 @@ export default function MergeBillsModal({
         createNewOrder: mergeStrategy === "create_new",
       });
 
-      alert(
+      showToast.success(
         `Orders merged successfully! New total: $${Number(
           result.mergeSummary.totalAmount || 0
         ).toFixed(2)}`
@@ -341,7 +345,7 @@ export default function MergeBillsModal({
       onClose();
     } catch (error) {
       console.error("Error merging orders:", error);
-      alert("Error merging orders. Please try again.");
+      showToast.error("Error merging orders. Please try again.");
     } finally {
       setMerging(false);
     }
@@ -460,7 +464,7 @@ export default function MergeBillsModal({
                                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                       order.status === "active"
                                         ? "bg-green-100 text-green-800"
-                                        : order.status === "paid"
+                                        : order.status === "closed"
                                         ? "bg-blue-100 text-blue-800"
                                         : "bg-gray-100 text-gray-800"
                                     }`}
@@ -511,7 +515,7 @@ export default function MergeBillsModal({
                               className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                 order.status === "active"
                                   ? "bg-green-100 text-green-800"
-                                  : order.status === "paid"
+                                  : order.status === "closed"
                                   ? "bg-blue-100 text-blue-800"
                                   : "bg-gray-100 text-gray-800"
                               }`}

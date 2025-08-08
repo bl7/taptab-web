@@ -5,6 +5,7 @@ import { RefreshCw, Eye, Users } from "lucide-react";
 import { useOrders } from "@/lib/use-orders";
 import { api } from "@/lib/api";
 import { Table } from "@/lib/api";
+import { filterVisibleOrders } from "@/lib/order-utils";
 import TableOrdersView from "@/components/orders/TableOrdersView";
 import MergeBillsModal from "@/components/orders/MergeBillsModal";
 
@@ -38,27 +39,45 @@ export default function OrdersPage() {
   // Get orders for a specific table
   const getTableOrders = useCallback(
     (tableId: string) => {
-      const table = tables.find((t) => t.id === tableId);
-      const tableNumber = table?.number;
-
       return orders.filter((order) => {
-        const matchesById = order.tableId === tableId;
-        const matchesByNumber = order.tableNumber === tableNumber;
-        const matchesByTableNumber = order.tableNumber === tableId;
-        const matchesByTableNumberString =
-          order.tableNumber === tableNumber?.toString();
+        // Find the table to get its number
+        const table = tables.find((t) => t.id === tableId);
+        if (!table) return false;
 
-        const isMatch =
-          matchesById ||
-          matchesByNumber ||
-          matchesByTableNumber ||
-          matchesByTableNumberString;
-        const isActive = order.status === "active";
+        // Handle both QR orders (tableNumber contains "10") and Waiter/Cashier orders (tableNumber contains tableId)
+        const isQROrder = order.orderSource === "QR_ORDERING";
 
-        return isMatch && isActive;
+        let matches = false;
+        if (isQROrder) {
+          // QR orders: match order.tableNumber (tableId) with table.id
+          matches = order.tableNumber === table.id;
+        } else {
+          // Waiter/Cashier orders: match order.tableNumber (tableId) with table.id
+          matches = order.tableNumber === table.id;
+        }
+
+        // Check if order is visible
+        const isVisible = filterVisibleOrders([order]).length > 0;
+
+        // Debug logging for specific order
+        if (order.id === "order_1754592610791_m9q5i") {
+          console.log("🎯 ORDER DEBUG:", {
+            table: table.number,
+            orderId: order.id,
+            orderTableNumber: order.tableNumber,
+            orderSource: order.orderSource,
+            orderStatus: order.status,
+            paymentStatus: order.paymentStatus,
+            matches,
+            isVisible,
+            finalResult: matches && isVisible,
+          });
+        }
+
+        return matches && isVisible;
       });
     },
-    [tables, orders]
+    [orders, tables]
   );
 
   // Get table status based on orders
@@ -162,7 +181,7 @@ export default function OrdersPage() {
       // Update order status in the backend
       await api.updateOrderStatus(
         orderId,
-        status as "active" | "paid" | "cancelled"
+        status as "active" | "closed" | "cancelled"
       );
       await refreshOrders();
     } catch (error) {

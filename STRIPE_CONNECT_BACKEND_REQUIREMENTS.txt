@@ -1,0 +1,332 @@
+# Stripe Connect Backend Requirements
+
+## Overview
+This document outlines the backend requirements for implementing Stripe Connect, allowing each tenant to have their own Stripe account for payment processing.
+
+## Database Schema
+
+### 1. Update tenant_payment_configs table
+```sql
+-- Add Stripe Connect fields to existing table
+ALTER TABLE tenant_payment_configs 
+ADD COLUMN stripe_connect_account_id VARCHAR(255),
+ADD COLUMN stripe_connect_publishable_key VARCHAR(255),
+ADD COLUMN stripe_connect_secret_key VARCHAR(255),
+ADD COLUMN webhook_secret VARCHAR(255),
+ADD COLUMN is_connected BOOLEAN DEFAULT false,
+ADD COLUMN account_link_url VARCHAR(500),
+ADD COLUMN account_status VARCHAR(50) DEFAULT 'pending'; -- 'pending', 'active', 'restricted', 'disabled'
+```
+
+### 2. Create stripe_connect_accounts table (optional - for detailed tracking)
+```sql
+CREATE TABLE stripe_connect_accounts (
+  id SERIAL PRIMARY KEY,
+  tenant_slug VARCHAR(255) UNIQUE NOT NULL,
+  account_id VARCHAR(255) UNIQUE NOT NULL,
+  account_status VARCHAR(50) DEFAULT 'pending',
+  charges_enabled BOOLEAN DEFAULT false,
+  payouts_enabled BOOLEAN DEFAULT false,
+  details_submitted BOOLEAN DEFAULT false,
+  requirements_completed BOOLEAN DEFAULT false,
+  business_type VARCHAR(50),
+  country VARCHAR(10),
+  email VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+## API Endpoints
+
+### 1. Get Stripe Connect Configuration
+```
+GET /api/v1/stripe-connect/config
+Authentication: Required (JWT token)
+Description: Get current tenant's Stripe Connect configuration
+Response:
+{
+  "success": true,
+  "data": {
+    "isConnected": false,
+    "accountId": null,
+    "publishableKey": null,
+    "secretKey": null,
+    "webhookSecret": null,
+    "currency": "usd",
+    "merchantName": "Restaurant Name",
+    "merchantCountry": "US",
+    "applePayEnabled": false,
+    "googlePayEnabled": false,
+    "merchantId": null,
+    "merchantCapabilities": [],
+    "isStripeEnabled": true,
+    "accountStatus": "pending",
+    "chargesEnabled": false,
+    "payoutsEnabled": false,
+    "detailsSubmitted": false
+  }
+}
+```
+
+### 2. Create Stripe Connect Account
+```
+POST /api/v1/stripe-connect/create-account
+Authentication: Required (JWT token)
+Description: Create a new Stripe Connect account for the tenant
+Request Body:
+{
+  "businessType": "individual", // or "company"
+  "country": "US",
+  "email": "business@example.com",
+  "businessProfile": {
+    "url": "https://restaurant.com",
+    "mcc": "5814" // Restaurant MCC code
+  }
+}
+Response:
+{
+  "success": true,
+  "data": {
+    "accountId": "acct_xxx",
+    "accountLink": "https://connect.stripe.com/setup/s/xxx",
+    "publishableKey": "pk_test_xxx",
+    "secretKey": "sk_test_xxx"
+  }
+}
+```
+
+### 3. Update Stripe Connect Configuration
+```
+PUT /api/v1/stripe-connect/config
+Authentication: Required (JWT token)
+Description: Update tenant's Stripe Connect configuration
+Request Body:
+{
+  "currency": "usd",
+  "merchantName": "Updated Restaurant Name",
+  "merchantCountry": "US",
+  "applePayEnabled": true,
+  "googlePayEnabled": true,
+  "merchantId": "merchant.com.restaurant",
+  "merchantCapabilities": ["supports3DS", "supportsCredit", "supportsDebit"],
+  "isStripeEnabled": true
+}
+Response:
+{
+  "success": true,
+  "data": {
+    "success": true
+  }
+}
+```
+
+### 4. Disconnect Stripe Account
+```
+POST /api/v1/stripe-connect/disconnect
+Authentication: Required (JWT token)
+Description: Disconnect tenant's Stripe Connect account
+Response:
+{
+  "success": true,
+  "data": {
+    "success": true
+  }
+}
+```
+
+### 5. Get Account Status
+```
+GET /api/v1/stripe-connect/account-status
+Authentication: Required (JWT token)
+Description: Get detailed status of Stripe Connect account
+Response:
+{
+  "success": true,
+  "data": {
+    "accountId": "acct_xxx",
+    "status": "active",
+    "chargesEnabled": true,
+    "payoutsEnabled": true,
+    "detailsSubmitted": true,
+    "requirements": {
+      "currentlyDue": [],
+      "eventuallyDue": [],
+      "pastDue": []
+    },
+    "capabilities": {
+      "card_payments": "active",
+      "transfers": "active"
+    }
+  }
+}
+```
+
+## Updated Payment Endpoints
+
+### 1. Get Tenant Stripe Config (Updated)
+```
+GET /api/v1/tenants/{tenantId}/stripe-config
+Authentication: Not required (public route)
+Description: Get tenant's Stripe configuration for frontend
+Response:
+{
+  "success": true,
+  "data": {
+    "publishableKey": "pk_test_xxx", // From tenant's Connect account
+    "currency": "usd",
+    "merchantName": "Restaurant Name",
+    "merchantCountry": "US",
+    "isStripeEnabled": true,
+    "applePayEnabled": true,
+    "googlePayEnabled": true,
+    "merchantId": "merchant.com.restaurant",
+    "merchantCapabilities": ["supports3DS", "supportsCredit", "supportsDebit"]
+  }
+}
+```
+
+### 2. Create Payment Intent (Updated)
+```
+POST /api/v1/orders/create-payment-intent
+Authentication: Not required (public route)
+Description: Create payment intent using tenant's Stripe Connect account
+Request Body:
+{
+  "tenantId": "restaurant-123",
+  "amount": 2500,
+  "currency": "usd",
+  "orderId": "order-123",
+  "customerEmail": "customer@email.com",
+  "metadata": {
+    "tableNumber": "5",
+    "orderType": "dine_in"
+  }
+}
+Response:
+{
+  "success": true,
+  "data": {
+    "clientSecret": "pi_xxx_secret_xxx",
+    "paymentIntentId": "pi_xxx",
+    "amount": 2500,
+    "currency": "usd"
+  }
+}
+```
+
+## Environment Variables
+
+```env
+# Stripe Connect Configuration
+STRIPE_CONNECT_CLIENT_ID=ca_xxx
+STRIPE_CONNECT_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# Platform Account (for creating Connect accounts)
+STRIPE_PLATFORM_SECRET_KEY=sk_test_xxx
+STRIPE_PLATFORM_PUBLISHABLE_KEY=pk_test_xxx
+```
+
+## Implementation Flow
+
+### 1. Account Creation Flow
+1. Tenant clicks "Connect Stripe Account" in settings
+2. Backend creates Stripe Connect account using platform secret key
+3. Backend generates account link for onboarding
+4. Frontend opens account link in new window
+5. Tenant completes Stripe onboarding
+6. Stripe sends webhook with account updates
+7. Backend updates account status in database
+8. Tenant refreshes settings page to see updated status
+
+### 2. Payment Processing Flow
+1. Customer places order on tenant's site
+2. Frontend gets tenant's Stripe config (Connect account keys)
+3. Frontend creates payment intent using tenant's Connect account
+4. Customer completes payment
+5. Frontend confirms payment with backend
+6. Backend marks order as paid with "STRIPE" method
+7. Money goes directly to tenant's Stripe account
+
+### 3. Webhook Handling
+```javascript
+// Handle Stripe Connect webhooks
+app.post('/api/v1/webhooks/stripe-connect', async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  const event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  
+  switch (event.type) {
+    case 'account.updated':
+      const account = event.data.object;
+      await updateTenantAccountStatus(account.id, account);
+      break;
+    case 'account.application.deauthorized':
+      const deauthAccount = event.data.object;
+      await disconnectTenantAccount(deauthAccount.id);
+      break;
+  }
+  
+  res.json({ received: true });
+});
+```
+
+## Security Considerations
+
+1. **Platform Secret Key**: Keep platform secret key secure, only use for creating Connect accounts
+2. **Tenant Keys**: Store tenant's Connect keys securely, encrypt at rest
+3. **Webhook Verification**: Always verify webhook signatures
+4. **Account Isolation**: Ensure each tenant's payments are isolated
+5. **Access Control**: Only tenant admins can manage their Connect account
+
+## Testing
+
+### Test Connect Account Creation
+```bash
+# Create test Connect account
+curl -X POST http://localhost:3000/api/v1/stripe-connect/create-account \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "businessType": "individual",
+    "country": "US",
+    "email": "test@restaurant.com"
+  }'
+```
+
+### Test Payment with Connect Account
+```bash
+# Create payment intent using Connect account
+curl -X POST http://localhost:3000/api/v1/orders/create-payment-intent \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tenantId": "restaurant-123",
+    "amount": 2500,
+    "currency": "usd",
+    "orderId": "order-123"
+  }'
+```
+
+## Migration Strategy
+
+1. **Phase 1**: Add Stripe Connect fields to existing table
+2. **Phase 2**: Implement Connect account creation flow
+3. **Phase 3**: Update payment processing to use Connect accounts
+4. **Phase 4**: Migrate existing tenants to Connect accounts
+5. **Phase 5**: Remove old single-account payment processing
+
+## Error Handling
+
+- Handle Connect account creation failures
+- Handle webhook processing errors
+- Handle account status changes
+- Handle deauthorization events
+- Provide clear error messages to tenants
+
+## Monitoring
+
+- Track Connect account creation success rates
+- Monitor account status changes
+- Track payment success rates per tenant
+- Monitor webhook delivery success
+- Alert on account deauthorizations 

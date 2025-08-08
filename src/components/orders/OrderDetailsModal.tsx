@@ -12,6 +12,12 @@ import {
 } from "lucide-react";
 import { Order } from "@/lib/orders-api";
 import { Button } from "@/components/ui/button";
+import {
+  getOrderStatusDisplay,
+  getOrderSourceDisplay,
+  getPaymentMethodDisplay,
+  isQROrder,
+} from "@/lib/order-utils";
 
 interface OrderDetailsModalProps {
   order: Order | null;
@@ -93,8 +99,34 @@ export default function OrderDetailsModal({
             <div className="flex items-center space-x-2">
               <Tag className="h-4 w-4 text-gray-400" />
               <span className="text-sm text-gray-600">
-                {order.orderSource || "Unknown Source"}
+                {getOrderSourceDisplay(order.orderSource)}
               </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <CheckCircle className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-600">
+                {getOrderStatusDisplay(order).orderStatus}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <XCircle className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-600">
+                {getOrderStatusDisplay(order).paymentStatus}
+              </span>
+            </div>
+            {order.paymentMethod && (
+              <div className="flex items-center space-x-2">
+                <Tag className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  Payment: {getPaymentMethodDisplay(order.paymentMethod)}
+                </span>
+              </div>
+            )}
+            {/* Payment Status Badge */}
+            <div className="flex items-center space-x-2">
+              <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {getOrderStatusDisplay(order).paymentStatus}
+              </div>
             </div>
           </div>
 
@@ -153,28 +185,71 @@ export default function OrderDetailsModal({
           <div className="flex space-x-3 flex-wrap gap-2">
             {order.status === "active" && (
               <>
-                <Button
-                  onClick={() => {
-                    onPaymentModal(order);
-                    onClose();
-                  }}
-                  className="flex-1 py-3"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Mark as Paid
-                </Button>
+                {/* For QR orders: Show different actions since payment is already taken */}
+                {isQROrder(order) ? (
+                  <>
+                    {/* Only show Edit Order for QR orders with pending payment */}
+                    {order.paymentStatus === "pending" && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => {
+                          // TODO: Add edit order functionality
+                          onClose();
+                        }}
+                        className="flex-1 py-3"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Edit Order
+                      </Button>
+                    )}
 
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    onCancelModal(order);
-                    onClose();
-                  }}
-                  className="flex-1 py-3"
-                >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  Cancel Order
-                </Button>
+                    {/* Only show Cancel Order for QR orders with pending payment */}
+                    {order.paymentStatus === "pending" && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          onCancelModal(order);
+                          onClose();
+                        }}
+                        className="flex-1 py-3"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Cancel Order
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {/* Only show Mark as Paid for orders with pending payment */}
+                    {order.paymentStatus === "pending" && (
+                      <Button
+                        onClick={() => {
+                          onPaymentModal(order);
+                          onClose();
+                        }}
+                        className="flex-1 py-3"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Mark as Paid
+                      </Button>
+                    )}
+
+                    {/* Only show Cancel Order for orders with pending payment */}
+                    {order.paymentStatus === "pending" && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          onCancelModal(order);
+                          onClose();
+                        }}
+                        className="flex-1 py-3"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Cancel Order
+                      </Button>
+                    )}
+                  </>
+                )}
               </>
             )}
           </div>

@@ -15,6 +15,8 @@ import {
   Filter,
   AlertTriangle,
 } from "lucide-react";
+import { OrderPaymentSection } from "@/components/payment";
+import { publicApi } from "@/lib/api";
 
 interface MenuItem {
   id: string;
@@ -88,8 +90,13 @@ export default function QROrderPage() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
   const [error, setError] = useState<string>("");
-  const [availableTables, setAvailableTables] = useState<string[]>([]);
+  const [availableTables, setAvailableTables] = useState<
+    Array<{ id: string; number: string }>
+  >([]);
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
 
   // Helper function to get severity color
   const getSeverityColor = (
@@ -150,13 +157,16 @@ export default function QROrderPage() {
       setMenuItems(menuData.data?.items || []);
       setCategories(categoriesData.data?.categories || []);
 
-      // Extract table numbers for reference
-      const tableNumbers = (tablesData.data?.tables || []).map(
-        (table: { number: string }) => table.number
+      // Extract table data for reference
+      const tableData = (tablesData.data?.tables || []).map(
+        (table: { id: string; number: string }) => ({
+          id: table.id,
+          number: table.number,
+        })
       );
-      setAvailableTables(tableNumbers);
+      setAvailableTables(tableData);
 
-      console.log("📋 Available tables:", tableNumbers);
+      console.log("📋 Available tables:", tableData);
     } catch (error) {
       console.error("❌ Error loading menu:", error);
       setError(error instanceof Error ? error.message : "Failed to load menu");
@@ -219,16 +229,19 @@ export default function QROrderPage() {
     );
   };
 
-  // Submit order
-  const submitOrder = async () => {
+  // Show payment first, then submit order after payment success
+  const handlePlaceOrder = async () => {
+    console.log("stripeDebug", "Place Order button clicked");
     if (cart.length === 0) return;
 
+    console.log("stripeDebug", "Creating order before payment");
     setOrderLoading(true);
     setError("");
 
     try {
+      // 1. Create order with pending status
       const orderData = {
-        tableNumber: tableNumber, // Keep as string, don't parseInt
+        tableNumber: tableNumber, // Use table number from URL
         items: cart.map((item) => ({
           menuItemId: item.menuItem.id,
           quantity: item.quantity,
@@ -238,17 +251,9 @@ export default function QROrderPage() {
         customerPhone: "",
       };
 
-      console.log("📦 Submitting order:", orderData);
-      console.log(
-        "🌐 API URL:",
-        `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`
-      );
-      console.log(
-        "📦 Order data being sent:",
-        JSON.stringify(orderData, null, 2)
-      );
+      console.log("📦 Creating order before payment:", orderData);
 
-      const response = await fetch(
+      const orderResponse = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/public/orders?tenant=${tenantSlug}`,
         {
           method: "POST",
@@ -259,50 +264,142 @@ export default function QROrderPage() {
         }
       );
 
-      console.log("📡 Response status:", response.status);
-      console.log("📡 Response status text:", response.statusText);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ Error response body:", errorText);
-
-        // Try to parse the error response as JSON
-        let errorMessage = `Order submission failed: ${response.status}`;
-        try {
-          const errorData = JSON.parse(errorText);
-          if (errorData.error && errorData.error.message) {
-            errorMessage = errorData.error.message;
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          }
-        } catch {
-          // If JSON parsing fails, use the raw error text
-          errorMessage =
-            errorText || `Order submission failed: ${response.status}`;
-        }
-
-        throw new Error(errorMessage);
+      if (!orderResponse.ok) {
+        const errorText = await orderResponse.text();
+        console.error("❌ Order creation error:", errorText);
+        throw new Error("Failed to create order");
       }
 
-      const orderResult = await response.json();
-      console.log("✅ Order submitted:", orderResult);
+      const orderResult = await orderResponse.json();
+      console.log("✅ Order created:", orderResult);
 
-      setOrderStatus({
-        orderId: orderResult.data?.orderId || "unknown",
-        status: "pending",
-        total: getCartTotal(),
-        items: [...cart],
-      });
+      const orderId = orderResult.data?.order?.id;
+      if (!orderId) {
+        throw new Error("No order ID found in response");
+      }
 
-      setCart([]);
+      console.log("📦 Order ID:", orderId);
+
+      // 2. Create payment intent
+      const paymentIntentResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/stripe/orders/create-payment-intent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tenantId: "6e8ba720-f7f5-4352-91d9-365632cfaf60", // Hardcoded for now
+            amount: Math.round(getCartTotal() * 100), // Convert to cents
+            currency: "gbp",
+            orderId: orderId,
+            metadata: {
+              tenantSlug: tenantSlug,
+              orderId: orderId,
+            },
+          }),
+        }
+      );
+
+      if (!paymentIntentResponse.ok) {
+        const errorText = await paymentIntentResponse.text();
+        console.error("❌ Payment intent creation error:", errorText);
+        throw new Error("Failed to create payment intent");
+      }
+
+      const paymentIntentData = await paymentIntentResponse.json();
+      console.log("✅ Payment intent created:", paymentIntentData);
+
+      // Store order ID and client secret for payment
+      setCurrentOrderId(orderId);
+      setClientSecret(paymentIntentData.data.clientSecret);
+
+      // Show payment section
+      setShowPayment(true);
+      console.log("💳 Payment section shown with client secret");
     } catch (error) {
-      console.error("❌ Error submitting order:", error);
+      console.error("❌ Error in order creation flow:", error);
       setError(
-        error instanceof Error ? error.message : "Failed to submit order"
+        error instanceof Error ? error.message : "Failed to create order"
       );
     } finally {
       setOrderLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = async (paymentResult: unknown) => {
+    console.log("✅ Payment successful:", paymentResult);
+
+    setOrderLoading(true);
+    setError("");
+
+    try {
+      if (!currentOrderId) {
+        throw new Error("No order ID found for payment confirmation");
+      }
+
+      console.log("📦 Payment confirmed for order:", currentOrderId);
+
+      // 3. Call payment success endpoint
+      const paymentSuccessResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/stripe/orders/${currentOrderId}/payment-success`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            tenantId: "6e8ba720-f7f5-4352-91d9-365632cfaf60", // Hardcoded for now
+            paymentIntentId:
+              (paymentResult as any)?.paymentIntent?.id || "unknown",
+          }),
+        }
+      );
+
+      if (!paymentSuccessResponse.ok) {
+        const errorText = await paymentSuccessResponse.text();
+        console.error("❌ Payment success confirmation error:", errorText);
+        throw new Error("Failed to confirm payment success");
+      }
+
+      const successData = await paymentSuccessResponse.json();
+      console.log("✅ Payment success confirmed:", successData);
+
+      // Order is now active and will appear on tables
+      setShowPayment(false);
+      setCart([]);
+      setOrderStatus({
+        orderId: currentOrderId,
+        status: "confirmed",
+        total: getCartTotal(),
+        items: [...cart],
+      });
+
+      // Clear the current order ID and client secret
+      setCurrentOrderId(null);
+      setClientSecret(null);
+    } catch (error) {
+      console.error("❌ Error handling payment success:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to handle payment success"
+      );
+      setShowPayment(false);
+    } finally {
+      setOrderLoading(false);
+    }
+  };
+
+  const handlePaymentError = (error: string) => {
+    console.error("❌ Payment error:", error);
+    setError(error);
+    setShowPayment(false);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPayment(false);
+    setOrderStatus(null);
   };
 
   const filteredItems =
@@ -339,13 +436,13 @@ export default function QROrderPage() {
                 Available tables for this restaurant:
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
-                {availableTables.map((tableNum) => (
+                {availableTables.map((table) => (
                   <a
-                    key={tableNum}
-                    href={`/order/${tenantSlug}/${tableNum}`}
+                    key={table.id}
+                    href={`/order/${tenantSlug}/${table.number}`}
                     className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm hover:bg-blue-200"
                   >
-                    {tableNum}
+                    {table.number}
                   </a>
                 ))}
               </div>
@@ -720,7 +817,7 @@ export default function QROrderPage() {
                 </div>
 
                 <button
-                  onClick={submitOrder}
+                  onClick={handlePlaceOrder}
                   disabled={orderLoading}
                   className="w-full bg-black text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
@@ -732,10 +829,47 @@ export default function QROrderPage() {
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4" />
-                      Place Order
+                      Confirm Order
                     </>
                   )}
                 </button>
+
+                {/* Debug: Show current state */}
+                <div className="mt-2 text-xs text-gray-500">
+                  Debug: showPayment = {showPayment ? "true" : "false"}
+                </div>
+
+                {showPayment && (
+                  <div className="mt-4 p-4 bg-red-500 text-white rounded-lg">
+                    <h1 className="text-2xl font-bold">HELLO WORLD!</h1>
+                    <p>If you can see this, the UI is working!</p>
+                  </div>
+                )}
+
+                {/* Payment Modal */}
+                {showPayment && (
+                  <div
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                    style={{ zIndex: 9999 }}
+                  >
+                    <div
+                      className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+                      style={{
+                        backgroundColor: "white",
+                        border: "2px solid red",
+                      }}
+                    >
+                      <OrderPaymentSection
+                        tenantSlug={tenantSlug}
+                        orderId={currentOrderId || "temp-order"}
+                        amount={Math.round(getCartTotal() * 100)} // Convert to cents
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentError={handlePaymentError}
+                        onCancel={handlePaymentCancel}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1062,7 +1196,7 @@ export default function QROrderPage() {
                   </div>
 
                   <button
-                    onClick={submitOrder}
+                    onClick={handlePlaceOrder}
                     disabled={orderLoading}
                     className="w-full bg-black text-white py-4 rounded-xl font-semibold hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                   >
@@ -1074,15 +1208,74 @@ export default function QROrderPage() {
                     ) : (
                       <>
                         <CheckCircle className="h-4 w-4" />
-                        Place Order
+                        Confirm Order
                       </>
                     )}
                   </button>
+
+                  {/* Debug: Show current state */}
+                  <div className="mt-2 text-xs text-gray-500">
+                    Debug: showPayment = {showPayment ? "true" : "false"}
+                  </div>
+
+                  {showPayment && (
+                    <div className="mt-4 p-4 bg-red-500 text-white rounded-lg">
+                      <h1 className="text-2xl font-bold">HELLO WORLD!</h1>
+                      <p>If you can see this, the UI is working!</p>
+                    </div>
+                  )}
+
+                  {/* Payment Modal */}
+                  {showPayment && (
+                    <div
+                      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+                      style={{ zIndex: 9999 }}
+                    >
+                      <div
+                        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+                        style={{
+                          backgroundColor: "white",
+                          border: "2px solid red",
+                        }}
+                      >
+                        <OrderPaymentSection
+                          tenantSlug={tenantSlug}
+                          orderId={currentOrderId || "temp-order"}
+                          amount={Math.round(getCartTotal() * 100)} // Convert to cents
+                          onPaymentSuccess={handlePaymentSuccess}
+                          onPaymentError={handlePaymentError}
+                          onCancel={handlePaymentCancel}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           </div>
         )}
+
+        {/* Payment Section - Disabled for now */}
+        {/* {showPayment && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+            style={{ zIndex: 9999 }}
+          >
+            <div
+              className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+              style={{ backgroundColor: "white", border: "2px solid red" }}
+            >
+              <OrderPaymentSection
+                tenantSlug={tenantSlug}
+                orderId="temp-order"
+                amount={Math.round(getCartTotal() * 100)} // Convert to cents
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+                onCancel={handlePaymentCancel}
+              />
+            </div>
+          </div>
+        )} */}
       </div>
     </div>
   );

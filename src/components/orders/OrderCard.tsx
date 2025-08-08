@@ -4,6 +4,12 @@ import React from "react";
 import { User, MapPin, AlertTriangle, Scissors } from "lucide-react";
 import { Order } from "@/lib/orders-api";
 import { Button } from "@/components/ui/button";
+import {
+  getOrderStatusDisplay,
+  getPaymentMethodDisplay,
+  getOrderSourceDisplay,
+  isQROrder,
+} from "@/lib/order-utils";
 
 interface OrderCardProps {
   order: Order;
@@ -15,6 +21,7 @@ interface OrderCardProps {
   onCancelModal: (order: Order) => void;
   onEditOrder: (order: Order) => void;
   onPrintReceipt: (order: Order) => void;
+  onCloseOrder?: (order: Order) => void;
   onMoveTable?: (order: Order) => void;
   onSplitOrder?: (order: Order) => void;
 }
@@ -27,9 +34,21 @@ export default function OrderCard({
   onPaymentModal,
   onEditOrder,
   onPrintReceipt,
+  onCloseOrder,
   onMoveTable,
   onSplitOrder,
 }: OrderCardProps) {
+  // Debug: Log order data to see what fields are available
+  console.log("qrorder", {
+    orderId: order.id,
+    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
+    orderSource: order.orderSource,
+    status: order.status,
+    allFields: Object.keys(order),
+    fullOrder: order,
+  });
+
   const totalAmount =
     order.totalAmount ||
     order.finalAmount ||
@@ -58,6 +77,9 @@ export default function OrderCard({
             ${totalAmount.toFixed(2)}
           </div>
           <div className="text-sm text-gray-500">{waitTime} min ago</div>
+          <div className="text-xs font-medium text-gray-600 mt-1">
+            Source: {getOrderSourceDisplay(order.orderSource)}
+          </div>
         </div>
       </div>
 
@@ -74,6 +96,58 @@ export default function OrderCard({
           <span className="text-sm text-gray-600">
             Table {order.tableNumber}
           </span>
+        </div>
+      </div>
+
+      {/* Payment Status - Prominent Display */}
+      <div className="mb-4">
+        <div
+          className={`inline-flex items-center px-3 py-2 rounded-lg text-sm font-medium ${
+            order.paymentStatus === "paid"
+              ? "bg-green-100 text-green-800 border border-green-200"
+              : order.paymentStatus === "pending"
+              ? "bg-yellow-100 text-yellow-800 border border-yellow-200"
+              : order.paymentStatus === "failed"
+              ? "bg-red-100 text-red-800 border border-red-200"
+              : "bg-gray-100 text-gray-800 border border-gray-200"
+          }`}
+        >
+          <span className="mr-2">Payment Status:</span>
+          <span className="font-semibold">
+            {order.paymentStatus || "Unknown"}
+          </span>
+          {order.paymentMethod && (
+            <span className="ml-2 text-xs">
+              via {getPaymentMethodDisplay(order.paymentMethod)}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Order Status Info */}
+      <div className="flex items-center justify-between mb-4 text-xs">
+        <div className="flex items-center space-x-3">
+          <span className="text-gray-600">
+            {getOrderStatusDisplay(order).orderStatus}
+          </span>
+          <div
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+              order.paymentStatus === "paid"
+                ? "bg-green-100 text-green-800"
+                : order.paymentStatus === "pending"
+                ? "bg-yellow-100 text-yellow-800"
+                : order.paymentStatus === "failed"
+                ? "bg-red-100 text-red-800"
+                : "bg-gray-100 text-gray-800"
+            }`}
+          >
+            {order.paymentStatus || "Unknown"}
+          </div>
+          {order.paymentMethod && (
+            <span className="text-gray-600">
+              via {getPaymentMethodDisplay(order.paymentMethod)}
+            </span>
+          )}
         </div>
       </div>
 
@@ -103,41 +177,85 @@ export default function OrderCard({
         <div className="space-y-2">
           {/* Primary Actions Row */}
           <div className="flex space-x-2">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onPaymentModal(order);
-              }}
-              className="flex-1 text-sm"
-            >
-              Mark as Paid
-            </Button>
+            {/* For QR orders: Show Close Table instead of Mark as Paid */}
+            {isQROrder(order) ? (
+              <>
+                {/* Only show Edit Order for QR orders with pending payment */}
+                {order.paymentStatus === "pending" && (
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditOrder(order);
+                    }}
+                    className="flex-1 text-sm"
+                  >
+                    Edit Order
+                  </Button>
+                )}
 
-            <Button
-              variant="secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditOrder(order);
-              }}
-              className="flex-1 text-sm"
-            >
-              Edit Order
-            </Button>
+                <Button
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPrintReceipt(order);
+                  }}
+                  className="flex-1 text-sm"
+                >
+                  Print Receipt
+                </Button>
 
-            <Button
-              variant="secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onPrintReceipt(order);
-              }}
-              className="flex-1 text-sm"
-            >
-              Print Receipt
-            </Button>
+                {onCloseOrder && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCloseOrder(order);
+                    }}
+                    className="flex-1 text-sm bg-green-600 hover:bg-green-700"
+                  >
+                    Close Order
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPaymentModal(order);
+                  }}
+                  className="flex-1 text-sm"
+                >
+                  Pay & Close
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditOrder(order);
+                  }}
+                  className="flex-1 text-sm"
+                >
+                  Edit Order
+                </Button>
+
+                <Button
+                  variant="secondary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPrintReceipt(order);
+                  }}
+                  className="flex-1 text-sm"
+                >
+                  Print Receipt
+                </Button>
+              </>
+            )}
           </div>
 
-          {/* Secondary Actions Row */}
-          {(onMoveTable || onSplitOrder) && (
+          {/* Secondary Actions Row - Only for non-QR orders */}
+          {!isQROrder(order) && (onMoveTable || onSplitOrder) && (
             <div className="flex justify-center gap-2">
               {onMoveTable && (
                 <Button
@@ -191,11 +309,6 @@ export default function OrderCard({
             {order.waiterName || order.sourceDetails || "Unknown Waiter"}
           </span>
         </div>
-        {order.orderSource && (
-          <span className="inline-block px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-full">
-            {order.orderSource.toUpperCase()}
-          </span>
-        )}
       </div>
     </div>
   );

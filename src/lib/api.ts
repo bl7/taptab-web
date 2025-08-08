@@ -141,10 +141,12 @@ export interface Order {
   total: number;
   totalAmount?: number;
   finalAmount?: number;
-  status: "active" | "paid" | "cancelled";
+  status: "active" | "closed" | "cancelled";
+  paymentStatus: "pending" | "paid" | "failed" | "refunded";
+  paymentMethod?: "CASH" | "CARD" | "QR" | "STRIPE";
   waiterId: string;
   waiterName: string;
-  orderSource?: string;
+  orderSource?: "QR_ORDERING" | "WAITER" | "CASHIER";
   sourceDetails?: string;
   customerName?: string;
   customerPhone?: string;
@@ -201,6 +203,7 @@ export interface DashboardSummary {
     card: { count: number; revenue: number };
     qr: { count: number; revenue: number };
     online: { count: number; revenue: number };
+    stripe: { count: number; revenue: number };
   };
 }
 
@@ -319,6 +322,23 @@ export interface Settings {
   taxRate: number;
   currency: string;
   timezone: string;
+  stripeConfig?: StripeConnectConfig;
+}
+
+export interface StripeConnectConfig {
+  isConnected: boolean;
+  accountId?: string;
+  publishableKey?: string;
+  secretKey?: string;
+  webhookSecret?: string;
+  currency: string;
+  merchantName: string;
+  merchantCountry: string;
+  applePayEnabled: boolean;
+  googlePayEnabled: boolean;
+  merchantId?: string;
+  merchantCapabilities?: string[];
+  isStripeEnabled: boolean;
 }
 
 export interface User {
@@ -1034,7 +1054,7 @@ class APIClient {
 
   async updateOrderStatus(
     id: string,
-    status: "active" | "paid" | "cancelled"
+    status: "active" | "closed" | "cancelled"
   ): Promise<{ order: Order }> {
     const response = await this.request<{
       data?: { order: Order };
@@ -1076,14 +1096,18 @@ class APIClient {
 
   async markOrderAsPaid(
     id: string,
-    paymentMethod: "CASH" | "CARD" | "QR" | "ONLINE"
+    paymentMethod: "CASH" | "CARD" | "QR" | "STRIPE"
   ): Promise<{ success: boolean }> {
     const response = await this.request<{
       data?: { success: boolean };
       success?: boolean;
     }>(`/orders/${id}/pay`, {
       method: "PUT",
-      body: JSON.stringify({ paymentMethod }),
+      body: JSON.stringify({
+        paymentMethod,
+        paymentStatus: "paid",
+        status: "closed", // Close the order when payment is taken
+      }),
     });
 
     // Handle different response structures
@@ -1093,6 +1117,24 @@ class APIClient {
     }
 
     return { success };
+  }
+
+  async closeOrder(id: string, reason?: string): Promise<{ order: Order }> {
+    const response = await this.request<{
+      data?: { order: Order };
+      order?: Order;
+    }>(`/orders/${id}/close`, {
+      method: "PUT",
+      body: JSON.stringify({ reason: reason || "Customer finished dining" }),
+    });
+
+    // Handle different response structures
+    const order = response.data?.order || response.order;
+    if (!order) {
+      throw new Error("API response does not contain order data");
+    }
+
+    return { order };
   }
 
   async modifyOrder(
@@ -1664,6 +1706,7 @@ class APIClient {
             card: { count: 0, revenue: 0 },
             qr: { count: 0, revenue: 0 },
             online: { count: 0, revenue: 0 },
+            stripe: { count: 0, revenue: 0 },
           },
         },
       };
@@ -1896,21 +1939,192 @@ class APIClient {
 
   // Settings endpoints
   async getSettings(): Promise<Settings> {
-    const response = await this.request<{ data: Settings }>("/settings");
-    return response.data;
+    const token = await tokenManager.getValidToken();
+
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get settings: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result;
   }
 
-  async updateSettings(
-    data: Partial<Settings>
-  ): Promise<{ settings: Settings }> {
-    const response = await this.request<{ data: { settings: Settings } }>(
-      "/settings",
+  async updateSettings(settings: Settings): Promise<{ success: boolean }> {
+    const token = await tokenManager.getValidToken();
+
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(settings),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update settings: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  }
+
+  // Stripe Connect API functions
+  async getStripeConnectConfig(): Promise<StripeConnectConfig> {
+    const token = await tokenManager.getValidToken();
+    if (!token) {
+      throw new Error("No valid token available");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/stripe/admin/config`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to get Stripe Connect config: ${response.status}`
+      );
+    }
+
+    const result = await response.json();
+    console.log("stripeDebug", "GET config response:", result);
+    return result.data || result;
+  }
+
+  async createStripeConnectAccount(): Promise<{
+    accountId: string;
+    accountLink: string;
+  }> {
+    const token = await tokenManager.getValidToken();
+    if (!token) {
+      throw new Error("No valid token available");
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/stripe/admin/create-account`,
       {
-        method: "PUT",
-        body: JSON.stringify(data),
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       }
     );
-    return { settings: response.data.settings };
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to create Stripe Connect account: ${response.status}`
+      );
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  }
+
+  async updateStripeConnectConfig(
+    config: Partial<StripeConnectConfig>
+  ): Promise<{ success: boolean }> {
+    const token = await tokenManager.getValidToken();
+    if (!token) {
+      throw new Error("No valid token available");
+    }
+
+    const url = `${API_BASE_URL}/stripe/admin/config`;
+    const requestBody = JSON.stringify(config);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: requestBody,
+    });
+
+    if (!response.ok) {
+      await response.text(); // Consume the error response
+      throw new Error(
+        `Failed to update Stripe Connect config: ${response.status}`
+      );
+    }
+
+    const result = await response.json();
+    return result.data || result;
+  }
+
+  async testStripeConnection(): Promise<{
+    success: boolean;
+    message?: string;
+    accountId?: string;
+    testPaymentIntentId?: string;
+    currency?: string;
+    publishableKey?: string;
+  }> {
+    const token = await tokenManager.getValidToken();
+    if (!token) {
+      throw new Error("No valid token available");
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/stripe/admin/test-connection`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Failed to test Stripe connection: ${response.status} - ${errorText}`
+      );
+    }
+
+    const result = await response.json();
+    console.log("stripeDebug", "Test connection response:", result);
+
+    if (result.success && result.data) {
+      return result.data;
+    } else if (result.success) {
+      return result;
+    } else {
+      throw new Error(result.error?.message || "Test connection failed");
+    }
+  }
+
+  async disconnectStripeAccount(): Promise<{ success: boolean }> {
+    const token = await tokenManager.getValidToken();
+    if (!token) {
+      throw new Error("No valid token available");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/stripe/admin/config`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to disconnect Stripe account: ${response.status}`
+      );
+    }
+
+    const result = await response.json();
+    return result.data || result;
   }
 
   // Health check
@@ -2009,7 +2223,6 @@ export class PublicAPIClient {
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
-        "X-Tenant-Slug": tenantSlug,
         ...options.headers,
       },
       ...options,
@@ -2105,6 +2318,22 @@ export class PublicAPIClient {
       console.log("📋 First public table example:", response.tables[0]);
     }
     return { tables: response.tables };
+  }
+
+  async getPublicTableByNumber(
+    tenantSlug: string,
+    tableNumber: string
+  ): Promise<{ table: Table }> {
+    console.log(
+      "🪑 Fetching public table by number from:",
+      `${this.baseURL}/public/tables/${tableNumber}?tenant=${tenantSlug}`
+    );
+    const response = await this.request<{ table: Table }>(
+      `/public/tables/${tableNumber}?tenant=${tenantSlug}`,
+      tenantSlug
+    );
+    console.log("🪑 Public table response:", response);
+    return { table: response.table };
   }
 
   async createPublicOrder(

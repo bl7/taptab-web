@@ -2,7 +2,10 @@
 import { api } from "./api";
 
 // Types based on the API documentation
-export type OrderStatus = "active" | "paid" | "cancelled";
+export type OrderStatus = "active" | "closed" | "cancelled";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+export type PaymentMethod = "CASH" | "CARD" | "QR" | "STRIPE";
+export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER";
 
 export interface OrderItem {
   id: string;
@@ -25,9 +28,11 @@ export interface Order {
   totalAmount?: number;
   finalAmount?: number;
   status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  paymentMethod?: PaymentMethod;
   waiterId: string;
   waiterName: string;
-  orderSource?: string;
+  orderSource?: OrderSource;
   sourceDetails?: string;
   customerName?: string;
   customerPhone?: string;
