@@ -5,6 +5,7 @@ import { ArrowLeft, Users, Clock, X, RefreshCw, User } from "lucide-react";
 import { Order } from "@/lib/orders-api";
 import { Table, api, OrderModificationChange } from "@/lib/api";
 import { ReceiptGenerator } from "@/lib/receipt-generator";
+import { useAuth } from "@/lib/use-auth";
 import { showToast } from "@/lib/utils";
 
 import OrderCard from "./OrderCard";
@@ -30,6 +31,7 @@ export default function TableOrdersView({
   onStatusChange,
   tables = [],
 }: TableOrdersViewProps) {
+  const { user } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -87,6 +89,7 @@ export default function TableOrdersView({
         customerName: order.customerName || "Walk-in Customer",
         customerPhone: order.customerPhone || "",
         orderSource: order.orderSource,
+        restaurantName: user?.tenant?.name || "Restaurant",
         items: order.items.map((item) => ({
           id: item.id,
           menuItemId: item.menuItemId,
@@ -279,6 +282,7 @@ export default function TableOrdersView({
         customerName: orderToPrint.customerName || "Walk-in Customer",
         customerPhone: orderToPrint.customerPhone || "",
         orderSource: orderToPrint.orderSource,
+        restaurantName: user?.tenant?.name || "Restaurant",
         items: orderToPrint.items.map((item) => ({
           id: item.id,
           menuItemId: item.menuItemId,

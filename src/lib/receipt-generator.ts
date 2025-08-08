@@ -17,7 +17,7 @@ export class ReceiptGenerator {
       fontSize: 12,
       fontFamily: "monospace",
       lineHeight: 1.2,
-      margin: 15, // Increased margin for better spacing
+      margin: 20, // Increased margin for better spacing
       ...options,
     };
   }
@@ -53,7 +53,8 @@ export class ReceiptGenerator {
         ctx.font = `${this.options.fontSize}px ${this.options.fontFamily}`;
         ctx.textAlign = "left";
 
-        let y = this.options.margin!;
+        // Add extra top spacing
+        let y = this.options.margin! + 20;
 
         // Header
         y = this.drawHeader(ctx, orderData, y, changes);
@@ -99,7 +100,7 @@ export class ReceiptGenerator {
     const lineHeight = this.options.fontSize! * this.options.lineHeight!;
     const margin = this.options.margin!;
 
-    let height = margin * 2; // Top and bottom margins
+    let height = margin * 2 + 40; // Top and bottom margins + extra spacing
 
     // Header (restaurant name, date, order number)
     height += lineHeight * 3;
@@ -159,7 +160,8 @@ export class ReceiptGenerator {
       this.options.fontFamily
     }`;
     ctx.textAlign = "center";
-    ctx.fillText("RESTAURANT NAME", this.options.width! / 2, y);
+    const restaurantName = orderData.restaurantName || "RESTAURANT NAME";
+    ctx.fillText(restaurantName, this.options.width! / 2, y);
     y += lineHeight;
 
     // Date and time
@@ -366,6 +368,9 @@ export class ReceiptGenerator {
     ctx.font = `${this.options.fontSize!}px ${this.options.fontFamily}`;
     ctx.fillText("Thank you for your order!", this.options.margin!, y);
     y += lineHeight;
+
+    // Add extra bottom spacing
+    y += 20;
 
     return y;
   }

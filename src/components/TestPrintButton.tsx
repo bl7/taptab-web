@@ -27,6 +27,7 @@ export const TestPrintButton: React.FC = () => {
         status: "PENDING",
         customerName: "Test Customer",
         customerPhone: "1234567890",
+        restaurantName: "Test Restaurant",
         items: [
           {
             id: "test_item_1",
