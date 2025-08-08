@@ -40,9 +40,20 @@ export function GooglePayButton({
         const stripeInstance = await loadStripe(stripeConfig.publishableKey);
         setStripe(stripeInstance);
 
+        // Debug Google Pay availability
+        console.log("📱 GooglePayButton - Checking Google Pay availability");
+        console.log("📱 window.google:", typeof window.google);
+        console.log(
+          "📱 window.google.payments:",
+          window.google?.payments ? "available" : "not available"
+        );
+
         // Check if Google Pay is available
         if (stripeInstance && window.google && window.google.payments) {
           setIsGooglePayAvailable(true);
+          console.log("✅ Google Pay is available!");
+        } else {
+          console.log("❌ Google Pay is NOT available on this device/browser");
         }
       } catch (error) {
         console.error("Failed to initialize Google Pay:", error);
@@ -144,7 +155,26 @@ export function GooglePayButton({
   };
 
   if (!isGooglePayAvailable) {
-    return null; // Don't show Google Pay button if not available
+    return (
+      <div className="payment-method-unavailable">
+        <div className="text-center py-8">
+          <div className="text-6xl mb-4">📱</div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            Google Pay Not Available
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Google Pay is only available on Android devices with Chrome browser
+            and requires setting up a payment method in your Google Pay app.
+          </p>
+          <button
+            onClick={onCancel}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Choose Different Payment Method
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import {
@@ -14,6 +15,7 @@ import {
   Search,
   Filter,
   AlertTriangle,
+  Info,
 } from "lucide-react";
 import { OrderPaymentSection } from "@/components/payment";
 import { publicApi } from "@/lib/api";
@@ -23,9 +25,12 @@ interface MenuItem {
   name: string;
   description: string;
   price: number;
+  category?: string;
   categoryId?: string;
   image?: string;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   ingredients?: Array<{
     id: string;
     ingredientId: string;
@@ -42,6 +47,7 @@ interface MenuItem {
   tags?: Array<{
     id: string;
     name: string;
+    description?: string;
     color: string;
   }>;
   allergens?: Array<{
@@ -49,7 +55,7 @@ interface MenuItem {
     name: string;
     description: string;
     severity: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
-    isStandard: boolean;
+    isStandard?: boolean;
     sources?: Array<{
       ingredientId: string;
       ingredientName: string;
@@ -97,6 +103,9 @@ export default function QROrderPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedMenuItemDetails, setSelectedMenuItemDetails] =
+    useState<MenuItem | null>(null);
 
   // Helper function to get severity color
   const getSeverityColor = (
@@ -403,6 +412,16 @@ export default function QROrderPage() {
     setOrderStatus(null);
   };
 
+  const handleShowDetails = (menuItem: MenuItem) => {
+    setSelectedMenuItemDetails(menuItem);
+    setShowDetailsModal(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetailsModal(false);
+    setSelectedMenuItemDetails(null);
+  };
+
   const filteredItems =
     selectedCategory === "all"
       ? menuItems
@@ -675,17 +694,29 @@ export default function QROrderPage() {
                       ${item.price.toFixed(2)}
                     </div>
 
-                    {/* Quick Add Button - Modern */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item);
-                      }}
-                      className="w-full bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Plus className="w-4 h-4" />
-                      ADD TO ORDER
-                    </button>
+                    {/* Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowDetails(item);
+                        }}
+                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Info className="w-4 h-4" />
+                        DETAILS
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(item);
+                        }}
+                        className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-4 h-4" />
+                        ADD TO ORDER
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1027,17 +1058,29 @@ export default function QROrderPage() {
                       </div>
                     )}
 
-                    {/* Mobile Add Button */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(item);
-                      }}
-                      className="w-full bg-black text-white py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      <Plus className="w-4 h-4" />
-                      ADD TO ORDER
-                    </button>
+                    {/* Mobile Action Buttons */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowDetails(item);
+                        }}
+                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Info className="w-4 h-4" />
+                        DETAILS
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          addToCart(item);
+                        }}
+                        className="flex-1 bg-black text-white py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
+                      >
+                        <Plus className="w-4 h-4" />
+                        ADD TO ORDER
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1277,6 +1320,154 @@ export default function QROrderPage() {
             </div>
           </div>
         )} */}
+
+        {/* Menu Item Details Modal - Using Portal */}
+        {typeof window !== "undefined" &&
+          showDetailsModal &&
+          selectedMenuItemDetails &&
+          createPortal(
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4"
+              style={{ zIndex: 9999 }}
+            >
+              <div className="bg-white rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl border border-gray-200">
+                {/* Modal Header */}
+                <div className="flex justify-between items-start p-6 border-b border-gray-200">
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                      {selectedMenuItemDetails.name}
+                    </h1>
+                    <div className="text-3xl font-bold text-gray-900 mb-3">
+                      ${selectedMenuItemDetails.price.toFixed(2)}
+                    </div>
+                    {/* Tags in header */}
+                    {selectedMenuItemDetails.tags &&
+                      selectedMenuItemDetails.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedMenuItemDetails.tags.map((tag) => (
+                            <span
+                              key={tag.id}
+                              className="px-2 py-1 rounded-full text-sm"
+                              style={{
+                                backgroundColor: tag.color + "20",
+                                color: tag.color,
+                              }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                  </div>
+                  <button
+                    onClick={handleCloseDetails}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 space-y-6">
+                  {/* Image */}
+                  {selectedMenuItemDetails.image && (
+                    <div className="w-full h-64 rounded-lg overflow-hidden">
+                      <Image
+                        src={selectedMenuItemDetails.image}
+                        alt={selectedMenuItemDetails.name}
+                        width={600}
+                        height={200}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Allergens - Simple pills */}
+                  {selectedMenuItemDetails.allergens &&
+                    selectedMenuItemDetails.allergens.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5 text-orange-500" />
+                          Allergens
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedMenuItemDetails.allergens.map((allergen) => (
+                            <span
+                              key={allergen.id}
+                              className={`px-3 py-2 rounded-full text-sm font-medium ${
+                                allergen.severity === "CRITICAL"
+                                  ? "bg-red-100 text-red-800"
+                                  : allergen.severity === "HIGH"
+                                  ? "bg-orange-100 text-orange-800"
+                                  : allergen.severity === "MEDIUM"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-blue-100 text-blue-800"
+                              }`}
+                            >
+                              {allergen.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Description */}
+                  {selectedMenuItemDetails.description && (
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                        Description
+                      </h3>
+                      <p className="text-gray-700 leading-relaxed">
+                        {selectedMenuItemDetails.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Ingredients - Simple comma-separated list */}
+                  {selectedMenuItemDetails.ingredients &&
+                    selectedMenuItemDetails.ingredients.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                          Ingredients
+                        </h3>
+                        <p className="text-gray-700">
+                          {selectedMenuItemDetails.ingredients
+                            .map(
+                              (ingredient) =>
+                                ingredient.ingredient?.name ||
+                                "Unknown Ingredient"
+                            )
+                            .join(", ")}
+                        </p>
+                      </div>
+                    )}
+
+                  {/* Quick Actions */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          addToCart(selectedMenuItemDetails);
+                          handleCloseDetails();
+                        }}
+                        className="flex-1 bg-gray-900 text-white py-3 px-4 rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Add to Order
+                      </button>
+                      <button
+                        onClick={handleCloseDetails}
+                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
       </div>
     </div>
   );

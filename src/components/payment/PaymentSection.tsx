@@ -55,14 +55,48 @@ export function PaymentSection({
 
     const methods: PaymentMethod[] = ["card"];
 
-    if (stripeConfig.applePayEnabled) {
+    // Debug logging for payment method availability
+    console.log("🔍 PaymentSection - Stripe Config:", stripeConfig);
+    console.log(
+      "🔍 PaymentSection - Apple Pay Enabled:",
+      stripeConfig.applePayEnabled
+    );
+    console.log(
+      "🔍 PaymentSection - Google Pay Enabled:",
+      stripeConfig.googlePayEnabled
+    );
+
+    // Check device compatibility before adding payment methods
+    const isApplePaySupported =
+      stripeConfig.applePayEnabled &&
+      typeof window !== "undefined" &&
+      window.ApplePaySession &&
+      window.ApplePaySession.canMakePayments();
+
+    const isGooglePaySupported =
+      stripeConfig.googlePayEnabled &&
+      typeof window !== "undefined" &&
+      window.google &&
+      window.google.payments;
+
+    console.log("🔍 Apple Pay device support:", isApplePaySupported);
+    console.log("🔍 Google Pay device support:", isGooglePaySupported);
+
+    if (isApplePaySupported) {
       methods.push("apple_pay");
+      console.log("✅ Adding Apple Pay to available methods");
+    } else {
+      console.log("❌ Apple Pay not supported on this device");
     }
 
-    if (stripeConfig.googlePayEnabled) {
+    if (isGooglePaySupported) {
       methods.push("google_pay");
+      console.log("✅ Adding Google Pay to available methods");
+    } else {
+      console.log("❌ Google Pay not supported on this device");
     }
 
+    console.log("🔍 Final available methods:", methods);
     return methods;
   };
 

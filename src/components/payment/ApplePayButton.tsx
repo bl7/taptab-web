@@ -40,6 +40,24 @@ export function ApplePayButton({
         const stripeInstance = await loadStripe(stripeConfig.publishableKey);
         setStripe(stripeInstance);
 
+        // Debug Apple Pay availability
+        console.log("🍎 ApplePayButton - Checking Apple Pay availability");
+        console.log(
+          "🍎 window.ApplePaySession:",
+          typeof window.ApplePaySession
+        );
+
+        if (window.ApplePaySession) {
+          console.log(
+            "🍎 ApplePaySession.canMakePayments():",
+            window.ApplePaySession.canMakePayments()
+          );
+        } else {
+          console.log(
+            "🍎 ApplePaySession not available on this device/browser"
+          );
+        }
+
         // Check if Apple Pay is available
         if (
           stripeInstance &&
@@ -47,6 +65,9 @@ export function ApplePayButton({
           window.ApplePaySession.canMakePayments()
         ) {
           setIsApplePayAvailable(true);
+          console.log("✅ Apple Pay is available!");
+        } else {
+          console.log("❌ Apple Pay is NOT available on this device/browser");
         }
       } catch (error) {
         console.error("Failed to initialize Apple Pay:", error);
@@ -148,7 +169,26 @@ export function ApplePayButton({
   };
 
   if (!isApplePayAvailable) {
-    return null; // Don't show Apple Pay button if not available
+    return (
+      <div className="payment-method-unavailable">
+        <div className="text-center py-8">
+          <div className="text-6xl mb-4">🍎</div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2">
+            Apple Pay Not Available
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Apple Pay is only available on iOS devices with Safari browser and
+            requires setting up a payment method in your Apple Wallet.
+          </p>
+          <button
+            onClick={onCancel}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors"
+          >
+            Choose Different Payment Method
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
