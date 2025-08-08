@@ -237,7 +237,7 @@ export default function MoveTableModal({
                   className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                     order.status === "active"
                       ? "bg-gray-100 text-gray-800"
-                      : order.status === "paid"
+                      : order.status === "closed"
                       ? "bg-gray-200 text-gray-900"
                       : order.status === "cancelled"
                       ? "bg-gray-100 text-gray-700"

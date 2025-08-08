@@ -351,7 +351,8 @@ export default function QROrderPage() {
           body: JSON.stringify({
             tenantId: "6e8ba720-f7f5-4352-91d9-365632cfaf60", // Hardcoded for now
             paymentIntentId:
-              (paymentResult as any)?.paymentIntent?.id || "unknown",
+              (paymentResult as { paymentIntent?: { id?: string } })
+                ?.paymentIntent?.id || "unknown",
           }),
         }
       );
@@ -693,7 +694,7 @@ export default function QROrderPage() {
         </div>
 
         {/* Desktop Right Sidebar - Order Management */}
-        <div className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col">
+        <div className="w-80 bg-gray-50 border-l border-gray-200 flex flex-col h-screen">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-black">My Order</h2>
@@ -706,7 +707,7 @@ export default function QROrderPage() {
             </div>
 
             {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto">
+            <div className="flex-1 overflow-y-auto max-h-[60vh]">
               {cart.length === 0 ? (
                 <div className="text-center py-8">
                   <ShoppingCart className="w-12 h-12 text-gray-300 mx-auto mb-4" />

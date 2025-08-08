@@ -52,13 +52,34 @@ export default function OrderDetailsModal({
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Order Details
-              </h2>
-              <p className="text-sm text-gray-600">
-                Order #{order.orderNumber || order.id.slice(-8)}
-              </p>
+            <div className="flex-1">
+              {/* Order Source as Primary Title */}
+              <h1
+                className={`text-3xl font-bold mb-2 ${
+                  isQROrder(order) ? "text-blue-700" : "text-purple-700"
+                }`}
+              >
+                {getOrderSourceDisplay(order.orderSource)}
+              </h1>
+
+              {/* Order Details Subtitle */}
+              <div className="flex items-center space-x-4">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Order Details
+                </h2>
+                <span className="text-sm text-gray-600">
+                  #{order.orderNumber || order.id.slice(-8)}
+                </span>
+              </div>
+
+              {/* Visual Indicator Bar */}
+              <div
+                className={`h-1 w-32 rounded-full mt-3 ${
+                  isQROrder(order)
+                    ? "bg-gradient-to-r from-blue-500 to-blue-300"
+                    : "bg-gradient-to-r from-purple-500 to-purple-300"
+                }`}
+              ></div>
             </div>
             <Button
               variant="ghost"

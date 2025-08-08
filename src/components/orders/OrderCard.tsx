@@ -67,20 +67,38 @@ export default function OrderCard({
         </div>
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          {/* Order number removed */}
-        </div>
-        <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900">
-            ${totalAmount.toFixed(2)}
+      {/* Header with Order Source Title */}
+      <div className="mb-4">
+        {/* Order Source as Title */}
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3
+              className={`text-lg font-bold ${
+                isQROrder(order) ? "text-blue-700" : "text-purple-700"
+              }`}
+            >
+              {getOrderSourceDisplay(order.orderSource)}
+            </h3>
+            <div className="text-xs text-gray-500 mt-1">
+              Order #{order.orderNumber || order.id.slice(-8)}
+            </div>
           </div>
-          <div className="text-sm text-gray-500">{waitTime} min ago</div>
-          <div className="text-xs font-medium text-gray-600 mt-1">
-            Source: {getOrderSourceDisplay(order.orderSource)}
+          <div className="text-right">
+            <div className="text-2xl font-bold text-gray-900">
+              ${totalAmount.toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-500">{waitTime} min ago</div>
           </div>
         </div>
+
+        {/* Order Source Icon/Indicator Bar */}
+        <div
+          className={`h-1 w-full rounded-full ${
+            isQROrder(order)
+              ? "bg-gradient-to-r from-blue-500 to-blue-300"
+              : "bg-gradient-to-r from-purple-500 to-purple-300"
+          }`}
+        ></div>
       </div>
 
       {/* Customer Info */}

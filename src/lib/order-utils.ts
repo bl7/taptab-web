@@ -40,11 +40,15 @@ export function getOrderStatusDisplay(order: Order) {
     refunded: "🔄 Refunded",
   };
 
+  const normalizedStatus =
+    order.status?.toLowerCase() as keyof typeof statusMap;
+  const normalizedPaymentStatus =
+    order.paymentStatus?.toLowerCase() as keyof typeof paymentStatusMap;
+
   return {
-    orderStatus: statusMap[order.status?.toLowerCase()] || order.status,
+    orderStatus: statusMap[normalizedStatus] || order.status,
     paymentStatus:
-      paymentStatusMap[order.paymentStatus?.toLowerCase()] ||
-      order.paymentStatus,
+      paymentStatusMap[normalizedPaymentStatus] || order.paymentStatus,
     paymentMethod: order.paymentMethod || "Not set",
   };
 }

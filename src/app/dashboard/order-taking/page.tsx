@@ -439,120 +439,117 @@ export default function OrderTakingPage() {
       </div>
 
       {/* Right Panel - Modern Order Summary */}
-      <div className="w-96 bg-white border-l border-gray-200 flex flex-col shadow-lg">
-        {/* Order Header - Modern, same height as main header */}
-        <div className="h-24 px-6 py-6 bg-gray-900 text-white flex flex-col justify-center">
-          <div className="text-xl font-bold mb-1">ORDER SUMMARY</div>
-          <div className="text-sm text-gray-300">
+      <div className="w-80 bg-white border-l border-gray-200 flex flex-col shadow-lg h-screen">
+        {/* Order Header - Compact */}
+        <div className="px-4 py-3 bg-gray-900 text-white border-b border-gray-700">
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-bold">ORDER</div>
+            <div className="text-xs text-gray-300">
+              {new Date().toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </div>
+          </div>
+          <div className="text-sm text-gray-300 mt-1">
             {selectedTable
               ? `Table ${selectedTable.number}`
-              : "No table selected"}{" "}
-            •{" "}
-            {new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+              : "No table selected"}
           </div>
         </div>
 
-        {/* Order Items - Modern */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        {/* Order Items - Scrollable */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
           {cart.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <div className="text-6xl mb-4">🛒</div>
-              <p className="text-lg font-medium">No items in order yet.</p>
-              <p className="text-sm text-gray-400 mt-2">
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-3">🛒</div>
+              <p className="text-sm font-medium">No items in order yet.</p>
+              <p className="text-xs text-gray-400 mt-1">
                 Click menu items to add them.
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {cart.map((item) => (
                 <div
                   key={item.menuItem.id}
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  className="bg-gray-50 rounded-lg p-3 border border-gray-200"
                 >
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h4 className="text-gray-900 font-semibold text-base">
+                      <h4 className="text-gray-900 font-semibold text-sm">
                         {item.menuItem.name}
                       </h4>
+                      <p className="text-gray-600 text-xs">
+                        ${item.menuItem.price.toFixed(2)} each
+                      </p>
                     </div>
                     <button
                       onClick={() => removeFromCart(item.menuItem.id)}
                       className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
 
-                  {/* Quantity Controls and Price - Modern */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
+                  {/* Quantity Controls - Compact */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
                       <button
                         onClick={() =>
                           updateQuantity(item.menuItem.id, item.quantity - 1)
                         }
-                        className="w-10 h-10 border border-gray-300 bg-white rounded-lg flex items-center justify-center font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-8 h-8 border border-gray-300 bg-white rounded-md flex items-center justify-center font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        <Minus className="w-4 h-4" />
+                        <Minus className="w-3 h-3" />
                       </button>
-                      <span className="min-w-10 text-center font-semibold text-lg text-gray-900">
+                      <span className="min-w-8 text-center font-semibold text-sm text-gray-900">
                         {item.quantity}
                       </span>
                       <button
                         onClick={() =>
                           updateQuantity(item.menuItem.id, item.quantity + 1)
                         }
-                        className="w-10 h-10 border border-gray-300 bg-white rounded-lg flex items-center justify-center font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="w-8 h-8 border border-gray-300 bg-white rounded-md flex items-center justify-center font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    <p className="text-gray-600 text-sm">
-                      ${item.menuItem.price.toFixed(2)} each
-                    </p>
-                  </div>
-
-                  {/* Notes - Modern */}
-                  <div className="mb-3">
-                    <textarea
-                      placeholder="Add notes..."
-                      value={item.notes}
-                      onChange={(e) =>
-                        updateNotes(item.menuItem.id, e.target.value)
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-gray-900 text-sm resize-none transition-colors"
-                      rows={2}
-                    />
-                  </div>
-
-                  {/* Item Total - Modern */}
-                  <div className="text-right">
-                    <span className="text-lg font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-gray-900">
                       ${(item.menuItem.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
+
+                  {/* Notes - Compact */}
+                  <textarea
+                    placeholder="Add notes..."
+                    value={item.notes}
+                    onChange={(e) =>
+                      updateNotes(item.menuItem.id, e.target.value)
+                    }
+                    className="w-full px-2 py-1 border border-gray-300 rounded-md focus:ring-1 focus:ring-gray-900 focus:border-gray-900 text-xs resize-none transition-colors"
+                    rows={2}
+                  />
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Order Total - Modern */}
-        <div className="px-6 py-6 bg-gray-50 border-t border-gray-200">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-lg font-semibold text-gray-900">TOTAL</span>
-            <span className="text-2xl font-bold text-gray-900">
+        {/* Order Total - Compact */}
+        <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-sm font-semibold text-gray-900">TOTAL</span>
+            <span className="text-lg font-bold text-gray-900">
               ${getCartTotal().toFixed(2)}
             </span>
           </div>
 
-          {/* Submit Button - Modern */}
+          {/* Submit Button - Compact */}
           <button
             onClick={submitOrder}
             disabled={cart.length === 0 || !selectedTable || submitting}
-            className="w-full bg-gray-900 text-white py-4 rounded-lg font-semibold text-base hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold text-sm hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {submitting ? "PLACING ORDER..." : "PLACE ORDER"}
           </button>
