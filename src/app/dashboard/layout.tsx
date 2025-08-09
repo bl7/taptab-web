@@ -130,21 +130,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           <nav className="hidden md:block bg-black border-t border-gray-800">
             <div className="flex items-center justify-around max-w-screen-xl mx-auto px-4 py-2">
               <Link
-                href="/dashboard"
-                className={getNavLinkClasses(isActiveLink("/dashboard"))}
-                title="Dashboard"
+                href="/dashboard/analytics"
+                className={getNavLinkClasses(
+                  isActiveLink("/dashboard/analytics")
+                )}
+                title="Analytics"
               >
-                <Home className="w-5 h-5 mb-1" />
-                <span className="font-medium">Dashboard</span>
-              </Link>
-
-              <Link
-                href="/dashboard/orders"
-                className={getNavLinkClasses(isActiveLink("/dashboard/orders"))}
-                title="Orders"
-              >
-                <ShoppingCart className="w-5 h-5 mb-1" />
-                <span className="font-medium">Orders</span>
+                <BarChart3 className="w-5 h-5 mb-1" />
+                <span className="font-medium">Analytics</span>
               </Link>
 
               <Link
@@ -157,32 +150,21 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </Link>
 
               <Link
-                href="/dashboard/order-taking"
-                className={getNavLinkClasses(
-                  isActiveLink("/dashboard/order-taking")
-                )}
-                title="Take Orders"
+                href="/dashboard"
+                className={getNavLinkClasses(isActiveLink("/dashboard"))}
+                title="Dashboard"
               >
-                <Plus className="w-5 h-5 mb-1" />
-                <span className="font-medium">Take Orders</span>
+                <Home className="w-5 h-5 mb-1" />
+                <span className="font-medium">Dashboard</span>
               </Link>
 
               <Link
-                href="/dashboard/staff"
-                className={getNavLinkClasses(isActiveLink("/dashboard/staff"))}
-                title="Staff"
+                href="/dashboard/layout"
+                className={getNavLinkClasses(isActiveLink("/dashboard/layout"))}
+                title="Layout Builder"
               >
-                <Users className="w-5 h-5 mb-1" />
-                <span className="font-medium">Staff</span>
-              </Link>
-
-              <Link
-                href="/dashboard/rota"
-                className={getNavLinkClasses(isActiveLink("/dashboard/rota"))}
-                title="Rota"
-              >
-                <Calendar className="w-5 h-5 mb-1" />
-                <span className="font-medium">Rota</span>
+                <Layout className="w-5 h-5 mb-1" />
+                <span className="font-medium">Layout</span>
               </Link>
 
               <Link
@@ -192,6 +174,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <Menu className="w-5 h-5 mb-1" />
                 <span className="font-medium">Menu</span>
+              </Link>
+
+              <Link
+                href="/dashboard/orders"
+                className={getNavLinkClasses(isActiveLink("/dashboard/orders"))}
+                title="Orders"
+              >
+                <ShoppingCart className="w-5 h-5 mb-1" />
+                <span className="font-medium">Orders</span>
               </Link>
 
               <Link
@@ -206,32 +197,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </Link>
 
               <Link
-                href="/dashboard/tables"
-                className={getNavLinkClasses(isActiveLink("/dashboard/tables"))}
-                title="Tables"
+                href="/dashboard/rota"
+                className={getNavLinkClasses(isActiveLink("/dashboard/rota"))}
+                title="Rota"
               >
-                <Table className="w-5 h-5 mb-1" />
-                <span className="font-medium">Tables</span>
-              </Link>
-
-              <Link
-                href="/dashboard/layout"
-                className={getNavLinkClasses(isActiveLink("/dashboard/layout"))}
-                title="Layout Builder"
-              >
-                <Layout className="w-5 h-5 mb-1" />
-                <span className="font-medium">Layout</span>
-              </Link>
-
-              <Link
-                href="/dashboard/analytics"
-                className={getNavLinkClasses(
-                  isActiveLink("/dashboard/analytics")
-                )}
-                title="Analytics"
-              >
-                <BarChart3 className="w-5 h-5 mb-1" />
-                <span className="font-medium">Analytics</span>
+                <Calendar className="w-5 h-5 mb-1" />
+                <span className="font-medium">Rota</span>
               </Link>
 
               <Link
@@ -243,6 +214,35 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               >
                 <Settings className="w-5 h-5 mb-1" />
                 <span className="font-medium">Settings</span>
+              </Link>
+
+              <Link
+                href="/dashboard/staff"
+                className={getNavLinkClasses(isActiveLink("/dashboard/staff"))}
+                title="Staff"
+              >
+                <Users className="w-5 h-5 mb-1" />
+                <span className="font-medium">Staff</span>
+              </Link>
+
+              <Link
+                href="/dashboard/tables"
+                className={getNavLinkClasses(isActiveLink("/dashboard/tables"))}
+                title="Tables"
+              >
+                <Table className="w-5 h-5 mb-1" />
+                <span className="font-medium">Tables</span>
+              </Link>
+
+              <Link
+                href="/dashboard/order-taking"
+                className={getNavLinkClasses(
+                  isActiveLink("/dashboard/order-taking")
+                )}
+                title="Take Orders"
+              >
+                <Plus className="w-5 h-5 mb-1" />
+                <span className="font-medium">Take Orders</span>
               </Link>
 
               <button
@@ -297,25 +297,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <div className="grid grid-cols-3 gap-4 mb-6">
                   {/* Row 1 */}
                   <Link
-                    href="/dashboard"
+                    href="/dashboard/analytics"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard")
+                      isActiveLink("/dashboard/analytics")
                     )}
                   >
-                    <Home className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Dashboard</span>
-                  </Link>
-
-                  <Link
-                    href="/dashboard/orders"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/orders")
-                    )}
-                  >
-                    <ShoppingCart className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Orders</span>
+                    <BarChart3 className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Analytics</span>
                   </Link>
 
                   <Link
@@ -331,27 +320,61 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     </span>
                   </Link>
 
-                  {/* Row 2 */}
                   <Link
-                    href="/dashboard/order-taking"
+                    href="/dashboard"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/order-taking")
+                      isActiveLink("/dashboard")
                     )}
                   >
-                    <Plus className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Take Orders</span>
+                    <Home className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Dashboard</span>
+                  </Link>
+
+                  {/* Row 2 */}
+                  <Link
+                    href="/dashboard/layout"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/layout")
+                    )}
+                  >
+                    <Layout className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Layout</span>
                   </Link>
 
                   <Link
-                    href="/dashboard/staff"
+                    href="/dashboard/menu"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/staff")
+                      isActiveLink("/dashboard/menu")
                     )}
                   >
-                    <Users className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Staff</span>
+                    <Menu className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Menu</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/orders"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/orders")
+                    )}
+                  >
+                    <ShoppingCart className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Orders</span>
+                  </Link>
+
+                  {/* Row 3 */}
+                  <Link
+                    href="/dashboard/promotions"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/promotions")
+                    )}
+                  >
+                    <Percent className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Promotions</span>
                   </Link>
 
                   <Link
@@ -365,27 +388,27 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     <span className="text-sm font-medium">Rota</span>
                   </Link>
 
-                  {/* Row 3 */}
                   <Link
-                    href="/dashboard/menu"
+                    href="/dashboard/settings"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/menu")
+                      isActiveLink("/dashboard/settings")
                     )}
                   >
-                    <Menu className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Menu</span>
+                    <Settings className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Settings</span>
                   </Link>
 
+                  {/* Row 4 */}
                   <Link
-                    href="/dashboard/promotions"
+                    href="/dashboard/staff"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/promotions")
+                      isActiveLink("/dashboard/staff")
                     )}
                   >
-                    <Percent className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Promotions</span>
+                    <Users className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Staff</span>
                   </Link>
 
                   <Link
@@ -400,39 +423,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </Link>
 
                   <Link
-                    href="/dashboard/layout"
+                    href="/dashboard/order-taking"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/layout")
+                      isActiveLink("/dashboard/order-taking")
                     )}
                   >
-                    <Layout className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Layout</span>
+                    <Plus className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Take Orders</span>
                   </Link>
 
-                  {/* Row 4 */}
-                  <Link
-                    href="/dashboard/analytics"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/analytics")
-                    )}
-                  >
-                    <BarChart3 className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Analytics</span>
-                  </Link>
-
-                  <Link
-                    href="/dashboard/settings"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={getMobileNavItemClasses(
-                      isActiveLink("/dashboard/settings")
-                    )}
-                  >
-                    <Settings className="w-8 h-8 mb-2" />
-                    <span className="text-sm font-medium">Settings</span>
-                  </Link>
-
+                  {/* Row 5 - Logout stays last */}
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
