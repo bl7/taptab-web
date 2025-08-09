@@ -7,6 +7,7 @@ import {
   useAvailablePromotions,
 } from "@/lib/use-promotions";
 import { CartItem, Customer, PromotionPreview } from "@/interfaces/promotion";
+import { showToast } from "@/lib/utils";
 
 interface OrderPromotionsProps {
   tenantSlug: string;
@@ -81,9 +82,11 @@ export const OrderPromotions: React.FC<OrderPromotionsProps> = ({
       onPromoCodesUpdate([...appliedPromoCodes, promoCodeInput.toUpperCase()]);
       setPromoCodeInput("");
       setShowPromoInput(false);
-      alert(`Promo code applied! You save Rs. ${validation.estimatedDiscount}`);
+      showToast.success(
+        `Promo code applied! You save Rs. ${validation.estimatedDiscount}`
+      );
     } else {
-      alert(validation.error?.message || "Invalid promo code");
+      showToast.error(validation.error?.message || "Invalid promo code");
     }
   };
 

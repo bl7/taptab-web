@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { X, Scissors, AlertCircle, Plus, Minus } from "lucide-react";
 import { Order, Table, api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { ButtonLoader } from "@/lib/utils";
 
 interface OrderSplitModalProps {
   order: Order | null;
@@ -663,10 +664,7 @@ export default function OrderSplitModal({
               disabled={selectedItems.length === 0 || loading}
             >
               {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Splitting Order...
-                </div>
+                "Splitting Order..."
               ) : (
                 <div className="flex items-center gap-2">
                   <Scissors className="h-4 w-4" />

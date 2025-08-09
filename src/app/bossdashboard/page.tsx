@@ -1,16 +1,17 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Building2, 
-  TrendingUp, 
+import { useState, useEffect } from "react";
+import {
+  Users,
+  Building2,
+  TrendingUp,
   Activity,
   Eye,
   Plus,
   Settings,
-  BarChart3
-} from 'lucide-react';
+  BarChart3,
+} from "lucide-react";
+import { PageLoader } from "@/lib/utils";
 
 interface DashboardStats {
   totalUsers: number;
@@ -34,9 +35,9 @@ export default function BossDashboard() {
 
   const fetchDashboardStats = async () => {
     try {
-      const token = localStorage.getItem('bossToken');
+      const token = localStorage.getItem("bossToken");
       if (!token) {
-        window.location.href = '/boss/login';
+        window.location.href = "/boss/login";
         return;
       }
 
@@ -49,21 +50,14 @@ export default function BossDashboard() {
         activeTenants: 21,
       });
     } catch (error) {
-      console.error('Error fetching dashboard stats:', error);
+      console.error("Error fetching dashboard stats:", error);
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-black">Loading dashboard...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading dashboard..." background="dark" />;
   }
 
   return (
@@ -80,7 +74,9 @@ export default function BossDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-black text-sm">Total Users</p>
-              <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
+              <p className="text-2xl font-bold text-white">
+                {stats.totalUsers}
+              </p>
             </div>
             <div className="bg-blue-600 p-3 rounded-lg">
               <Users className="h-6 w-6 text-white" />
@@ -92,7 +88,9 @@ export default function BossDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-black text-sm">Total Restaurants</p>
-              <p className="text-2xl font-bold text-white">{stats.totalTenants}</p>
+              <p className="text-2xl font-bold text-white">
+                {stats.totalTenants}
+              </p>
             </div>
             <div className="bg-green-600 p-3 rounded-lg">
               <Building2 className="h-6 w-6 text-white" />
@@ -104,7 +102,9 @@ export default function BossDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-black text-sm">Active Users</p>
-              <p className="text-2xl font-bold text-white">{stats.activeUsers}</p>
+              <p className="text-2xl font-bold text-white">
+                {stats.activeUsers}
+              </p>
             </div>
             <div className="bg-purple-600 p-3 rounded-lg">
               <Activity className="h-6 w-6 text-white" />
@@ -116,7 +116,9 @@ export default function BossDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-black text-sm">Active Restaurants</p>
-              <p className="text-2xl font-bold text-white">{stats.activeTenants}</p>
+              <p className="text-2xl font-bold text-white">
+                {stats.activeTenants}
+              </p>
             </div>
             <div className="bg-orange-600 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6 text-white" />
@@ -134,7 +136,9 @@ export default function BossDashboard() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Manage Users</h3>
-              <p className="text-black text-sm">View and manage all system users</p>
+              <p className="text-black text-sm">
+                View and manage all system users
+              </p>
             </div>
           </div>
           <div className="mt-4">
@@ -176,7 +180,9 @@ export default function BossDashboard() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white">Analytics</h3>
-              <p className="text-black text-sm">System-wide analytics and reports</p>
+              <p className="text-black text-sm">
+                System-wide analytics and reports
+              </p>
             </div>
           </div>
           <div className="mt-4">
@@ -193,28 +199,34 @@ export default function BossDashboard() {
 
       {/* Recent Activity */}
       <div className="bg-gray-800 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Recent Activity</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">
+          Recent Activity
+        </h2>
         <div className="space-y-4">
           <div className="flex items-center space-x-4 p-4 bg-gray-700 rounded-lg">
             <div className="bg-green-600 p-2 rounded-full">
               <Plus className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-white text-sm">New restaurant &quot;Pizza Palace&quot; registered</p>
+              <p className="text-white text-sm">
+                New restaurant &quot;Pizza Palace&quot; registered
+              </p>
               <p className="text-black text-xs">2 hours ago</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4 p-4 bg-gray-700 rounded-lg">
             <div className="bg-blue-600 p-2 rounded-full">
               <Users className="h-4 w-4 text-white" />
             </div>
             <div>
-              <p className="text-white text-sm">5 new users added to &quot;Burger Joint&quot;</p>
+              <p className="text-white text-sm">
+                5 new users added to &quot;Burger Joint&quot;
+              </p>
               <p className="text-black text-xs">4 hours ago</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4 p-4 bg-gray-700 rounded-lg">
             <div className="bg-orange-600 p-2 rounded-full">
               <Settings className="h-4 w-4 text-white" />
@@ -228,4 +240,4 @@ export default function BossDashboard() {
       </div>
     </div>
   );
-} 
+}

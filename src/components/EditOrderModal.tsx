@@ -19,6 +19,7 @@ import {
   OrderModificationChange,
 } from "@/lib/api";
 import { api } from "@/lib/api";
+import { showToast, SectionLoader } from "@/lib/utils";
 
 interface EditOrderModalProps {
   order: Order;
@@ -224,7 +225,7 @@ export default function EditOrderModal({
       onClose();
     } catch (error) {
       console.error("Error saving changes:", error);
-      alert("Failed to save changes. Please try again.");
+      showToast.operationFailed("save changes");
     } finally {
       setModifying(false);
     }
@@ -255,9 +256,7 @@ export default function EditOrderModal({
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-          </div>
+          <SectionLoader height="lg" message="Loading order details..." />
         </div>
       </div>
     );

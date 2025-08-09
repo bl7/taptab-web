@@ -9,6 +9,7 @@ import { filterVisibleOrders } from "@/lib/order-utils";
 import TableOrdersView from "@/components/orders/TableOrdersView";
 import MergeBillsModal from "@/components/orders/MergeBillsModal";
 import { LayoutObject } from "@/types/layout";
+import { PageLoader } from "@/lib/utils";
 
 // Component to render a layout with table status overlays
 interface LocationLayoutViewProps {
@@ -840,7 +841,11 @@ function LocationLayoutView({
           const height = layoutTable.size.height * scale;
 
           return (
-            <g key={`table-${index}`}>
+            <g
+              key={`table-${index}`}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => onTableClick(table)}
+            >
               {/* Table shape with enhanced styling */}
               {layoutTable.shape === "round" ? (
                 <>
@@ -850,6 +855,7 @@ function LocationLayoutView({
                     cy={y + height / 2 + 1.5}
                     r={Math.min(width, height) / 2}
                     fill="rgba(0,0,0,0.2)"
+                    pointerEvents="none"
                   />
                   {/* Table base (pedestal) */}
                   <circle
@@ -859,6 +865,7 @@ function LocationLayoutView({
                     fill="#8B4513"
                     stroke="#654321"
                     strokeWidth="0.5"
+                    pointerEvents="none"
                   />
                   {/* Table top */}
                   <circle
@@ -868,8 +875,6 @@ function LocationLayoutView({
                     fill={fillColor}
                     stroke="#fff"
                     strokeWidth="2"
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => onTableClick(table)}
                   />
                   {/* Wood grain lines */}
                   <circle
@@ -879,6 +884,7 @@ function LocationLayoutView({
                     fill="transparent"
                     stroke="rgba(255,255,255,0.3)"
                     strokeWidth="0.5"
+                    pointerEvents="none"
                   />
                   <circle
                     cx={x + width / 2}
@@ -887,6 +893,7 @@ function LocationLayoutView({
                     fill="transparent"
                     stroke="rgba(255,255,255,0.3)"
                     strokeWidth="0.5"
+                    pointerEvents="none"
                   />
                 </>
               ) : (
@@ -899,26 +906,36 @@ function LocationLayoutView({
                     height={height}
                     fill="rgba(0,0,0,0.2)"
                     rx="4"
+                    pointerEvents="none"
                   />
                   {/* Table legs (4 circles at corners) */}
-                  <circle cx={x + 5} cy={y + 5} r="1.5" fill="#654321" />
+                  <circle
+                    cx={x + 5}
+                    cy={y + 5}
+                    r="1.5"
+                    fill="#654321"
+                    pointerEvents="none"
+                  />
                   <circle
                     cx={x + width - 5}
                     cy={y + 5}
                     r="1.5"
                     fill="#654321"
+                    pointerEvents="none"
                   />
                   <circle
                     cx={x + 5}
                     cy={y + height - 5}
                     r="1.5"
                     fill="#654321"
+                    pointerEvents="none"
                   />
                   <circle
                     cx={x + width - 5}
                     cy={y + height - 5}
                     r="1.5"
                     fill="#654321"
+                    pointerEvents="none"
                   />
                   {/* Table top */}
                   <rect
@@ -930,8 +947,6 @@ function LocationLayoutView({
                     fill={fillColor}
                     stroke="#fff"
                     strokeWidth="2"
-                    className="cursor-pointer hover:opacity-80 transition-opacity"
-                    onClick={() => onTableClick(table)}
                   />
                   {/* Wood grain lines */}
                   <line
@@ -941,6 +956,7 @@ function LocationLayoutView({
                     y2={y + height * 0.25}
                     stroke="rgba(255,255,255,0.3)"
                     strokeWidth="0.5"
+                    pointerEvents="none"
                   />
                   <line
                     x1={x + 7.5}
@@ -949,6 +965,7 @@ function LocationLayoutView({
                     y2={y + height * 0.5}
                     stroke="rgba(255,255,255,0.3)"
                     strokeWidth="0.5"
+                    pointerEvents="none"
                   />
                   <line
                     x1={x + 7.5}
@@ -957,6 +974,7 @@ function LocationLayoutView({
                     y2={y + height * 0.75}
                     stroke="rgba(255,255,255,0.3)"
                     strokeWidth="0.5"
+                    pointerEvents="none"
                   />
                 </>
               )}
@@ -970,7 +988,7 @@ function LocationLayoutView({
                 fill="white"
                 fontSize="10"
                 fontWeight="bold"
-                className="pointer-events-none"
+                pointerEvents="none"
               >
                 {table.number}
               </text>
@@ -983,7 +1001,7 @@ function LocationLayoutView({
                 dominantBaseline="middle"
                 fill="white"
                 fontSize="7"
-                className="pointer-events-none"
+                pointerEvents="none"
               >
                 {table.capacity}p
               </text>
@@ -1327,16 +1345,7 @@ export default function OrdersPage() {
   };
 
   if (loading || tablesLoading || locationsLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-900 text-lg">
-            Loading restaurant data...
-          </p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading restaurant data..." />;
   }
 
   if (error) {

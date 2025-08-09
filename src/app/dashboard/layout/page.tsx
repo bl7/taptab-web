@@ -27,6 +27,7 @@ import {
   SavedLayout,
 } from "@/types/layout";
 import { Table as APITable, TableLayout, api } from "@/lib/api";
+import { showToast } from "@/lib/utils";
 import {
   exportLayoutToFile,
   importLayoutFromFile,
@@ -232,10 +233,10 @@ export default function LayoutBuilderPage() {
     try {
       await saveLayoutToBackend(name, description);
       setShowSaveModal(false);
-      alert("Layout saved successfully to backend!");
+      showToast.saved("Layout");
     } catch (error) {
       console.error("Failed to save layout:", error);
-      alert("Failed to save layout: " + (error as Error).message);
+      showToast.operationFailed("save layout", (error as Error).message);
     }
   };
 
@@ -244,10 +245,10 @@ export default function LayoutBuilderPage() {
     try {
       await loadLayoutFromBackend(layoutId);
       setShowLoadModal(false);
-      alert("Layout loaded successfully!");
+      showToast.loaded("Layout");
     } catch (error) {
       console.error("Failed to load layout:", error);
-      alert("Failed to load layout: " + (error as Error).message);
+      showToast.operationFailed("load layout", (error as Error).message);
     }
   };
 
@@ -285,7 +286,7 @@ export default function LayoutBuilderPage() {
   // Export layout
   const handleExportLayout = () => {
     if (objects.length === 0) {
-      alert("Cannot export an empty layout");
+      showToast.warning("Cannot export an empty layout");
       return;
     }
 
@@ -313,9 +314,9 @@ export default function LayoutBuilderPage() {
         setCurrentLocation(layout.location);
       }
       loadLayout(layout.objects);
-      alert("Layout imported successfully!");
+      showToast.success("Layout imported successfully!");
     } catch (error) {
-      alert("Failed to import layout: " + (error as Error).message);
+      showToast.operationFailed("import layout", (error as Error).message);
     }
   };
 
@@ -459,9 +460,12 @@ export default function LayoutBuilderPage() {
             try {
               await api.deleteTableLayout(layoutId);
               await fetchSavedLayouts(); // Refresh the list
-              alert("Layout deleted successfully!");
+              showToast.deleted("Layout");
             } catch (error) {
-              alert("Failed to delete layout: " + (error as Error).message);
+              showToast.operationFailed(
+                "delete layout",
+                (error as Error).message
+              );
             }
           }}
           onClose={() => setShowLoadModal(false)}

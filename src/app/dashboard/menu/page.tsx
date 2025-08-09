@@ -10,6 +10,7 @@ import {
   MenuTag,
 } from "@/lib/api";
 import toast from "react-hot-toast";
+import { PageLoader } from "@/lib/utils";
 import CategoriesTab from "@/components/menu/CategoriesTab";
 import MenuTab from "@/components/menu/MenuTab";
 import IngredientsTab from "@/components/menu/IngredientsTab";
@@ -516,14 +517,7 @@ export default function MenuPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading menu data...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading menu data..." />;
   }
 
   return (

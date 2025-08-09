@@ -1,18 +1,19 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  User, 
-  Mail, 
-  Shield, 
-  UserCheck, 
-  UserX, 
-  Edit, 
-  Trash2, 
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import {
+  User,
+  Mail,
+  Shield,
+  UserCheck,
+  UserX,
+  Edit,
+  Trash2,
   Plus,
-  Search
-} from 'lucide-react';
+  Search,
+} from "lucide-react";
+import { PageLoader, showToast } from "@/lib/utils";
 
 interface StaffMember {
   id: string;
@@ -33,23 +34,23 @@ export default function BossUsersPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<StaffMember | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRole, setFilterRole] = useState("all");
   const [apiLoading, setApiLoading] = useState(false);
   const router = useRouter();
 
   // Memoized fetch function for better performance
   const fetchUsers = useCallback(async () => {
     try {
-      const token = localStorage.getItem('bossToken');
+      const token = localStorage.getItem("bossToken");
       if (!token) {
-        router.push('/boss/login');
+        router.push("/boss/login");
         return;
       }
 
-      const response = await fetch('/api/users', {
+      const response = await fetch("/api/users", {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -57,10 +58,10 @@ export default function BossUsersPage() {
         const data = await response.json();
         setStaff(data.users);
       } else {
-        console.error('Failed to fetch users');
+        console.error("Failed to fetch users");
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     } finally {
       setLoading(false);
     }
@@ -73,12 +74,12 @@ export default function BossUsersPage() {
   const handleCreateUser = async (userData: Partial<StaffMember>) => {
     setApiLoading(true);
     try {
-      const token = localStorage.getItem('bossToken');
-      const response = await fetch('/api/users', {
-        method: 'POST',
+      const token = localStorage.getItem("bossToken");
+      const response = await fetch("/api/users", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(userData),
       });
@@ -88,25 +89,28 @@ export default function BossUsersPage() {
         fetchUsers(); // Refresh the list
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to create user');
+        showToast.operationFailed("create user", error.error);
       }
     } catch (error) {
-      console.error('Error creating user:', error);
-      alert('Failed to create user');
+      console.error("Error creating user:", error);
+      showToast.operationFailed("create user");
     } finally {
       setApiLoading(false);
     }
   };
 
-  const handleUpdateUser = async (userId: string, userData: Partial<StaffMember>) => {
+  const handleUpdateUser = async (
+    userId: string,
+    userData: Partial<StaffMember>
+  ) => {
     setApiLoading(true);
     try {
-      const token = localStorage.getItem('bossToken');
+      const token = localStorage.getItem("bossToken");
       const response = await fetch(`/api/users/${userId}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(userData),
       });
@@ -117,28 +121,28 @@ export default function BossUsersPage() {
         fetchUsers(); // Refresh the list
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to update user');
+        showToast.operationFailed("update user", error.error);
       }
     } catch (error) {
-      console.error('Error updating user:', error);
-      alert('Failed to update user');
+      console.error("Error updating user:", error);
+      showToast.operationFailed("update user");
     } finally {
       setApiLoading(false);
     }
   };
 
   const handleDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) {
+    if (!confirm("Are you sure you want to delete this user?")) {
       return;
     }
 
     setApiLoading(true);
     try {
-      const token = localStorage.getItem('bossToken');
+      const token = localStorage.getItem("bossToken");
       const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -146,11 +150,11 @@ export default function BossUsersPage() {
         fetchUsers(); // Refresh the list
       } else {
         const error = await response.json();
-        alert(error.error || 'Failed to delete user');
+        showToast.operationFailed("delete user", error.error);
       }
     } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Failed to delete user');
+      console.error("Error deleting user:", error);
+      showToast.operationFailed("delete user");
     } finally {
       setApiLoading(false);
     }
@@ -158,40 +162,40 @@ export default function BossUsersPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'SUPER_ADMIN':
-        return 'bg-red-100 text-red-800';
-      case 'TENANT_ADMIN':
-        return 'bg-purple-100 text-purple-800';
-      case 'MANAGER':
-        return 'bg-blue-100 text-blue-800';
-      case 'CASHIER':
-        return 'bg-green-100 text-green-800';
-      case 'WAITER':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'KITCHEN':
-        return 'bg-orange-100 text-orange-800';
-      case 'READONLY':
-        return 'bg-gray-100 text-gray-800';
+      case "SUPER_ADMIN":
+        return "bg-red-100 text-red-800";
+      case "TENANT_ADMIN":
+        return "bg-purple-100 text-purple-800";
+      case "MANAGER":
+        return "bg-blue-100 text-blue-800";
+      case "CASHIER":
+        return "bg-green-100 text-green-800";
+      case "WAITER":
+        return "bg-yellow-100 text-yellow-800";
+      case "KITCHEN":
+        return "bg-orange-100 text-orange-800";
+      case "READONLY":
+        return "bg-gray-100 text-gray-800";
       default:
-        return 'bg-gray-100 text-gray-800';
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'SUPER_ADMIN':
+      case "SUPER_ADMIN":
         return <Shield className="h-4 w-4" />;
-      case 'TENANT_ADMIN':
+      case "TENANT_ADMIN":
         return <Shield className="h-4 w-4" />;
-      case 'MANAGER':
+      case "MANAGER":
         return <UserCheck className="h-4 w-4" />;
-      case 'CASHIER':
+      case "CASHIER":
         return <User className="h-4 w-4" />;
-      case 'WAITER':
+      case "WAITER":
         return <User className="h-4 w-4" />;
-      case 'KITCHEN':
+      case "KITCHEN":
         return <User className="h-4 w-4" />;
-      case 'READONLY':
+      case "READONLY":
         return <UserX className="h-4 w-4" />;
       default:
         return <User className="h-4 w-4" />;
@@ -199,26 +203,19 @@ export default function BossUsersPage() {
   };
 
   // Filter and search users
-  const filteredStaff = staff.filter(user => {
-    const matchesSearch = 
+  const filteredStaff = staff.filter((user) => {
+    const matchesSearch =
       user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = filterRole === 'all' || user.role === filterRole;
-    
+
+    const matchesFilter = filterRole === "all" || user.role === filterRole;
+
     return matchesSearch && matchesFilter;
   });
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading users...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading users..." background="dark" />;
   }
 
   return (
@@ -226,7 +223,9 @@ export default function BossUsersPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-white">All Users</h1>
-        <p className="text-gray-400 mt-2">Manage all system users across all restaurants</p>
+        <p className="text-gray-400 mt-2">
+          Manage all system users across all restaurants
+        </p>
       </div>
 
       {/* Filters */}
@@ -311,19 +310,25 @@ export default function BossUsersPage() {
                       )}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(user.role)}`}>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(
+                        user.role
+                      )}`}
+                    >
                       {getRoleIcon(user.role)}
-                      {user.role.replace('_', ' ')}
+                      {user.role.replace("_", " ")}
                     </span>
-                    
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
+
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {user.isActive ? "Active" : "Inactive"}
                     </span>
 
                     <div className="flex items-center space-x-2">
@@ -379,14 +384,22 @@ export default function BossUsersPage() {
 }
 
 // Add User Modal Component
-function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onSubmit: (data: Partial<StaffMember>) => void; loading: boolean }) {
+function AddUserModal({
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  onClose: () => void;
+  onSubmit: (data: Partial<StaffMember>) => void;
+  loading: boolean;
+}) {
   const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    role: 'WAITER',
-    password: '',
-    tenantId: '',
+    email: "",
+    firstName: "",
+    lastName: "",
+    role: "WAITER",
+    password: "",
+    tenantId: "",
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -407,7 +420,9 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
               type="email"
               required
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
             />
           </div>
@@ -420,7 +435,9 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
                 type="text"
                 required
                 value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
               />
             </div>
@@ -432,7 +449,9 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
                 type="text"
                 required
                 value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
+                }
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
               />
             </div>
@@ -443,7 +462,9 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
             </label>
             <select
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value })
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
             >
               <option value="SUPER_ADMIN">Super Admin</option>
@@ -462,7 +483,9 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
             <input
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
               placeholder="Leave empty for OTP login"
             />
@@ -481,7 +504,7 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
               disabled={loading}
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
             >
-              {loading ? 'Adding...' : 'Add User'}
+              {loading ? "Adding..." : "Add User"}
             </button>
           </div>
         </form>
@@ -491,13 +514,23 @@ function AddUserModal({ onClose, onSubmit, loading }: { onClose: () => void; onS
 }
 
 // Edit User Modal Component
-function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember; onClose: () => void; onSubmit: (data: Partial<StaffMember>) => void; loading: boolean }) {
+function EditUserModal({
+  user,
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  user: StaffMember;
+  onClose: () => void;
+  onSubmit: (data: Partial<StaffMember>) => void;
+  loading: boolean;
+}) {
   const [formData, setFormData] = useState({
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     role: user.role,
-    password: '',
+    password: "",
     isActive: user.isActive,
   });
 
@@ -521,7 +554,9 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
               type="email"
               required
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
             />
           </div>
@@ -534,7 +569,9 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
                 type="text"
                 required
                 value={formData.firstName}
-                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, firstName: e.target.value })
+                }
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
               />
             </div>
@@ -546,7 +583,9 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
                 type="text"
                 required
                 value={formData.lastName}
-                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, lastName: e.target.value })
+                }
                 className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
               />
             </div>
@@ -557,7 +596,9 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
             </label>
             <select
               value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, role: e.target.value })
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
             >
               <option value="SUPER_ADMIN">Super Admin</option>
@@ -576,7 +617,9 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
             <input
               type="password"
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, password: e.target.value })
+              }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
               placeholder="New password"
             />
@@ -586,10 +629,15 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
               type="checkbox"
               id="isActive"
               checked={formData.isActive}
-              onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+              onChange={(e) =>
+                setFormData({ ...formData, isActive: e.target.checked })
+              }
               className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-600 rounded bg-gray-700"
             />
-            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-300">
+            <label
+              htmlFor="isActive"
+              className="ml-2 block text-sm text-gray-300"
+            >
               Active
             </label>
           </div>
@@ -607,11 +655,11 @@ function EditUserModal({ user, onClose, onSubmit, loading }: { user: StaffMember
               disabled={loading}
               className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
             >
-              {loading ? 'Updating...' : 'Update User'}
+              {loading ? "Updating..." : "Update User"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

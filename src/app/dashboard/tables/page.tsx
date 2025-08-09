@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { api, Table, Location } from "@/lib/api";
 import TableQRCode from "@/components/TableQRCode";
+import { showToast, PageLoader } from "@/lib/utils";
 
 type TabType = "locations" | "tables";
 
@@ -98,10 +99,12 @@ export default function TablesPage() {
       const response = await api.createLocation(locationData);
       setLocations((prev) => [response.location, ...prev]);
       setShowAddModal(false);
+      showToast.created("Location");
     } catch (error) {
       console.error("Error creating location:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to create location"
+      showToast.operationFailed(
+        "create location",
+        error instanceof Error ? error.message : undefined
       );
     } finally {
       setApiLoading(false);
@@ -122,10 +125,12 @@ export default function TablesPage() {
       );
       setShowEditModal(false);
       setSelectedLocation(null);
+      showToast.updated("Location");
     } catch (error) {
       console.error("Error updating location:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to update location"
+      showToast.operationFailed(
+        "update location",
+        error instanceof Error ? error.message : undefined
       );
     } finally {
       setApiLoading(false);
@@ -146,13 +151,15 @@ export default function TablesPage() {
       try {
         await api.deleteLocation(id, location.tableCount > 0);
         setLocations((prev) => prev.filter((location) => location.id !== id));
+        showToast.deleted("Location");
         // Refresh tables to reflect changes
         const tablesResponse = await api.getTables();
         setTables(tablesResponse.tables || []);
       } catch (error) {
         console.error("Error deleting location:", error);
-        alert(
-          error instanceof Error ? error.message : "Failed to delete location"
+        showToast.operationFailed(
+          "delete location",
+          error instanceof Error ? error.message : undefined
         );
       } finally {
         setApiLoading(false);
@@ -173,12 +180,16 @@ export default function TablesPage() {
       const response = await api.createTable(tableData);
       setTables((prev) => [response.table, ...prev]);
       setShowAddModal(false);
+      showToast.created("Table");
       // Refresh locations to update table counts
       const locationsResponse = await api.getLocations();
       setLocations(locationsResponse.locations || []);
     } catch (error) {
       console.error("Error creating table:", error);
-      alert(error instanceof Error ? error.message : "Failed to create table");
+      showToast.operationFailed(
+        "create table",
+        error instanceof Error ? error.message : undefined
+      );
     } finally {
       setApiLoading(false);
     }
@@ -198,7 +209,10 @@ export default function TablesPage() {
       setLocations(locationsResponse.locations || []);
     } catch (error) {
       console.error("Error updating table:", error);
-      alert(error instanceof Error ? error.message : "Failed to update table");
+      showToast.operationFailed(
+        "update table",
+        error instanceof Error ? error.message : undefined
+      );
     } finally {
       setApiLoading(false);
     }
@@ -210,13 +224,15 @@ export default function TablesPage() {
       try {
         await api.deleteTable(id);
         setTables((prev) => prev.filter((table) => table.id !== id));
+        showToast.deleted("Table");
         // Refresh locations to update table counts
         const locationsResponse = await api.getLocations();
         setLocations(locationsResponse.locations || []);
       } catch (error) {
         console.error("Error deleting table:", error);
-        alert(
-          error instanceof Error ? error.message : "Failed to delete table"
+        showToast.operationFailed(
+          "delete table",
+          error instanceof Error ? error.message : undefined
         );
       } finally {
         setApiLoading(false);
@@ -233,8 +249,9 @@ export default function TablesPage() {
       );
     } catch (error) {
       console.error("Error updating table status:", error);
-      alert(
-        error instanceof Error ? error.message : "Failed to update table status"
+      showToast.operationFailed(
+        "update table status",
+        error instanceof Error ? error.message : undefined
       );
     } finally {
       setApiLoading(false);
@@ -257,14 +274,7 @@ export default function TablesPage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-black">Loading...</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading tables and locations..." />;
   }
 
   return (
@@ -692,7 +702,7 @@ function AddLocationModal({
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      alert("Location name is required");
+      showToast.warning("Location name is required");
       return;
     }
 
@@ -801,7 +811,7 @@ function EditLocationModal({
     e.preventDefault();
 
     if (!formData.name.trim()) {
-      alert("Location name is required");
+      showToast.warning("Location name is required");
       return;
     }
 
@@ -927,7 +937,7 @@ function AddTableModal({
     e.preventDefault();
 
     if (!formData.number.trim()) {
-      alert("Table number is required");
+      showToast.warning("Table number is required");
       return;
     }
 
@@ -1084,7 +1094,7 @@ function EditTableModal({
     e.preventDefault();
 
     if (!formData.number.trim()) {
-      alert("Table number is required");
+      showToast.warning("Table number is required");
       return;
     }
 

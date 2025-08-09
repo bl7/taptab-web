@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api, StripeConnectConfig } from "@/lib/api";
+import { showToast, ButtonLoader, SectionLoader } from "@/lib/utils";
 
 interface StripeConnectSectionProps {
   onConfigUpdate?: (config: StripeConnectConfig) => void;
@@ -61,7 +62,7 @@ export default function StripeConnectSection({
       // Reload the config from backend to get the latest state
       await loadStripeConfig();
 
-      alert("Stripe configuration saved successfully!");
+      showToast.saved("Stripe configuration");
     } catch (error: unknown) {
       console.error("stripeDebug", "Error updating Stripe config:", error);
       setError("Failed to save configuration. Please try again.");
@@ -121,11 +122,7 @@ export default function StripeConnectSection({
 
   if (loading) {
     return (
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-        <div className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
+      <SectionLoader height="sm" message="Loading Stripe configuration..." />
     );
   }
 
@@ -361,29 +358,7 @@ export default function StripeConnectSection({
                 disabled={saving}
                 className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center space-x-2"
               >
-                {saving ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    <span>Saving...</span>
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
-                    <span>Save Configuration</span>
-                  </>
-                )}
+                {saving ? "Saving..." : "Save Configuration"}
               </button>
             </div>
           </form>

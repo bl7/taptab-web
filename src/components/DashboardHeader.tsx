@@ -17,6 +17,7 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
   const [showStatusDetails, setShowStatusDetails] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<{ play: () => void } | null>(null);
 
   // Check if user should see the header (only tenant admin and kitchen)
@@ -162,6 +163,26 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
     return pbConnected ? "text-green-600" : "text-red-600";
   };
 
+  // Click outside handler for status details dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        statusRef.current &&
+        !statusRef.current.contains(event.target as Node)
+      ) {
+        setShowStatusDetails(false);
+      }
+    };
+
+    if (showStatusDetails) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showStatusDetails]);
+
   const markAllAsRead = useCallback(() => {
     notifications.forEach((notification) => {
       markAsRead(notification.id);
@@ -256,7 +277,10 @@ export function DashboardHeader({ jwtToken, userRole }: DashboardHeaderProps) {
 
       {/* Status Details Panel */}
       {showStatusDetails && (
-        <div className="fixed top-4 left-20 w-80 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-xl z-50">
+        <div
+          ref={statusRef}
+          className="fixed top-4 left-20 w-80 p-4 bg-gray-50 rounded-lg border border-gray-200 shadow-xl z-50"
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* WebSocket Details */}
             <div className="space-y-2">

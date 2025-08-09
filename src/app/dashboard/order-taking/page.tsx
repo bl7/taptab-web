@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { PageLoader } from "@/lib/utils";
 import { showToast } from "@/lib/utils";
 
 interface MenuItem {
@@ -290,12 +291,7 @@ export default function OrderTakingPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-black mx-auto"></div>
-          <p className="mt-4 text-black text-lg">Loading POS System...</p>
-        </div>
-      </div>
+      <PageLoader message="Loading POS System..." background="transparent" />
     );
   }
 

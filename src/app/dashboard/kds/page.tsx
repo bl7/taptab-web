@@ -6,6 +6,7 @@ import { useOrders } from "@/lib/use-orders";
 import { api, Table } from "@/lib/api";
 import { Order } from "@/lib/orders-api";
 import { filterVisibleOrders } from "@/lib/order-utils";
+import { PageLoader } from "@/lib/utils";
 
 interface KDSOrderCardProps {
   order: Order;
@@ -311,16 +312,7 @@ export default function KDSPage() {
   };
 
   if (loading || tablesLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4 text-gray-900 text-lg">
-            Loading kitchen orders...
-          </p>
-        </div>
-      </div>
-    );
+    return <PageLoader message="Loading kitchen orders..." />;
   }
 
   if (error) {

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api, Settings, StripeConnectConfig } from "@/lib/api";
 import { StripeConnectSection } from "@/components/stripe";
 import { ProfileSection, SettingsTabs } from "@/components/settings";
-import { showToast } from "@/lib/utils";
+import { showToast, SectionLoader, ButtonLoader } from "@/lib/utils";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -60,9 +60,7 @@ export default function SettingsPage() {
     return (
       <div className="min-h-screen bg-gray-50 p-8">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black"></div>
-          </div>
+          <SectionLoader height="lg" message="Loading settings..." />
         </div>
       </div>
     );
@@ -108,29 +106,7 @@ export default function SettingsPage() {
               disabled={saving}
               className="bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
-              {saving ? (
-                <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  <span>Save Settings</span>
-                </>
-              )}
+              {saving ? "Saving..." : "Save Settings"}
             </button>
           </div>
         </div>

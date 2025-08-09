@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, MapPin, AlertCircle } from "lucide-react";
 import { Order, Table, api } from "@/lib/api";
+import { ButtonLoader } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 interface MoveTableModalProps {
@@ -368,7 +369,6 @@ export default function MoveTableModal({
             >
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                   Moving Order...
                 </div>
               ) : (
