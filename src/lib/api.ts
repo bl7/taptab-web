@@ -146,7 +146,7 @@ export interface Order {
   paymentMethod?: "CASH" | "CARD" | "QR" | "STRIPE";
   waiterId: string;
   waiterName: string;
-  orderSource?: "QR_ORDERING" | "WAITER" | "CASHIER";
+  orderSource?: "QR_ORDERING" | "WAITER" | "CASHIER" | "SPLIT";
   sourceDetails?: string;
   customerName?: string;
   customerPhone?: string;

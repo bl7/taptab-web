@@ -4,18 +4,19 @@ import { Order } from "./api";
 export type OrderStatus = "active" | "closed" | "cancelled";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type PaymentMethod = "CASH" | "CARD" | "QR" | "STRIPE";
-export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER";
+export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER" | "SPLIT";
 
 /**
  * Check if an order should be visible on tables based on the new status system
  * Orders are visible when:
  * - status === 'active' AND
- * - (orderSource === 'QR_ORDERING' OR (orderSource IN ['WAITER', 'CASHIER'] AND paymentStatus === 'pending'))
+ * - (orderSource === 'QR_ORDERING' OR orderSource === 'SPLIT' OR (orderSource IN ['WAITER', 'CASHIER'] AND paymentStatus === 'pending'))
  */
 export function isOrderVisibleOnTable(order: Order): boolean {
   return (
     order.status?.toLowerCase() === "active" &&
     (order.orderSource === "QR_ORDERING" ||
+      order.orderSource === "SPLIT" ||
       (["WAITER", "WAITER_ORDERING", "CASHIER", "CASHIER_ORDERING"].includes(
         order.orderSource || ""
       ) &&
@@ -68,12 +69,16 @@ export function isQROrder(order: Order): boolean {
 }
 
 /**
- * Check if an order is a regular order (waiter/cashier)
+ * Check if an order is a regular order (waiter/cashier/split)
  */
 export function isRegularOrder(order: Order): boolean {
-  return ["WAITER", "WAITER_ORDERING", "CASHIER", "CASHIER_ORDERING"].includes(
-    order.orderSource || ""
-  );
+  return [
+    "WAITER",
+    "WAITER_ORDERING",
+    "CASHIER",
+    "CASHIER_ORDERING",
+    "SPLIT",
+  ].includes(order.orderSource || "");
 }
 
 /**
@@ -86,6 +91,7 @@ export function getOrderSourceDisplay(orderSource?: string): string {
     WAITER_ORDERING: "Waiter",
     CASHIER: "Cashier",
     CASHIER_ORDERING: "Cashier",
+    SPLIT: "Split Order",
   };
 
   return (

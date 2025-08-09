@@ -5,7 +5,7 @@ import { api } from "./api";
 export type OrderStatus = "active" | "closed" | "cancelled";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type PaymentMethod = "CASH" | "CARD" | "QR" | "STRIPE";
-export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER";
+export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER" | "SPLIT";
 
 export interface OrderItem {
   id: string;

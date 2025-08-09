@@ -527,18 +527,11 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-black mb-2">Menu Management</h1>
-        <p className="text-gray-600">
-          Manage your menu items, categories, ingredients, and allergens
-        </p>
-      </div>
-
+    <div className="p-3 md:p-6 max-w-7xl mx-auto">
       {/* Tab Navigation */}
-      <div className="mb-6">
+      <div className="mb-4 md:mb-6">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-1 md:space-x-8 overflow-x-auto scrollbar-hide -mx-3 md:mx-0 px-3 md:px-0">
             {[
               {
                 id: "categories",
@@ -556,13 +549,14 @@ export default function MenuPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-3 md:px-4 border-b-2 font-medium text-sm whitespace-nowrap min-w-max ${
                   activeTab === tab.id
                     ? "border-black text-black"
                     : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                 }`}
               >
-                {tab.label}
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.label.split(" ")[0]}</span>
                 <span className="ml-2 bg-gray-100 text-gray-900 py-0.5 px-2.5 rounded-full text-xs">
                   {tab.count}
                 </span>

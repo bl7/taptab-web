@@ -8,7 +8,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       message: "Server is ready to handle requests",
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         status: "error",

@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { OrdersApi, Order, CreateOrderRequest } from './orders-api';
+import { useState, useEffect, useCallback } from "react";
+import { OrdersApi, Order, CreateOrderRequest } from "./orders-api";
 
 interface UseOrdersReturn {
   orders: Order[];
@@ -21,90 +21,121 @@ export const useOrders = (): UseOrdersReturn => {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      console.log('🔄 Fetching orders from authenticated API...');
+      console.log("🔄 Fetching orders from authenticated API...");
       const response = await OrdersApi.getOrders();
-      console.log('✅ Orders API response:', response);
-      
+      console.log("✅ Orders API response:", response);
+
       if (response.success) {
-        console.log('📋 Orders received:', response.data.orders.length);
+        console.log("📋 Orders received:", response.data.orders.length);
+
+        // Debug: Check for split orders
+        const splitOrders = response.data.orders.filter(
+          (order) => order.orderSource === "SPLIT"
+        );
+        console.log("🚨 SPLIT ORDERS FOUND:", splitOrders.length);
+        if (splitOrders.length > 0) {
+          console.log("🔍 Split orders details:", splitOrders);
+        }
+
+        // Debug: Log all order sources
+        const orderSources = [
+          ...new Set(response.data.orders.map((o) => o.orderSource)),
+        ];
+        console.log("📊 All order sources:", orderSources);
+
         setOrders(response.data.orders);
       } else {
-        console.error('❌ Orders API returned success: false');
-        setError('Failed to fetch orders');
+        console.error("❌ Orders API returned success: false");
+        setError("Failed to fetch orders");
       }
     } catch (err) {
-      console.error('❌ Error fetching orders from authenticated API:', err);
-      
+      console.error("❌ Error fetching orders from authenticated API:", err);
+
       // Try public API as fallback
       try {
-        console.log('🔄 Trying public API as fallback...');
+        console.log("🔄 Trying public API as fallback...");
         // For now, we'll need to get the tenant slug from somewhere
         // This is a temporary solution - you might want to store tenant info in localStorage
-        const tenantSlug = localStorage.getItem('tenantSlug') || 'default';
-        const publicResponse = await OrdersApi.getOrdersFromPublicAPI(tenantSlug);
-        
+        const tenantSlug = localStorage.getItem("tenantSlug") || "default";
+        const publicResponse = await OrdersApi.getOrdersFromPublicAPI(
+          tenantSlug
+        );
+
         if (publicResponse.success) {
-          console.log('✅ Public API response:', publicResponse);
-          console.log('📋 Orders received from public API:', publicResponse.data.orders.length);
+          console.log("✅ Public API response:", publicResponse);
+          console.log(
+            "📋 Orders received from public API:",
+            publicResponse.data.orders.length
+          );
           setOrders(publicResponse.data.orders);
         } else {
-          throw new Error('Public API also failed');
+          throw new Error("Public API also failed");
         }
       } catch (publicErr) {
-        console.error('❌ Public API also failed:', publicErr);
-        setError(err instanceof Error ? err.message : 'Failed to fetch orders from both APIs');
+        console.error("❌ Public API also failed:", publicErr);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch orders from both APIs"
+        );
       }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const createOrder = useCallback(async (orderData: CreateOrderRequest): Promise<Order> => {
-    try {
-      const response = await OrdersApi.createOrder(orderData);
-      if (response.success) {
-        const newOrder = response.data.order;
-        setOrders(prev => [newOrder, ...prev]);
-        return newOrder;
-      } else {
-        throw new Error('Failed to create order');
+  const createOrder = useCallback(
+    async (orderData: CreateOrderRequest): Promise<Order> => {
+      try {
+        const response = await OrdersApi.createOrder(orderData);
+        if (response.success) {
+          const newOrder = response.data.order;
+          setOrders((prev) => [newOrder, ...prev]);
+          return newOrder;
+        } else {
+          throw new Error("Failed to create order");
+        }
+      } catch (err) {
+        console.error("Error creating order:", err);
+        throw err;
       }
-    } catch (err) {
-      console.error('Error creating order:', err);
-      throw err;
-    }
-  }, []);
+    },
+    []
+  );
 
   const updateOrder = useCallback(async (orderId: string): Promise<Order> => {
     try {
       const response = await OrdersApi.updateOrder();
       if (response.success) {
         const updatedOrder = response.data.order;
-        setOrders(prev => prev.map(order => 
-          order.id === orderId ? updatedOrder : order
-        ));
+        setOrders((prev) =>
+          prev.map((order) => (order.id === orderId ? updatedOrder : order))
+        );
         return updatedOrder;
       } else {
-        throw new Error('Failed to update order');
+        throw new Error("Failed to update order");
       }
     } catch (err) {
-      console.error('Error updating order:', err);
+      console.error("Error updating order:", err);
       throw err;
     }
   }, []);
 
-  const updateOrderStatus = useCallback(async (orderId: string): Promise<Order> => {
-    return updateOrder(orderId);
-  }, [updateOrder]);
+  const updateOrderStatus = useCallback(
+    async (orderId: string): Promise<Order> => {
+      return updateOrder(orderId);
+    },
+    [updateOrder]
+  );
 
   const deleteOrder = useCallback(async (orderId: string): Promise<void> => {
     try {
-      await OrdersApi.cancelOrder(orderId, 'Admin deletion');
-      setOrders(prev => prev.filter(order => order.id !== orderId));
+      await OrdersApi.cancelOrder(orderId, "Admin deletion");
+      setOrders((prev) => prev.filter((order) => order.id !== orderId));
     } catch (err) {
-      console.error('Error deleting order:', err);
+      console.error("Error deleting order:", err);
       throw err;
     }
   }, []);
@@ -115,10 +146,10 @@ export const useOrders = (): UseOrdersReturn => {
       if (response.success) {
         return response.data.order;
       } else {
-        throw new Error('Failed to get order');
+        throw new Error("Failed to get order");
       }
     } catch (err) {
-      console.error('Error getting order:', err);
+      console.error("Error getting order:", err);
       throw err;
     }
   }, []);
@@ -143,4 +174,4 @@ export const useOrders = (): UseOrdersReturn => {
     refreshOrders,
     getOrder,
   };
-}; 
+};

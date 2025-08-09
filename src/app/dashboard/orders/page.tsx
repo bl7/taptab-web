@@ -39,6 +39,20 @@ export default function OrdersPage() {
   // Get orders for a specific table
   const getTableOrders = useCallback(
     (tableId: string) => {
+      // Debug: Log all orders and their sources for this table
+      const tableOrdersDebug = orders.filter((order) => {
+        const table = tables.find((t) => t.id === tableId);
+        return table && order.tableNumber === table.id;
+      });
+      console.log(
+        `🏠 Table ${tableId} orders before filtering:`,
+        tableOrdersDebug.map((o) => ({
+          id: o.id,
+          source: o.orderSource,
+          status: o.status,
+        }))
+      );
+
       return orders.filter((order) => {
         // Find the table to get its number
         const table = tables.find((t) => t.id === tableId);
@@ -58,6 +72,21 @@ export default function OrdersPage() {
 
         // Check if order is visible
         const isVisible = filterVisibleOrders([order]).length > 0;
+
+        // Special debugging for split orders
+        if (order.orderSource === "SPLIT") {
+          console.log("🚨 SPLIT ORDER DEBUG:", {
+            orderId: order.id,
+            orderSource: order.orderSource,
+            status: order.status,
+            paymentStatus: order.paymentStatus,
+            tableNumber: order.tableNumber,
+            tableId: table.id,
+            matches,
+            isVisible,
+            finalResult: matches && isVisible,
+          });
+        }
 
         // Debug logging for specific order
         if (order.id === "order_1754592610791_m9q5i") {
@@ -249,18 +278,12 @@ export default function OrdersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-6 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-            <p className="text-gray-600 mt-1 text-sm">
-              Manage tables and track order progress
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
+      <div className="bg-white border-b border-gray-200 px-3 md:px-6 py-4 md:py-6 shadow-sm">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-end gap-3 md:gap-0">
+          <div className="flex items-center gap-2 md:gap-4 w-full md:w-auto overflow-x-auto">
             {/* Compact Status Legend */}
-            <div className="bg-white rounded-lg border border-gray-200 px-4 py-2 shadow-sm">
-              <div className="flex items-center gap-3 text-xs">
+            <div className="bg-white rounded-lg border border-gray-200 px-2 md:px-4 py-2 shadow-sm min-w-max">
+              <div className="flex items-center gap-2 md:gap-3 text-xs">
                 <div className="flex items-center gap-1">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                   <span className="text-gray-700">Free</span>
@@ -281,16 +304,16 @@ export default function OrdersPage() {
             </div>
             <button
               onClick={refreshOrders}
-              className="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium text-sm transition-colors"
+              className="bg-gray-900 hover:bg-gray-800 text-white px-3 md:px-4 py-2 rounded-lg flex items-center gap-2 font-medium text-sm transition-colors min-w-max"
             >
               <RefreshCw className="h-4 w-4" />
-              <span>Refresh</span>
+              <span className="hidden sm:inline">Refresh</span>
             </button>
 
             {/* Global Merge Bills Button */}
             <button
               onClick={() => setShowMergeBillsModal(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg flex items-center gap-3 font-semibold text-base transition-colors shadow-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg flex items-center gap-2 md:gap-3 font-semibold text-sm md:text-base transition-colors shadow-lg min-w-max"
             >
               <Users className="h-5 w-5" />
               <span>Merge Bills</span>
@@ -300,10 +323,10 @@ export default function OrdersPage() {
       </div>
 
       {/* Content */}
-      <div className="px-6 py-6">
+      <div className="px-3 md:px-6 py-4 md:py-6">
         {/* Tables Grid */}
         {tables.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center shadow-sm">
+          <div className="bg-white rounded-lg border border-gray-200 p-8 md:p-12 text-center shadow-sm">
             <div className="p-4 rounded-full bg-gray-100 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
               <Eye className="h-8 w-8 text-gray-400" />
             </div>
@@ -313,11 +336,11 @@ export default function OrdersPage() {
             <p className="text-gray-600">No tables have been configured yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
             {Object.entries(groupedTables).map(([location, locationTables]) => (
               <div
                 key={location}
-                className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm"
+                className="bg-white rounded-lg border border-gray-200 p-4 md:p-6 shadow-sm"
               >
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 mb-1">
@@ -330,8 +353,8 @@ export default function OrdersPage() {
                 </div>
 
                 {/* Location-specific layout */}
-                <div className="relative min-h-[200px] bg-gray-50 rounded-lg p-4">
-                  <div className="flex flex-wrap gap-3">
+                <div className="relative min-h-[200px] bg-gray-50 rounded-lg p-3 md:p-4">
+                  <div className="flex flex-wrap gap-2 md:gap-3">
                     {locationTables.map((table) => {
                       const orderCount = getTableOrderCount(table.id);
                       const revenue = getTableRevenue(table.id);

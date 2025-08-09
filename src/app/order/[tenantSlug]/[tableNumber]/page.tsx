@@ -18,7 +18,6 @@ import {
   Info,
 } from "lucide-react";
 import { OrderPaymentSection } from "@/components/payment";
-import { publicApi } from "@/lib/api";
 
 interface MenuItem {
   id: string;

@@ -3,7 +3,7 @@
 import React, { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import Image from "next/image";
+
 import {
   Home,
   ShoppingCart,
@@ -14,10 +14,10 @@ import {
   Table,
   Plus,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   Calendar,
   Percent,
+  UtensilsCrossed,
+  X,
 } from "lucide-react";
 import { PrintBridgeProvider } from "@/contexts/PrintBridgeContext";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -28,12 +28,12 @@ interface DashboardLayoutProps {
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [jwtToken, setJwtToken] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>("");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, isLoading, user, logout } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
 
   // Get JWT token and user role from localStorage
   useEffect(() => {
@@ -77,15 +77,23 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   };
 
   const getNavLinkClasses = (isActive: boolean) => {
-    const baseClasses = "w-full p-3 transition-colors flex items-center";
-    const collapsedClasses = sidebarCollapsed
-      ? "justify-center group relative"
-      : "space-x-3";
+    const baseClasses =
+      "flex flex-col items-center justify-center px-2 py-3 md:px-3 transition-colors text-xs min-w-max whitespace-nowrap";
     const activeClasses = isActive
-      ? "bg-white bg-opacity-20 text-white rounded-lg mx-2"
-      : "text-white hover:bg-white hover:bg-opacity-10 mx-2 rounded-lg";
+      ? "bg-gray-800 text-white rounded-lg"
+      : "text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg";
 
-    return `${baseClasses} ${collapsedClasses} ${activeClasses}`;
+    return `${baseClasses} ${activeClasses}`;
+  };
+
+  const getMobileNavItemClasses = (isActive: boolean) => {
+    const baseClasses =
+      "flex flex-col items-center justify-center p-4 rounded-2xl transition-colors text-center min-h-[100px]";
+    const activeClasses = isActive
+      ? "bg-blue-50 text-blue-600 border-2 border-blue-200"
+      : "text-gray-600 hover:bg-gray-50 border-2 border-transparent";
+
+    return `${baseClasses} ${activeClasses}`;
   };
 
   // Show loading state while checking authentication
@@ -108,284 +116,322 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   return (
     <PrintBridgeProvider>
       <div className="flex h-screen bg-gray-50">
-        {/* Left Sidebar - Black Navigation */}
-        <div
-          className={`${
-            sidebarCollapsed ? "w-24" : "w-64"
-          } bg-black flex flex-col items-center py-6 space-y-8 transition-all duration-300 relative`}
-        >
-          {/* Logo */}
-          <div className="flex items-center justify-center">
-            {sidebarCollapsed ? (
-              <Image
-                src="/icon.png"
-                alt="TapTab Icon"
-                width={32}
-                height={32}
-                className="object-contain"
-              />
-            ) : (
-              <Image
-                src="/logo.png"
-                alt="TapTab Logo"
-                width={120}
-                height={40}
-                className="object-contain"
-              />
-            )}
-          </div>
-
-          {/* Navigation Icons */}
-          <nav className="flex flex-col items-center flex-1 w-full">
-            <Link
-              href="/dashboard"
-              className={getNavLinkClasses(isActiveLink("/dashboard"))}
-              title="Dashboard"
-            >
-              <Home className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Dashboard</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Dashboard
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/orders"
-              className={getNavLinkClasses(isActiveLink("/dashboard/orders"))}
-              title="Orders"
-            >
-              <ShoppingCart className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Orders</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Orders
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/order-taking"
-              className={getNavLinkClasses(
-                isActiveLink("/dashboard/order-taking")
-              )}
-              title="Take Orders"
-            >
-              <Plus className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Take Orders</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Take Orders
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/staff"
-              className={getNavLinkClasses(isActiveLink("/dashboard/staff"))}
-              title="Staff"
-            >
-              <Users className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Staff</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Staff
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/rota"
-              className={getNavLinkClasses(isActiveLink("/dashboard/rota"))}
-              title="Rota"
-            >
-              <Calendar className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Rota</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Rota
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/menu"
-              className={getNavLinkClasses(isActiveLink("/dashboard/menu"))}
-              title="Menu"
-            >
-              <Menu className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Menu</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Menu
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/promotions"
-              className={getNavLinkClasses(
-                isActiveLink("/dashboard/promotions")
-              )}
-              title="Promotions"
-            >
-              <Percent className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Promotions</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Promotions
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/tables"
-              className={getNavLinkClasses(isActiveLink("/dashboard/tables"))}
-              title="Tables"
-            >
-              <Table className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Tables</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Tables
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/analytics"
-              className={getNavLinkClasses(
-                isActiveLink("/dashboard/analytics")
-              )}
-              title="Analytics"
-            >
-              <BarChart3 className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Analytics</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Analytics
-                </div>
-              )}
-            </Link>
-
-            <Link
-              href="/dashboard/settings"
-              className={getNavLinkClasses(isActiveLink("/dashboard/settings"))}
-              title="Settings"
-            >
-              <Settings className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Settings</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Settings
-                </div>
-              )}
-            </Link>
-          </nav>
-
-          {/* User Info */}
-          <div className="flex flex-col items-center w-full px-2">
-            <div
-              className={`w-full p-3 transition-colors flex items-center ${
-                sidebarCollapsed ? "justify-center group relative" : "space-x-3"
-              } text-white`}
-            >
-              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-bold text-sm">
-                  {user?.firstName?.charAt(0) || user?.email?.charAt(0) || "A"}
-                </span>
-              </div>
-              {!sidebarCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-white truncate">
-                    {user?.firstName
-                      ? `${user.firstName} ${user.lastName}`
-                      : "Admin User"}
-                  </p>
-                  <p className="text-xs text-gray-300 truncate">
-                    {user?.role?.replace("_", " ") || "Restaurant Manager"}
-                  </p>
-                </div>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  <div className="font-semibold">
-                    {user?.firstName
-                      ? `${user.firstName} ${user.lastName}`
-                      : "Admin User"}
-                  </div>
-                  <div className="text-xs text-gray-300">
-                    {user?.role?.replace("_", " ") || "Restaurant Manager"}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Bottom Actions */}
-          <div className="flex flex-col items-center w-full">
-            <button
-              onClick={handleLogout}
-              className={`w-full p-3 transition-colors flex items-center ${
-                sidebarCollapsed ? "justify-center group relative" : "space-x-3"
-              } text-white hover:bg-white hover:bg-opacity-10 mx-2 rounded-lg`}
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5 flex-shrink-0" />
-              {!sidebarCollapsed && (
-                <span className="font-medium text-sm">Logout</span>
-              )}
-              {sidebarCollapsed && (
-                <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                  Logout
-                </div>
-              )}
-            </button>
-          </div>
-
-          {/* Collapse Handle */}
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-12 bg-gray-800 hover:bg-gray-700 rounded-r-lg flex items-center justify-center transition-colors"
-            title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="w-4 h-4 text-white" />
-            ) : (
-              <ChevronLeft className="w-4 h-4 text-white" />
-            )}
-          </button>
+        {/* Left Sidebar - Thin sidebar with status indicators */}
+        <div className="w-16 bg-white border-r border-gray-200 flex flex-col">
+          <DashboardHeader jwtToken={jwtToken} userRole={userRole} />
         </div>
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col">
-          {/* Dashboard Header - Only shown for tenant admin and kitchen */}
-          <DashboardHeader jwtToken={jwtToken} userRole={userRole} />
-
-          {/* Main Content */}
           <main className="flex-1 overflow-auto bg-gray-50">{children}</main>
+
+          {/* Desktop Navigation - Hidden on Mobile */}
+          <nav className="hidden md:block bg-black border-t border-gray-800">
+            <div className="flex items-center justify-around max-w-screen-xl mx-auto px-4 py-2">
+              <Link
+                href="/dashboard"
+                className={getNavLinkClasses(isActiveLink("/dashboard"))}
+                title="Dashboard"
+              >
+                <Home className="w-5 h-5 mb-1" />
+                <span className="font-medium">Dashboard</span>
+              </Link>
+
+              <Link
+                href="/dashboard/orders"
+                className={getNavLinkClasses(isActiveLink("/dashboard/orders"))}
+                title="Orders"
+              >
+                <ShoppingCart className="w-5 h-5 mb-1" />
+                <span className="font-medium">Orders</span>
+              </Link>
+
+              <Link
+                href="/dashboard/kds"
+                className={getNavLinkClasses(isActiveLink("/dashboard/kds"))}
+                title="Chef's Screen"
+              >
+                <UtensilsCrossed className="w-5 h-5 mb-1" />
+                <span className="font-medium">Chef&apos;s Screen</span>
+              </Link>
+
+              <Link
+                href="/dashboard/order-taking"
+                className={getNavLinkClasses(
+                  isActiveLink("/dashboard/order-taking")
+                )}
+                title="Take Orders"
+              >
+                <Plus className="w-5 h-5 mb-1" />
+                <span className="font-medium">Take Orders</span>
+              </Link>
+
+              <Link
+                href="/dashboard/staff"
+                className={getNavLinkClasses(isActiveLink("/dashboard/staff"))}
+                title="Staff"
+              >
+                <Users className="w-5 h-5 mb-1" />
+                <span className="font-medium">Staff</span>
+              </Link>
+
+              <Link
+                href="/dashboard/rota"
+                className={getNavLinkClasses(isActiveLink("/dashboard/rota"))}
+                title="Rota"
+              >
+                <Calendar className="w-5 h-5 mb-1" />
+                <span className="font-medium">Rota</span>
+              </Link>
+
+              <Link
+                href="/dashboard/menu"
+                className={getNavLinkClasses(isActiveLink("/dashboard/menu"))}
+                title="Menu"
+              >
+                <Menu className="w-5 h-5 mb-1" />
+                <span className="font-medium">Menu</span>
+              </Link>
+
+              <Link
+                href="/dashboard/promotions"
+                className={getNavLinkClasses(
+                  isActiveLink("/dashboard/promotions")
+                )}
+                title="Promotions"
+              >
+                <Percent className="w-5 h-5 mb-1" />
+                <span className="font-medium">Promotions</span>
+              </Link>
+
+              <Link
+                href="/dashboard/tables"
+                className={getNavLinkClasses(isActiveLink("/dashboard/tables"))}
+                title="Tables"
+              >
+                <Table className="w-5 h-5 mb-1" />
+                <span className="font-medium">Tables</span>
+              </Link>
+
+              <Link
+                href="/dashboard/analytics"
+                className={getNavLinkClasses(
+                  isActiveLink("/dashboard/analytics")
+                )}
+                title="Analytics"
+              >
+                <BarChart3 className="w-5 h-5 mb-1" />
+                <span className="font-medium">Analytics</span>
+              </Link>
+
+              <Link
+                href="/dashboard/settings"
+                className={getNavLinkClasses(
+                  isActiveLink("/dashboard/settings")
+                )}
+                title="Settings"
+              >
+                <Settings className="w-5 h-5 mb-1" />
+                <span className="font-medium">Settings</span>
+              </Link>
+
+              <button
+                onClick={handleLogout}
+                className={getNavLinkClasses(false)}
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5 mb-1" />
+                <span className="font-medium">Logout</span>
+              </button>
+            </div>
+          </nav>
+
+          {/* Mobile Navigation - Menu Button */}
+          <div className="md:hidden bg-black border-t border-gray-800 px-4 py-3">
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+              <span className="font-medium">Menu</span>
+            </button>
+          </div>
         </div>
+
+        {/* Mobile Drawer Menu */}
+        {isMobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            {/* Drawer */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl z-50 md:hidden max-h-[80vh] overflow-y-auto animate-slide-up shadow-2xl">
+              {/* Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Navigation
+                </h2>
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Navigation Items */}
+              <div className="p-6">
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {/* Row 1 */}
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard")
+                    )}
+                  >
+                    <Home className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Dashboard</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/orders"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/orders")
+                    )}
+                  >
+                    <ShoppingCart className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Orders</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/kds"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/kds")
+                    )}
+                  >
+                    <UtensilsCrossed className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">
+                      Chef&apos;s Screen
+                    </span>
+                  </Link>
+
+                  {/* Row 2 */}
+                  <Link
+                    href="/dashboard/order-taking"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/order-taking")
+                    )}
+                  >
+                    <Plus className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Take Orders</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/staff"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/staff")
+                    )}
+                  >
+                    <Users className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Staff</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/rota"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/rota")
+                    )}
+                  >
+                    <Calendar className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Rota</span>
+                  </Link>
+
+                  {/* Row 3 */}
+                  <Link
+                    href="/dashboard/menu"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/menu")
+                    )}
+                  >
+                    <Menu className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Menu</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/promotions"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/promotions")
+                    )}
+                  >
+                    <Percent className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Promotions</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/tables"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/tables")
+                    )}
+                  >
+                    <Table className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Tables</span>
+                  </Link>
+
+                  {/* Row 4 */}
+                  <Link
+                    href="/dashboard/analytics"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/analytics")
+                    )}
+                  >
+                    <BarChart3 className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Analytics</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/settings")
+                    )}
+                  >
+                    <Settings className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Settings</span>
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                    className={getMobileNavItemClasses(false)}
+                  >
+                    <LogOut className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Logout</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Handle for dragging */}
+              <div className="flex justify-center pb-4">
+                <div className="w-8 h-1 bg-gray-300 rounded-full"></div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </PrintBridgeProvider>
   );

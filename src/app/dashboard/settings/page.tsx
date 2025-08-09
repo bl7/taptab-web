@@ -156,12 +156,14 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <div className="min-h-screen bg-gray-50 p-3 md:p-8">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-black mb-2">Settings</h1>
-          <p className="text-gray-600">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-black mb-2">
+            Settings
+          </h1>
+          <p className="text-gray-600 text-sm md:text-base">
             Manage your restaurant configuration and payment settings
           </p>
         </div>

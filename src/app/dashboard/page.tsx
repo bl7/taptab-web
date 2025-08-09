@@ -439,48 +439,60 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-4 md:space-y-8 p-3 md:p-6">
       {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Quick Actions</h3>
+          <h3 className="text-lg md:text-xl font-semibold text-gray-900">
+            Quick Actions
+          </h3>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           <Link
             href="/dashboard/order-taking"
-            className="p-4 border border-gray-200 rounded-xl hover:border-green-300 hover:bg-green-50 transition-colors"
+            className="p-3 md:p-4 border border-gray-200 rounded-xl hover:border-green-300 hover:bg-green-50 transition-colors"
           >
-            <Plus className="w-6 h-6 text-green-600 mb-2" />
-            <p className="text-sm font-medium text-gray-900">New Order</p>
-            <p className="text-xs text-gray-500">Take order</p>
+            <Plus className="w-5 h-5 md:w-6 md:h-6 text-green-600 mb-2" />
+            <p className="text-xs md:text-sm font-medium text-gray-900">
+              New Order
+            </p>
+            <p className="text-xs text-gray-500 hidden md:block">Take order</p>
           </Link>
 
           <Link
             href="/dashboard/analytics"
-            className="p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-colors"
+            className="p-3 md:p-4 border border-gray-200 rounded-xl hover:border-blue-300 hover:bg-blue-50 transition-colors"
           >
-            <BarChart3 className="w-6 h-6 text-blue-600 mb-2" />
-            <p className="text-sm font-medium text-gray-900">Analytics</p>
-            <p className="text-xs text-gray-500">View reports</p>
+            <BarChart3 className="w-5 h-5 md:w-6 md:h-6 text-blue-600 mb-2" />
+            <p className="text-xs md:text-sm font-medium text-gray-900">
+              Analytics
+            </p>
+            <p className="text-xs text-gray-500 hidden md:block">
+              View reports
+            </p>
           </Link>
 
           <Link
             href="/dashboard/menu"
-            className="p-4 border border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-colors"
+            className="p-3 md:p-4 border border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-colors"
           >
-            <Package className="w-6 h-6 text-purple-600 mb-2" />
-            <p className="text-sm font-medium text-gray-900">Menu</p>
-            <p className="text-xs text-gray-500">Manage items</p>
+            <Package className="w-5 h-5 md:w-6 md:h-6 text-purple-600 mb-2" />
+            <p className="text-xs md:text-sm font-medium text-gray-900">Menu</p>
+            <p className="text-xs text-gray-500 hidden md:block">
+              Manage items
+            </p>
           </Link>
 
           <Link
             href="/dashboard/staff"
-            className="p-4 border border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-colors"
+            className="p-3 md:p-4 border border-gray-200 rounded-xl hover:border-orange-300 hover:bg-orange-50 transition-colors"
           >
-            <Users className="w-6 h-6 text-orange-600 mb-2" />
-            <p className="text-sm font-medium text-gray-900">Staff</p>
-            <p className="text-xs text-gray-500">Manage team</p>
+            <Users className="w-5 h-5 md:w-6 md:h-6 text-orange-600 mb-2" />
+            <p className="text-xs md:text-sm font-medium text-gray-900">
+              Staff
+            </p>
+            <p className="text-xs text-gray-500 hidden md:block">Manage team</p>
           </Link>
         </div>
       </div>
@@ -520,27 +532,27 @@ export default function DashboardPage() {
       </div>
 
       {/* Payment Methods */}
-      <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-xl p-4 md:p-6 border border-gray-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
+          <h3 className="text-lg md:text-xl font-semibold text-gray-900">
             Payment Methods
           </h3>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {Object.entries(dashboardData.summary.paymentMethods).map(
             ([method, data]) => (
               <div
                 key={method}
-                className="text-center p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
+                className="text-center p-3 md:p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="text-sm font-medium text-gray-600 mb-1">
+                <div className="text-xs md:text-sm font-medium text-gray-600 mb-1">
                   {method.toUpperCase()}
                 </div>
-                <div className="text-lg font-semibold text-gray-900">
+                <div className="text-sm md:text-lg font-semibold text-gray-900">
                   {data.count} orders
                 </div>
-                <div className="text-sm text-green-600 font-medium">
+                <div className="text-xs md:text-sm text-green-600 font-medium">
                   ${data.revenue.toFixed(2)}
                 </div>
               </div>
@@ -550,13 +562,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Live Orders and Revenue Chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <LiveOrdersCard />
         <RevenueChart />
       </div>
 
       {/* Popular Combinations */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-4 md:gap-6">
         <PopularCombinationsCard />
       </div>
     </div>
