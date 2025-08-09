@@ -70,13 +70,740 @@ function LocationLayoutView({
           const scale = 0.5;
           const offsetX = 20;
           const offsetY = 40;
+          const x = obj.position.x * scale + offsetX;
+          const y = obj.position.y * scale + offsetY;
+          const width = obj.size.width * scale;
+          const height = obj.size.height * scale;
+
+          // Render different object types with realistic appearance
+          if (obj.type === "plant") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Plant shadow */}
+                <ellipse
+                  cx={x + width / 2 + 1}
+                  cy={y + height * 0.9 + 1}
+                  rx={width * 0.25}
+                  ry={height * 0.1}
+                  fill="rgba(0,0,0,0.15)"
+                />
+                {/* Pot rim */}
+                <ellipse
+                  cx={x + width / 2}
+                  cy={y + height * 0.9}
+                  rx={width * 0.25}
+                  ry={height * 0.1}
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="1"
+                />
+                {/* Pot body */}
+                <rect
+                  x={x + width * 0.3}
+                  y={y + height * 0.7}
+                  width={width * 0.4}
+                  height={height * 0.2}
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="1"
+                  rx="2"
+                />
+                {/* Soil */}
+                <ellipse
+                  cx={x + width / 2}
+                  cy={y + height * 0.75}
+                  rx={width * 0.18}
+                  ry={height * 0.05}
+                  fill="#4A2C2A"
+                />
+                {/* Plant leaves - multiple layers for depth */}
+                <circle
+                  cx={x + width * 0.35}
+                  cy={y + height * 0.4}
+                  r={width * 0.12}
+                  fill="#228B22"
+                />
+                <circle
+                  cx={x + width * 0.6}
+                  cy={y + height * 0.35}
+                  r={width * 0.14}
+                  fill="#32CD32"
+                />
+                <circle
+                  cx={x + width * 0.45}
+                  cy={y + height * 0.55}
+                  r={width * 0.1}
+                  fill="#228B22"
+                />
+                <circle
+                  cx={x + width * 0.65}
+                  cy={y + height * 0.6}
+                  r={width * 0.08}
+                  fill="#32CD32"
+                />
+                <circle
+                  cx={x + width * 0.5}
+                  cy={y + height * 0.45}
+                  r={width * 0.16}
+                  fill="#228B22"
+                />
+              </g>
+            );
+          } else if (obj.type === "bar") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Bar shadow */}
+                <rect
+                  x={x + 1.5}
+                  y={y + 1.5}
+                  width={width}
+                  height={height}
+                  fill="rgba(0,0,0,0.2)"
+                  rx="6"
+                />
+                {/* Bar counter base */}
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  fill="#2F4F4F"
+                  stroke="#1C3333"
+                  strokeWidth="1"
+                  rx="6"
+                />
+                {/* Bar top surface (marble/granite look) */}
+                <rect
+                  x={x + 2.5}
+                  y={y + 2.5}
+                  width={width - 5}
+                  height={height - 5}
+                  fill="#708090"
+                  rx="4"
+                />
+                {/* Marble veining */}
+                <line
+                  x1={x + width * 0.2}
+                  y1={y + height * 0.25}
+                  x2={x + width * 0.6}
+                  y2={y + height * 0.75}
+                  stroke="#B8C6DB"
+                  strokeWidth="1"
+                />
+                <line
+                  x1={x + width * 0.25}
+                  y1={y + height * 0.75}
+                  x2={x + width * 0.8}
+                  y2={y + height * 0.2}
+                  stroke="#B8C6DB"
+                  strokeWidth="0.5"
+                />
+                {/* Bar stools with backs */}
+                <circle
+                  cx={x + width * 0.2}
+                  cy={y - height * 0.35}
+                  r="4"
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="0.5"
+                />
+                <rect
+                  x={x + width * 0.2 - 1.5}
+                  y={y - height * 0.35 - 6}
+                  width="3"
+                  height="4"
+                  fill="#8B4513"
+                  rx="1.5"
+                />
+                <circle
+                  cx={x + width * 0.5}
+                  cy={y - height * 0.35}
+                  r="4"
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="0.5"
+                />
+                <rect
+                  x={x + width * 0.5 - 1.5}
+                  y={y - height * 0.35 - 6}
+                  width="3"
+                  height="4"
+                  fill="#8B4513"
+                  rx="1.5"
+                />
+                <circle
+                  cx={x + width * 0.8}
+                  cy={y - height * 0.35}
+                  r="4"
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="0.5"
+                />
+                <rect
+                  x={x + width * 0.8 - 1.5}
+                  y={y - height * 0.35 - 6}
+                  width="3"
+                  height="4"
+                  fill="#8B4513"
+                  rx="1.5"
+                />
+              </g>
+            );
+          } else if (obj.type === "piano") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Piano shadow */}
+                <rect
+                  x={x + 1.5}
+                  y={y + 1.5}
+                  width={width}
+                  height={height}
+                  fill="rgba(0,0,0,0.3)"
+                  rx="4"
+                />
+                {/* Piano body */}
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  fill="#1C1C1C"
+                  stroke="#000000"
+                  strokeWidth="1"
+                  rx="4"
+                />
+                {/* Piano legs */}
+                <rect
+                  x={x + 4}
+                  y={y + height - 2.5}
+                  width="2"
+                  height="5"
+                  fill="#0F0F0F"
+                />
+                <rect
+                  x={x + width - 6}
+                  y={y + height - 2.5}
+                  width="2"
+                  height="5"
+                  fill="#0F0F0F"
+                />
+                <rect
+                  x={x + 4}
+                  y={y - 2.5}
+                  width="2"
+                  height="5"
+                  fill="#0F0F0F"
+                />
+                {/* Keyboard area */}
+                <rect
+                  x={x + 4}
+                  y={y + 4}
+                  width={width - 8}
+                  height={height * 0.4}
+                  fill="#FFFFFF"
+                  stroke="#CCCCCC"
+                  strokeWidth="0.5"
+                  rx="2"
+                />
+                {/* White keys */}
+                <line
+                  x1={x + 10}
+                  y1={y + 4}
+                  x2={x + 10}
+                  y2={y + 4 + height * 0.4}
+                  stroke="#DDDDDD"
+                  strokeWidth="0.5"
+                />
+                <line
+                  x1={x + 16}
+                  y1={y + 4}
+                  x2={x + 16}
+                  y2={y + 4 + height * 0.4}
+                  stroke="#DDDDDD"
+                  strokeWidth="0.5"
+                />
+                <line
+                  x1={x + 22}
+                  y1={y + 4}
+                  x2={x + 22}
+                  y2={y + 4 + height * 0.4}
+                  stroke="#DDDDDD"
+                  strokeWidth="0.5"
+                />
+                {/* Black keys */}
+                <rect
+                  x={x + 7.5}
+                  y={y + 4}
+                  width="3"
+                  height={height * 0.25}
+                  fill="#000000"
+                />
+                <rect
+                  x={x + 13.5}
+                  y={y + 4}
+                  width="3"
+                  height={height * 0.25}
+                  fill="#000000"
+                />
+                <rect
+                  x={x + 19.5}
+                  y={y + 4}
+                  width="3"
+                  height={height * 0.25}
+                  fill="#000000"
+                />
+                {/* Music stand area */}
+                <rect
+                  x={x + width * 0.25}
+                  y={y + height * 0.5}
+                  width={width * 0.5}
+                  height={height * 0.3}
+                  fill="transparent"
+                  stroke="#333333"
+                  strokeWidth="0.5"
+                  rx="2"
+                />
+              </g>
+            );
+          } else if (obj.type === "prep_center" || obj.type === "host_table") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Counter shadow */}
+                <rect
+                  x={x + 1.5}
+                  y={y + 1.5}
+                  width={width}
+                  height={height}
+                  fill="rgba(0,0,0,0.2)"
+                  rx="3"
+                />
+                {/* Counter base */}
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  fill="#4A5568"
+                  stroke="#2D3748"
+                  strokeWidth="1"
+                  rx="3"
+                />
+                {/* Stainless steel surface */}
+                <rect
+                  x={x + 1.5}
+                  y={y + 1.5}
+                  width={width - 3}
+                  height={height - 3}
+                  fill="#C0C0C0"
+                  rx="2"
+                />
+                {/* Stainless steel grain lines */}
+                <line
+                  x1={x + 4}
+                  y1={y + height * 0.25}
+                  x2={x + width - 4}
+                  y2={y + height * 0.25}
+                  stroke="#A8A8A8"
+                  strokeWidth="0.25"
+                />
+                <line
+                  x1={x + 4}
+                  y1={y + height * 0.5}
+                  x2={x + width - 4}
+                  y2={y + height * 0.5}
+                  stroke="#A8A8A8"
+                  strokeWidth="0.25"
+                />
+                <line
+                  x1={x + 4}
+                  y1={y + height * 0.75}
+                  x2={x + width - 4}
+                  y2={y + height * 0.75}
+                  stroke="#A8A8A8"
+                  strokeWidth="0.25"
+                />
+                {/* Equipment on surface */}
+                <circle
+                  cx={x + width * 0.25}
+                  cy={y + height * 0.3}
+                  r="3"
+                  fill="#E2E8F0"
+                  stroke="#CBD5E0"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx={x + width * 0.75}
+                  cy={y + height * 0.7}
+                  r="3"
+                  fill="#E2E8F0"
+                  stroke="#CBD5E0"
+                  strokeWidth="0.5"
+                />
+                <rect
+                  x={x + width * 0.5 - 6}
+                  y={y + height * 0.5 - 3}
+                  width="12"
+                  height="6"
+                  fill="#F7FAFC"
+                  stroke="#E2E8F0"
+                  strokeWidth="0.5"
+                  rx="1.5"
+                />
+              </g>
+            );
+          } else if (obj.type === "waiter_station") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Station shadow */}
+                <rect
+                  x={x + 1.5}
+                  y={y + 1.5}
+                  width={width}
+                  height={height}
+                  fill="rgba(0,0,0,0.3)"
+                  rx="4"
+                />
+                {/* Station base */}
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  fill="#2D3748"
+                  stroke="#1A202C"
+                  strokeWidth="1"
+                  rx="4"
+                />
+                {/* Desktop surface */}
+                <rect
+                  x={x + 2}
+                  y={y + 2}
+                  width={width - 4}
+                  height={height - 4}
+                  fill="#4A5568"
+                  rx="3"
+                />
+                {/* POS terminal base */}
+                <rect
+                  x={x + width * 0.15}
+                  y={y + height * 0.2}
+                  width={width * 0.7}
+                  height={height * 0.4}
+                  fill="#1A202C"
+                  stroke="#2D3748"
+                  strokeWidth="0.5"
+                  rx="3"
+                />
+                {/* POS screen */}
+                <rect
+                  x={x + width * 0.2}
+                  y={y + height * 0.25}
+                  width={width * 0.6}
+                  height={height * 0.3}
+                  fill="#000000"
+                  stroke="#333333"
+                  strokeWidth="0.5"
+                  rx="2"
+                />
+                {/* Screen bezel */}
+                <rect
+                  x={x + width * 0.25}
+                  y={y + height * 0.3}
+                  width={width * 0.5}
+                  height={height * 0.2}
+                  fill="#1a1a2e"
+                  rx="1"
+                />
+                {/* Stand/arm */}
+                <rect
+                  x={x + width * 0.5 - 1}
+                  y={y + height * 0.65}
+                  width="2"
+                  height={height * 0.25}
+                  fill="#2D3748"
+                />
+                {/* Keyboard area */}
+                <rect
+                  x={x + width * 0.3}
+                  y={y + height * 0.75}
+                  width={width * 0.4}
+                  height={height * 0.15}
+                  fill="#2D3748"
+                  stroke="#4A5568"
+                  strokeWidth="0.5"
+                  rx="1.5"
+                />
+              </g>
+            );
+          } else if (obj.type === "storage_cabinet") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Cabinet shadow */}
+                <rect
+                  x={x + 1.5}
+                  y={y + 1.5}
+                  width={width}
+                  height={height}
+                  fill="rgba(0,0,0,0.2)"
+                  rx="3"
+                />
+                {/* Cabinet body */}
+                <rect
+                  x={x}
+                  y={y}
+                  width={width}
+                  height={height}
+                  fill="#8B7355"
+                  stroke="#6B5B47"
+                  strokeWidth="1"
+                  rx="3"
+                />
+                {/* Wood grain texture */}
+                <line
+                  x1={x + 4}
+                  y1={y + height * 0.33}
+                  x2={x + width - 4}
+                  y2={y + height * 0.33}
+                  stroke="#6B5B47"
+                  strokeWidth="0.5"
+                />
+                <line
+                  x1={x + 4}
+                  y1={y + height * 0.5}
+                  x2={x + width - 4}
+                  y2={y + height * 0.5}
+                  stroke="#6B5B47"
+                  strokeWidth="0.5"
+                />
+                <line
+                  x1={x + 4}
+                  y1={y + height * 0.67}
+                  x2={x + width - 4}
+                  y2={y + height * 0.67}
+                  stroke="#6B5B47"
+                  strokeWidth="0.5"
+                />
+                {/* Cabinet door dividing line */}
+                <line
+                  x1={x + width / 2}
+                  y1={y + 2}
+                  x2={x + width / 2}
+                  y2={y + height - 2}
+                  stroke="#5A4A3A"
+                  strokeWidth="1"
+                />
+                {/* Door panels */}
+                <rect
+                  x={x + 3}
+                  y={y + 3}
+                  width={width / 2 - 4.5}
+                  height={height - 6}
+                  fill="transparent"
+                  stroke="#6B5B47"
+                  strokeWidth="0.5"
+                  rx="1.5"
+                />
+                <rect
+                  x={x + width / 2 + 1.5}
+                  y={y + 3}
+                  width={width / 2 - 4.5}
+                  height={height - 6}
+                  fill="transparent"
+                  stroke="#6B5B47"
+                  strokeWidth="0.5"
+                  rx="1.5"
+                />
+                {/* Door handles */}
+                <circle
+                  cx={x + width * 0.35}
+                  cy={y + height * 0.5}
+                  r="1.5"
+                  fill="#C0C0C0"
+                  stroke="#A0A0A0"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx={x + width * 0.65}
+                  cy={y + height * 0.5}
+                  r="1.5"
+                  fill="#C0C0C0"
+                  stroke="#A0A0A0"
+                  strokeWidth="0.5"
+                />
+                {/* Hinges */}
+                <rect
+                  x={x + 1}
+                  y={y + height * 0.25}
+                  width="2"
+                  height="4"
+                  fill="#A0A0A0"
+                  rx="1"
+                />
+                <rect
+                  x={x + 1}
+                  y={y + height * 0.62}
+                  width="2"
+                  height="4"
+                  fill="#A0A0A0"
+                  rx="1"
+                />
+              </g>
+            );
+          } else if (obj.type === "door") {
+            return (
+              <g key={`obj-${index}`}>
+                {/* Wall thickness on left */}
+                <rect
+                  x={x}
+                  y={y}
+                  width="3"
+                  height={height}
+                  fill="#8B8B8B"
+                  stroke="#666666"
+                  strokeWidth="0.5"
+                />
+                {/* Wall thickness on right */}
+                <rect
+                  x={x + width - 3}
+                  y={y}
+                  width="3"
+                  height={height}
+                  fill="#8B8B8B"
+                  stroke="#666666"
+                  strokeWidth="0.5"
+                />
+                {/* Door opening (gap) */}
+                <rect
+                  x={x + 3}
+                  y={y}
+                  width={width - 6}
+                  height={height}
+                  fill="transparent"
+                  stroke="transparent"
+                />
+                {/* Left door panel (open outward) */}
+                <rect
+                  x={x + 3}
+                  y={y}
+                  width="3"
+                  height={(width - 6) * 0.85}
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="0.5"
+                  rx="1"
+                  transform={`rotate(-75, ${x + 3}, ${y})`}
+                />
+                {/* Right door panel (open outward) */}
+                <rect
+                  x={x + width - 6}
+                  y={y}
+                  width="3"
+                  height={(width - 6) * 0.85}
+                  fill="#8B4513"
+                  stroke="#654321"
+                  strokeWidth="0.5"
+                  rx="1"
+                  transform={`rotate(75, ${x + width - 3}, ${y})`}
+                />
+                {/* Left door swing arc */}
+                <line
+                  x1={x + 3}
+                  y1={y}
+                  x2={x + 3 + (width - 6) * 0.6}
+                  y2={y - (width - 6) * 0.5}
+                  stroke="#CCCCCC"
+                  strokeWidth="0.5"
+                  strokeDasharray="2,2"
+                />
+                {/* Right door swing arc */}
+                <line
+                  x1={x + width - 3}
+                  y1={y}
+                  x2={x + width - 3 - (width - 6) * 0.6}
+                  y2={y - (width - 6) * 0.5}
+                  stroke="#CCCCCC"
+                  strokeWidth="0.5"
+                  strokeDasharray="2,2"
+                />
+                {/* Hinges */}
+                <circle
+                  cx={x + 3}
+                  cy={y + 4}
+                  r="1"
+                  fill="#C0C0C0"
+                  stroke="#808080"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx={x + 3}
+                  cy={y + height - 4}
+                  r="1"
+                  fill="#C0C0C0"
+                  stroke="#808080"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx={x + width - 3}
+                  cy={y + 4}
+                  r="1"
+                  fill="#C0C0C0"
+                  stroke="#808080"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx={x + width - 3}
+                  cy={y + height - 4}
+                  r="1"
+                  fill="#C0C0C0"
+                  stroke="#808080"
+                  strokeWidth="0.5"
+                />
+                {/* Door handles */}
+                <circle
+                  cx={x + 3 + (width - 6) * 0.4}
+                  cy={y - (width - 6) * 0.3}
+                  r="1"
+                  fill="#FFD700"
+                  stroke="#DAA520"
+                  strokeWidth="0.5"
+                />
+                <circle
+                  cx={x + width - 3 - (width - 6) * 0.4}
+                  cy={y - (width - 6) * 0.3}
+                  r="1"
+                  fill="#FFD700"
+                  stroke="#DAA520"
+                  strokeWidth="0.5"
+                />
+                {/* Wall edge highlights */}
+                <line
+                  x1={x + 3}
+                  y1={y}
+                  x2={x + 3}
+                  y2={y + height}
+                  stroke="#AAAAAA"
+                  strokeWidth="0.5"
+                />
+                <line
+                  x1={x + width - 3}
+                  y1={y}
+                  x2={x + width - 3}
+                  y2={y + height}
+                  stroke="#AAAAAA"
+                  strokeWidth="0.5"
+                />
+              </g>
+            );
+          }
+
+          // Default fallback for unknown types
           return (
             <rect
               key={`obj-${index}`}
-              x={obj.position.x * scale + offsetX}
-              y={obj.position.y * scale + offsetY}
-              width={obj.size.width * scale}
-              height={obj.size.height * scale}
+              x={x}
+              y={y}
+              width={width}
+              height={height}
               fill="#d1d5db"
               stroke="#9ca3af"
               strokeWidth="1"
@@ -114,31 +841,124 @@ function LocationLayoutView({
 
           return (
             <g key={`table-${index}`}>
-              {/* Table shape */}
+              {/* Table shape with enhanced styling */}
               {layoutTable.shape === "round" ? (
-                <circle
-                  cx={x + width / 2}
-                  cy={y + height / 2}
-                  r={Math.min(width, height) / 2}
-                  fill={fillColor}
-                  stroke="#fff"
-                  strokeWidth="2"
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => onTableClick(table)}
-                />
+                <>
+                  {/* Table shadow */}
+                  <circle
+                    cx={x + width / 2 + 1.5}
+                    cy={y + height / 2 + 1.5}
+                    r={Math.min(width, height) / 2}
+                    fill="rgba(0,0,0,0.2)"
+                  />
+                  {/* Table base (pedestal) */}
+                  <circle
+                    cx={x + width / 2}
+                    cy={y + height / 2}
+                    r={Math.min(width, height) / 6}
+                    fill="#8B4513"
+                    stroke="#654321"
+                    strokeWidth="0.5"
+                  />
+                  {/* Table top */}
+                  <circle
+                    cx={x + width / 2}
+                    cy={y + height / 2}
+                    r={Math.min(width, height) / 2}
+                    fill={fillColor}
+                    stroke="#fff"
+                    strokeWidth="2"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => onTableClick(table)}
+                  />
+                  {/* Wood grain lines */}
+                  <circle
+                    cx={x + width / 2}
+                    cy={y + height / 2}
+                    r={Math.min(width, height) / 2.5}
+                    fill="transparent"
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="0.5"
+                  />
+                  <circle
+                    cx={x + width / 2}
+                    cy={y + height / 2}
+                    r={Math.min(width, height) / 4}
+                    fill="transparent"
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="0.5"
+                  />
+                </>
               ) : (
-                <rect
-                  x={x}
-                  y={y}
-                  width={width}
-                  height={height}
-                  rx={layoutTable.shape === "square" ? 8 : 0}
-                  fill={fillColor}
-                  stroke="#fff"
-                  strokeWidth="2"
-                  className="cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => onTableClick(table)}
-                />
+                <>
+                  {/* Table shadow */}
+                  <rect
+                    x={x + 1.5}
+                    y={y + 1.5}
+                    width={width}
+                    height={height}
+                    fill="rgba(0,0,0,0.2)"
+                    rx="4"
+                  />
+                  {/* Table legs (4 circles at corners) */}
+                  <circle cx={x + 5} cy={y + 5} r="1.5" fill="#654321" />
+                  <circle
+                    cx={x + width - 5}
+                    cy={y + 5}
+                    r="1.5"
+                    fill="#654321"
+                  />
+                  <circle
+                    cx={x + 5}
+                    cy={y + height - 5}
+                    r="1.5"
+                    fill="#654321"
+                  />
+                  <circle
+                    cx={x + width - 5}
+                    cy={y + height - 5}
+                    r="1.5"
+                    fill="#654321"
+                  />
+                  {/* Table top */}
+                  <rect
+                    x={x}
+                    y={y}
+                    width={width}
+                    height={height}
+                    rx={layoutTable.shape === "square" ? 4 : 2}
+                    fill={fillColor}
+                    stroke="#fff"
+                    strokeWidth="2"
+                    className="cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => onTableClick(table)}
+                  />
+                  {/* Wood grain lines */}
+                  <line
+                    x1={x + 7.5}
+                    y1={y + height * 0.25}
+                    x2={x + width - 7.5}
+                    y2={y + height * 0.25}
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="0.5"
+                  />
+                  <line
+                    x1={x + 7.5}
+                    y1={y + height * 0.5}
+                    x2={x + width - 7.5}
+                    y2={y + height * 0.5}
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="0.5"
+                  />
+                  <line
+                    x1={x + 7.5}
+                    y1={y + height * 0.75}
+                    x2={x + width - 7.5}
+                    y2={y + height * 0.75}
+                    stroke="rgba(255,255,255,0.3)"
+                    strokeWidth="0.5"
+                  />
+                </>
               )}
 
               {/* Table number */}
@@ -148,7 +968,7 @@ function LocationLayoutView({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="12"
+                fontSize="10"
                 fontWeight="bold"
                 className="pointer-events-none"
               >
@@ -162,7 +982,7 @@ function LocationLayoutView({
                 textAnchor="middle"
                 dominantBaseline="middle"
                 fill="white"
-                fontSize="8"
+                fontSize="7"
                 className="pointer-events-none"
               >
                 {table.capacity}p
