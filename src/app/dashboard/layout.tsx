@@ -18,6 +18,7 @@ import {
   Percent,
   UtensilsCrossed,
   X,
+  Layout,
 } from "lucide-react";
 import { PrintBridgeProvider } from "@/contexts/PrintBridgeContext";
 import { DashboardHeader } from "@/components/DashboardHeader";
@@ -214,6 +215,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </Link>
 
               <Link
+                href="/dashboard/layout"
+                className={getNavLinkClasses(isActiveLink("/dashboard/layout"))}
+                title="Layout Builder"
+              >
+                <Layout className="w-5 h-5 mb-1" />
+                <span className="font-medium">Layout</span>
+              </Link>
+
+              <Link
                 href="/dashboard/analytics"
                 className={getNavLinkClasses(
                   isActiveLink("/dashboard/analytics")
@@ -387,6 +397,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   >
                     <Table className="w-8 h-8 mb-2" />
                     <span className="text-sm font-medium">Tables</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard/layout"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={getMobileNavItemClasses(
+                      isActiveLink("/dashboard/layout")
+                    )}
+                  >
+                    <Layout className="w-8 h-8 mb-2" />
+                    <span className="text-sm font-medium">Layout</span>
                   </Link>
 
                   {/* Row 4 */}

@@ -1754,3 +1754,28 @@ select option:checked {
     flex-direction: column;
   }
 }
+
+/* Force all input placeholders to be black */
+input::placeholder,
+textarea::placeholder {
+  color: black !important;
+  opacity: 0.7;
+}
+
+input::-webkit-input-placeholder,
+textarea::-webkit-input-placeholder {
+  color: black !important;
+  opacity: 0.7;
+}
+
+input::-moz-placeholder,
+textarea::-moz-placeholder {
+  color: black !important;
+  opacity: 0.7;
+}
+
+input:-ms-input-placeholder,
+textarea:-ms-input-placeholder {
+  color: black !important;
+  opacity: 0.7;
+}
