@@ -85,11 +85,13 @@ export function ObjectLibrary({ onDragStart }: ObjectLibraryProps) {
   >("all");
 
   // Filter tables for current location
-  const tablesForCurrentLocation = existingTables.filter(
-    (table) =>
-      table.location === currentLocation ||
-      (!table.location && currentLocation === "Main Floor")
-  );
+  const tablesForCurrentLocation = existingTables.filter((table) => {
+    const locationName = table.locationDetails?.name || table.location;
+    return (
+      locationName === currentLocation ||
+      (!locationName && currentLocation === "Main Floor")
+    );
+  });
 
   // Get tables that are already placed in the layout
   const placedTableIds = new Set(
@@ -235,7 +237,8 @@ export function ObjectLibrary({ onDragStart }: ObjectLibraryProps) {
                     </div>
                     <p className="text-xs text-black">
                       {table.capacity} seats
-                      {table.location && ` • ${table.location}`}
+                      {(table.locationDetails?.name || table.location) &&
+                        ` • ${table.locationDetails?.name || table.location}`}
                     </p>
                   </div>
                 </div>

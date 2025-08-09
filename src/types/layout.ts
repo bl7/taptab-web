@@ -9,6 +9,7 @@ export interface LayoutObject {
   color: string;
   name: string;
   seats?: number; // Only for tables
+  shape?: "round" | "rectangle" | "square"; // For tables
   isExistingTable?: boolean; // True if this is from existing tables API
   tableId?: string; // Reference to existing table ID
 }
@@ -59,6 +60,11 @@ export interface LayoutActions {
   setCurrentLocation: (location: string) => void;
   setAvailableLocations: (locations: string[]) => void;
   loadLayoutForLocation: (location: string, objects: LayoutObject[]) => void;
+  saveLayoutToBackend: (
+    layoutName: string,
+    description?: string
+  ) => Promise<unknown>;
+  loadLayoutFromBackend: (layoutId: string) => Promise<unknown>;
 }
 
 export interface SavedLayout {

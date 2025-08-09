@@ -154,12 +154,83 @@ export interface Order {
   updatedAt: string;
 }
 
+export interface Location {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  tableCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TableLayout {
+  id: string;
+  name: string;
+  description?: string;
+  locationId: string;
+  locationDetails?: {
+    name: string;
+    description?: string;
+  };
+  layoutJson: {
+    type: "grid" | "freeform";
+    dimensions: {
+      width: number;
+      height: number;
+      gridSize?: number;
+    };
+    tables?: Array<{
+      tableId: string;
+      position: { x: number; y: number };
+      size: { width: number; height: number };
+      shape: "round" | "rectangle" | "square";
+      seats: number;
+      rotation: number;
+    }>;
+    walls?: Array<{
+      start: { x: number; y: number };
+      end: { x: number; y: number };
+    }>;
+    objects?: Array<{
+      type: string;
+      position: { x: number; y: number };
+      size: { width: number; height: number };
+      [key: string]: unknown;
+    }>;
+    zones?: Array<{
+      name: string;
+      color: string;
+      bounds: { x: number; y: number; width: number; height: number };
+    }>;
+    metadata?: {
+      theme?: string;
+      background?: string;
+      version?: string;
+      [key: string]: unknown;
+    };
+  };
+  isActive: boolean;
+  isDefault: boolean;
+  createdByUserId: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Table {
   id: string;
   number: string;
   capacity: number;
   status: "available" | "occupied" | "reserved" | "cleaning";
-  location?: string;
+  location?: string; // Keep for backward compatibility
+  locationId?: string; // New foreign key reference
+  locationDetails?: {
+    id: string;
+    name: string;
+    description?: string;
+    isActive: boolean;
+  };
   currentOrderId?: string;
   tenantId?: string;
   createdAt: string;
@@ -390,6 +461,14 @@ class APIClient {
   ): Promise<T> {
     // Get valid token (auto-refresh if needed)
     const token = await tokenManager.getValidToken();
+    console.log("🔑 API Request Debug:", {
+      endpoint,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : "NO_TOKEN",
+      localStorage_token: !!localStorage.getItem("token"),
+      localStorage_bossToken: !!localStorage.getItem("bossToken"),
+      localStorage_refreshToken: !!localStorage.getItem("refreshToken"),
+    });
 
     const config: RequestInit = {
       headers: {
@@ -1436,14 +1515,8 @@ class APIClient {
 
   // Tables endpoints
   async getTables(): Promise<{ tables: Table[] }> {
-    console.log("🔍 Fetching tables from:", `${this.baseURL}/tables`);
     const response = await this.request<{ tables: Table[] }>("/tables");
-    console.log("📋 Tables response:", response);
-    console.log("📋 Tables array:", response.tables);
-    console.log("📋 Number of tables:", response.tables?.length || 0);
-    if (response.tables && response.tables.length > 0) {
-      console.log("📋 First table example:", response.tables[0]);
-    }
+    console.log("TABLES DATA:", response);
     return { tables: response.tables };
   }
 
@@ -1597,7 +1670,8 @@ class APIClient {
   async createTable(data: {
     number: string;
     capacity: number;
-    location?: string;
+    location?: string; // Legacy support
+    locationId?: string; // New location system
     status?: string;
   }): Promise<{ table: Table }> {
     console.log("➕ Creating table with data:", data);
@@ -1615,7 +1689,8 @@ class APIClient {
     data: {
       number?: string;
       capacity?: number;
-      location?: string;
+      location?: string; // Legacy support
+      locationId?: string; // New location system
       status?: string;
     }
   ): Promise<{ table: Table }> {
@@ -1645,6 +1720,155 @@ class APIClient {
       method: "DELETE",
     });
     return { success: response.success };
+  }
+
+  // Location management methods
+  async getLocations(
+    includeInactive = false
+  ): Promise<{ locations: Location[] }> {
+    const params = includeInactive ? "?includeInactive=true" : "";
+    const response = await this.request<{ locations: Location[] }>(
+      `/locations${params}`
+    );
+    console.log("LOCATIONS DATA:", response);
+    return { locations: response.locations };
+  }
+
+  async createLocation(data: {
+    name: string;
+    description?: string;
+    isActive?: boolean;
+  }): Promise<{ location: Location; message: string }> {
+    const response = await this.request<{
+      location: Location;
+      message: string;
+    }>("/locations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    console.log("CREATE LOCATION RESPONSE:", response);
+    return { location: response.location, message: response.message };
+  }
+
+  async updateLocation(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      isActive?: boolean;
+    }
+  ): Promise<{ location: Location; message: string }> {
+    const response = await this.request<{
+      location: Location;
+      message: string;
+    }>(`/locations/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return { location: response.location, message: response.message };
+  }
+
+  async deleteLocation(
+    id: string,
+    force = false
+  ): Promise<{ success: boolean; message: string }> {
+    const params = force ? "?force=true" : "";
+    const response = await this.request<{
+      success: boolean;
+      message: string;
+    }>(`/locations/${id}${params}`, {
+      method: "DELETE",
+    });
+    return { success: response.success, message: response.message };
+  }
+
+  // Table Layout management methods
+  async getTableLayouts(params?: {
+    locationId?: string;
+    includeInactive?: boolean;
+  }): Promise<{ layouts: TableLayout[] }> {
+    const queryParams = new URLSearchParams();
+    if (params?.locationId) queryParams.append("locationId", params.locationId);
+    if (params?.includeInactive) queryParams.append("includeInactive", "true");
+
+    const endpoint = `/table-layouts${
+      queryParams.toString() ? `?${queryParams.toString()}` : ""
+    }`;
+
+    const response = await this.request<{ layouts: TableLayout[] }>(endpoint);
+    console.log("TABLE LAYOUTS DATA:", response);
+    return { layouts: response.layouts };
+  }
+
+  async getTableLayout(id: string): Promise<{ layout: TableLayout }> {
+    const response = await this.request<{ layout: TableLayout }>(
+      `/table-layouts/${id}`
+    );
+    return { layout: response.layout };
+  }
+
+  async createTableLayout(data: {
+    name: string;
+    description?: string;
+    locationId: string;
+    layoutJson: TableLayout["layoutJson"];
+    isActive?: boolean;
+    isDefault?: boolean;
+  }): Promise<{ layout: TableLayout; message: string }> {
+    const response = await this.request<{
+      layout: TableLayout;
+      message: string;
+    }>("/table-layouts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    console.log("CREATE LAYOUT RESPONSE:", response);
+    return { layout: response.layout, message: response.message };
+  }
+
+  async updateTableLayout(
+    id: string,
+    data: {
+      name?: string;
+      description?: string;
+      locationId?: string;
+      layoutJson?: TableLayout["layoutJson"];
+      isActive?: boolean;
+      isDefault?: boolean;
+    }
+  ): Promise<{ layout: TableLayout; message: string }> {
+    const response = await this.request<{
+      layout: TableLayout;
+      message: string;
+    }>(`/table-layouts/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+    return { layout: response.layout, message: response.message };
+  }
+
+  async deleteTableLayout(
+    id: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<{
+      success: boolean;
+      message: string;
+    }>(`/table-layouts/${id}`, {
+      method: "DELETE",
+    });
+    return { success: response.success, message: response.message };
+  }
+
+  async setDefaultTableLayout(
+    id: string
+  ): Promise<{ success: boolean; message: string }> {
+    const response = await this.request<{
+      success: boolean;
+      message: string;
+    }>(`/table-layouts/${id}/set-default`, {
+      method: "PUT",
+    });
+    return { success: response.success, message: response.message };
   }
 
   // Analytics endpoints

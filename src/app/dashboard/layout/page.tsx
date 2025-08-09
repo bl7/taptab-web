@@ -26,15 +26,11 @@ import {
   DEFAULT_COLORS,
   SavedLayout,
 } from "@/types/layout";
-import { Table as APITable } from "@/lib/api";
+import { Table as APITable, TableLayout, api } from "@/lib/api";
 import {
-  saveLayoutToStorage,
-  getLayoutsFromStorage,
-  deleteLayoutFromStorage,
   exportLayoutToFile,
   importLayoutFromFile,
   generateLayoutPreview,
-  getLocationsFromTables,
 } from "@/lib/layout-utils";
 
 export default function LayoutBuilderPage() {
@@ -63,6 +59,8 @@ export default function LayoutBuilderPage() {
     availableLocations,
     setCurrentLocation,
     setAvailableLocations,
+    saveLayoutToBackend,
+    loadLayoutFromBackend,
   } = useLayoutStore();
 
   // Update canvas size on window resize
@@ -86,14 +84,27 @@ export default function LayoutBuilderPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch tables to get locations
+        // Fetch both tables and locations
         const { api } = await import("@/lib/api");
-        const response = await api.getTables();
-        const tables = response.tables || [];
+        const [tablesResponse, locationsResponse] = await Promise.all([
+          api.getTables(),
+          api.getLocations(),
+        ]);
 
-        // Extract locations from tables
-        const tableLocations = getLocationsFromTables(tables);
-        setAvailableLocations(tableLocations);
+        const tables = tablesResponse.tables || [];
+        const locations = locationsResponse.locations || [];
+
+        // Use proper location names from the locations API
+        const locationNames = locations
+          .filter((loc) => loc.isActive)
+          .map((loc) => loc.name);
+
+        // Add fallback for tables without location assignment
+        if (!locationNames.includes("Main Floor")) {
+          locationNames.unshift("Main Floor");
+        }
+
+        setAvailableLocations(locationNames);
 
         // Layouts will be loaded on demand
       } catch (error) {
@@ -217,24 +228,47 @@ export default function LayoutBuilderPage() {
   );
 
   // Save layout
-  const handleSaveLayout = async (name: string) => {
+  const handleSaveLayout = async (name: string, description?: string) => {
     try {
-      await saveLayoutToStorage(name, currentLocation, objects);
+      await saveLayoutToBackend(name, description);
       setShowSaveModal(false);
-      alert("Layout saved successfully!");
+      alert("Layout saved successfully to backend!");
     } catch (error) {
+      console.error("Failed to save layout:", error);
       alert("Failed to save layout: " + (error as Error).message);
     }
   };
 
-  // Load layout
-  const handleLoadLayout = (layout: SavedLayout) => {
-    if (layout.location !== currentLocation) {
-      // Switch to the layout's location
-      setCurrentLocation(layout.location);
+  // Load layout from backend
+  const handleLoadLayout = async (layoutId: string) => {
+    try {
+      await loadLayoutFromBackend(layoutId);
+      setShowLoadModal(false);
+      alert("Layout loaded successfully!");
+    } catch (error) {
+      console.error("Failed to load layout:", error);
+      alert("Failed to load layout: " + (error as Error).message);
     }
-    loadLayout(layout.objects);
-    setShowLoadModal(false);
+  };
+
+  // Fetch saved layouts for current location
+  const [savedLayouts, setSavedLayouts] = useState<TableLayout[]>([]);
+  const fetchSavedLayouts = async () => {
+    try {
+      const locations = await api.getLocations();
+      const currentLocationObj = locations.locations.find(
+        (loc) => loc.name === currentLocation
+      );
+
+      if (currentLocationObj) {
+        const layouts = await api.getTableLayouts({
+          locationId: currentLocationObj.id,
+        });
+        setSavedLayouts(layouts.layouts);
+      }
+    } catch (error) {
+      console.error("Failed to fetch layouts:", error);
+    }
   };
 
   // Clear layout
@@ -418,13 +452,20 @@ export default function LayoutBuilderPage() {
       {/* Load Modal */}
       {showLoadModal && (
         <LoadLayoutModal
-          layouts={getLayoutsFromStorage()} // Show all layouts, not just current location
+          layouts={savedLayouts}
           currentLocation={currentLocation}
           onLoad={handleLoadLayout}
-          onDelete={(layoutId) => {
-            deleteLayoutFromStorage(layoutId);
+          onDelete={async (layoutId) => {
+            try {
+              await api.deleteTableLayout(layoutId);
+              await fetchSavedLayouts(); // Refresh the list
+              alert("Layout deleted successfully!");
+            } catch (error) {
+              alert("Failed to delete layout: " + (error as Error).message);
+            }
           }}
           onClose={() => setShowLoadModal(false)}
+          onOpen={fetchSavedLayouts}
         />
       )}
 
@@ -507,23 +548,39 @@ function LoadLayoutModal({
   onLoad,
   onDelete,
   onClose,
+  onOpen,
 }: {
-  layouts: SavedLayout[];
+  layouts: TableLayout[];
   currentLocation: string;
-  onLoad: (layout: SavedLayout) => void;
+  onLoad: (layoutId: string) => void;
   onDelete: (layoutId: string) => void;
   onClose: () => void;
+  onOpen?: () => void;
 }) {
   const [locationFilter, setLocationFilter] = useState<string>("all");
 
+  // Load layouts when modal opens
+  React.useEffect(() => {
+    if (onOpen) {
+      onOpen();
+    }
+  }, [onOpen]);
+
   // Get unique locations from layouts
-  const locations = [...new Set(layouts.map((layout) => layout.location))];
+  const locations = [
+    ...new Set(
+      layouts.map((layout) => layout.locationDetails?.name || "Unknown")
+    ),
+  ];
 
   // Filter layouts by location
   const filteredLayouts =
     locationFilter === "all"
       ? layouts
-      : layouts.filter((layout) => layout.location === locationFilter);
+      : layouts.filter(
+          (layout) =>
+            (layout.locationDetails?.name || "Unknown") === locationFilter
+        );
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-[600px] max-h-[500px]">
@@ -566,19 +623,31 @@ function LoadLayoutModal({
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-black">{layout.name}</h3>
                     <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                      {layout.location}
+                      {layout.locationDetails?.name || "Unknown"}
                     </span>
+                    {layout.isDefault && (
+                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                        Default
+                      </span>
+                    )}
                   </div>
-                  <p className="text-sm text-black mt-1">
-                    {generateLayoutPreview(layout.objects)}
+                  {layout.description && (
+                    <p className="text-sm text-black mt-1">
+                      {layout.description}
+                    </p>
+                  )}
+                  <p className="text-xs text-black mt-1">
+                    Tables: {layout.layoutJson.tables?.length || 0} | Objects:{" "}
+                    {layout.layoutJson.objects?.length || 0}
                   </p>
                   <p className="text-xs text-black mt-1">
-                    Created: {new Date(layout.createdAt).toLocaleDateString()}
+                    Created: {new Date(layout.createdAt).toLocaleDateString()}{" "}
+                    by {layout.createdBy}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => onLoad(layout)}
+                    onClick={() => onLoad(layout.id)}
                     className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
                   >
                     Load
