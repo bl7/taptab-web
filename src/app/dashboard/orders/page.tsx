@@ -8,7 +8,6 @@ import { Table, Location, TableLayout } from "@/lib/api";
 import { filterVisibleOrders } from "@/lib/order-utils";
 import TableOrdersView from "@/components/orders/TableOrdersView";
 import MergeBillsModal from "@/components/orders/MergeBillsModal";
-import { LayoutObject } from "@/types/layout";
 import { PageLoader } from "@/lib/utils";
 
 // Component to render a layout with table status overlays
@@ -19,9 +18,7 @@ interface LocationLayoutViewProps {
   getTableStatus: (table: Table) => string;
   getTableOrderCount: (tableId: string) => number;
   getTableRevenue: (tableId: string) => number;
-  getTableWaitTime: (tableId: string) => number;
   isTableUrgent: (tableId: string) => boolean;
-  getTableStatusColor: (table: Table) => string;
 }
 
 function LocationLayoutView({
@@ -31,9 +28,7 @@ function LocationLayoutView({
   getTableStatus,
   getTableOrderCount,
   getTableRevenue,
-  getTableWaitTime,
   isTableUrgent,
-  getTableStatusColor,
 }: LocationLayoutViewProps) {
   const layoutObjects = layout.layoutJson.objects || [];
   const layoutTables = layout.layoutJson.tables || [];
@@ -820,7 +815,6 @@ function LocationLayoutView({
 
           const orderCount = getTableOrderCount(table.id);
           const revenue = getTableRevenue(table.id);
-          const waitTime = getTableWaitTime(table.id);
           const isUrgent = isTableUrgent(table.id);
           const status = getTableStatus(table);
 
@@ -1281,21 +1275,6 @@ export default function OrdersPage() {
     return tables.filter((table) => table.locationId === currentLocation.id);
   }, [tables, currentLocation]);
 
-  // Group tables by location (keeping for backward compatibility)
-  const groupedTables = useMemo(() => {
-    const groups: { [key: string]: Table[] } = {};
-
-    tables.forEach((table) => {
-      const location = table.location || "Main Area";
-      if (!groups[location]) {
-        groups[location] = [];
-      }
-      groups[location].push(table);
-    });
-
-    return groups;
-  }, [tables]);
-
   // Get table status color
   const getTableStatusColor = (table: Table) => {
     const status = getTableStatus(table);
@@ -1318,16 +1297,6 @@ export default function OrdersPage() {
   const handleTableClick = (table: Table) => {
     setSelectedTable(table);
     setShowTableOrders(true);
-  };
-
-  // Handle layout table click (from layout objects)
-  const handleLayoutTableClick = (layoutObject: LayoutObject) => {
-    if (layoutObject.type === "existing_table" && layoutObject.tableId) {
-      const table = tables.find((t) => t.id === layoutObject.tableId);
-      if (table) {
-        handleTableClick(table);
-      }
-    }
   };
 
   // Handle order status change
@@ -1484,9 +1453,7 @@ export default function OrdersPage() {
                     getTableStatus={getTableStatus}
                     getTableOrderCount={getTableOrderCount}
                     getTableRevenue={getTableRevenue}
-                    getTableWaitTime={getTableWaitTime}
                     isTableUrgent={isTableUrgent}
-                    getTableStatusColor={getTableStatusColor}
                   />
                 </div>
               ) : (

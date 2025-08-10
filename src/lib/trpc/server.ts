@@ -1,71 +1,50 @@
 import { initTRPC, TRPCError } from '@trpc/server';
+import { type FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch';
 import superjson from 'superjson';
-import { ZodError } from 'zod';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken } from '@/lib/token-verifier';
 
-export interface CreateContextOptions {
-  headers: Headers;
+interface CreateContextOptions {
   user?: {
     id: string;
     email: string;
     role: string;
     tenantId: string;
-  };
+  } | null;
 }
 
 const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
-    headers: opts.headers,
     user: opts.user,
   };
 };
 
-export const createTRPCContext = async (opts: { req: Request }) => {
+export const createTRPCContext = async (opts: FetchCreateContextFnOptions) => {
   const { req } = opts;
   
-  // Get token from Authorization header
-  const token = req.headers.get('authorization')?.replace('Bearer ', '');
+  // Extract token from Authorization header
+  const authHeader = req.headers.get('authorization');
+  let user = null;
   
-  let user = undefined;
-  if (token) {
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.substring(7);
     try {
       const decoded = await verifyToken(token);
-      user = {
-        id: decoded.id,
-        email: decoded.email,
-        role: decoded.role,
-        tenantId: decoded.tenantId,
-      };
-    } catch {
-      // Token is invalid, but we don't throw here
-      // Let individual procedures handle authentication
+      user = decoded;
+    } catch (error) {
+      // Token verification failed, but we'll continue with null user
+      console.warn('Token verification failed:', error);
     }
   }
 
   return createInnerTRPCContext({
-    headers: req.headers,
     user,
   });
 };
 
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
-  errorFormatter({ shape, error }) {
-    return {
-      ...shape,
-      data: {
-        ...shape.data,
-        zodError:
-          error.cause instanceof ZodError ? error.cause.flatten() : null,
-      },
-    };
-  },
 });
 
-export const createTRPCRouter = t.router;
-export const publicProcedure = t.procedure;
-
-// Middleware to check if user is authenticated
 const isAuthed = t.middleware(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({ code: 'UNAUTHORIZED' });
@@ -78,17 +57,14 @@ const isAuthed = t.middleware(({ ctx, next }) => {
   });
 });
 
-// Middleware to check if user has specific role
 const hasRole = (allowedRoles: string[]) =>
   t.middleware(({ ctx, next }) => {
-    if (!ctx.user) {
-      throw new TRPCError({ code: 'UNAUTHORIZED' });
+    if (!ctx.user || !allowedRoles.includes(ctx.user.role)) {
+      throw new TRPCError({ 
+        code: 'FORBIDDEN',
+        message: 'Insufficient permissions'
+      });
     }
-    
-    if (!allowedRoles.includes(ctx.user.role)) {
-      throw new TRPCError({ code: 'FORBIDDEN' });
-    }
-    
     return next({
       ctx: {
         ...ctx,
@@ -97,6 +73,8 @@ const hasRole = (allowedRoles: string[]) =>
     });
   });
 
+export const createTRPCRouter = t.router;
+export const publicProcedure = t.procedure;
 export const protectedProcedure = t.procedure.use(isAuthed);
 export const adminProcedure = protectedProcedure.use(hasRole(['SUPER_ADMIN', 'TENANT_ADMIN']));
-export const managerProcedure = protectedProcedure.use(hasRole(['SUPER_ADMIN', 'TENANT_ADMIN', 'MANAGER'])); 
+export const managerProcedure = protectedProcedure.use(hasRole(['SUPER_ADMIN', 'TENANT_ADMIN', 'MANAGER']));

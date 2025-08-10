@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { X, MapPin, AlertCircle } from "lucide-react";
 import { Order, Table, api } from "@/lib/api";
-import { ButtonLoader } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
 
 interface MoveTableModalProps {
@@ -132,35 +132,6 @@ export default function MoveTableModal({
       setError(userError);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleMoveError = (error: Error & { code?: string }): string => {
-    const errorMessages: Record<string, string> = {
-      TABLE_NOT_FOUND: "The selected table does not exist or is not available",
-      SAME_TABLE: "This order is already at the selected table",
-      INVALID_ORDER_STATUS:
-        "This order cannot be moved (must be active or pending)",
-      NOT_FOUND: "Order not found",
-      VALIDATION_ERROR: "Please select a valid table",
-    };
-
-    const errorCode = error?.code || "";
-    return errorMessages[errorCode] || error?.message || "Failed to move order";
-  };
-
-  const getTableStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "available":
-        return "text-green-600";
-      case "occupied":
-        return "text-red-600";
-      case "reserved":
-        return "text-yellow-600";
-      case "cleaning":
-        return "text-gray-600";
-      default:
-        return "text-gray-600";
     }
   };
 

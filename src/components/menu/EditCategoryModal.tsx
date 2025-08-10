@@ -40,10 +40,14 @@ export function EditCategoryModal({
         <h2 className="text-xl font-semibold mb-4">Edit Category</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-category-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Category Name
             </label>
             <input
+              id="edit-category-name"
               type="text"
               required
               value={formData.name}
@@ -56,10 +60,14 @@ export function EditCategoryModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-category-sort"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Sort Order
             </label>
             <input
+              id="edit-category-sort"
               type="number"
               required
               min="0"

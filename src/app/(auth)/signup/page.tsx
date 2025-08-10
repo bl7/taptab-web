@@ -1,60 +1,61 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function SignupPage() {
-  const [formData, setFormData] = useState({
-    // Restaurant details
-    restaurantName: '',
-    restaurantSlug: '',
-    restaurantAddress: '',
-    restaurantPhone: '',
-    
-    // Admin user details
-    firstName: '',
-    lastName: '',
-    email: '',
-  });
-  
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const router = useRouter();
+  // Restaurant details
+  const [restaurantName, setRestaurantName] = useState("");
+  const [restaurantSlug, setRestaurantSlug] = useState("");
+  const [restaurantAddress, setRestaurantAddress] = useState("");
+  const [restaurantPhone, setRestaurantPhone] = useState("");
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+  // Admin user details
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
-      const response = await fetch('/api/signup', {
-        method: 'POST',
+      const response = await fetch("/api/signup", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          restaurantName,
+          restaurantSlug,
+          restaurantAddress,
+          restaurantPhone,
+          firstName,
+          lastName,
+          email,
+        }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Signup failed');
+        throw new Error(data.message || "Signup failed");
       }
 
       // Redirect to login with success message
-      router.push('/login?message=Restaurant account created successfully! Please check your email for login instructions.');
+      router.push(
+        "/login?message=Restaurant account created successfully! Please check your email for login instructions."
+      );
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Signup failed';
+      const errorMessage =
+        error instanceof Error ? error.message : "Signup failed";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -68,10 +69,10 @@ export default function SignupPage() {
           {/* Header with Logo and Text */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center">
-              <Image 
-                src="/icon.png" 
-                alt="TapTab Logo" 
-                width={40} 
+              <Image
+                src="/icon.png"
+                alt="TapTab Logo"
+                width={40}
                 height={40}
                 className="rounded-lg"
               />
@@ -82,8 +83,12 @@ export default function SignupPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-black mb-2">Create Restaurant Account</h2>
-            <p className="text-gray-600">Set up your restaurant on TapTab POS</p>
+            <h2 className="text-3xl font-bold text-black mb-2">
+              Create Restaurant Account
+            </h2>
+            <p className="text-gray-600">
+              Set up your restaurant on TapTab POS
+            </p>
           </div>
 
           {error && (
@@ -92,10 +97,10 @@ export default function SignupPage() {
             </div>
           )}
 
-          <form 
-            onSubmit={handleSubmit} 
+          <form
+            onSubmit={handleSubmit}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit(e);
               }
@@ -104,18 +109,22 @@ export default function SignupPage() {
           >
             {/* Restaurant Details */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold text-black mb-4">Restaurant Information</h3>
+              <h3 className="text-xl font-semibold text-black mb-4">
+                Restaurant Information
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="restaurantName" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="restaurantName"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Restaurant Name *
                   </label>
                   <input
                     type="text"
                     id="restaurantName"
-                    name="restaurantName"
-                    value={formData.restaurantName}
-                    onChange={handleInputChange}
+                    value={restaurantName}
+                    onChange={(e) => setRestaurantName(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="Enter restaurant name"
@@ -123,15 +132,17 @@ export default function SignupPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="restaurantSlug" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="restaurantSlug"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Restaurant Slug *
                   </label>
                   <input
                     type="text"
                     id="restaurantSlug"
-                    name="restaurantSlug"
-                    value={formData.restaurantSlug}
-                    onChange={handleInputChange}
+                    value={restaurantSlug}
+                    onChange={(e) => setRestaurantSlug(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="restaurant-name"
@@ -139,30 +150,34 @@ export default function SignupPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="restaurantPhone" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="restaurantPhone"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Restaurant Phone
                   </label>
                   <input
                     type="tel"
                     id="restaurantPhone"
-                    name="restaurantPhone"
-                    value={formData.restaurantPhone}
-                    onChange={handleInputChange}
+                    value={restaurantPhone}
+                    onChange={(e) => setRestaurantPhone(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="+1234567890"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label htmlFor="restaurantAddress" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="restaurantAddress"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Restaurant Address
                   </label>
                   <input
                     type="text"
                     id="restaurantAddress"
-                    name="restaurantAddress"
-                    value={formData.restaurantAddress}
-                    onChange={handleInputChange}
+                    value={restaurantAddress}
+                    onChange={(e) => setRestaurantAddress(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="123 Main St, City, State 12345"
                   />
@@ -172,18 +187,22 @@ export default function SignupPage() {
 
             {/* Admin User Details */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="text-xl font-semibold text-black mb-4">Admin Account</h3>
+              <h3 className="text-xl font-semibold text-black mb-4">
+                Admin Account
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="firstName"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     First Name *
                   </label>
                   <input
                     type="text"
                     id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="Enter first name"
@@ -191,15 +210,17 @@ export default function SignupPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="lastName"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Last Name *
                   </label>
                   <input
                     type="text"
                     id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="Enter last name"
@@ -207,15 +228,17 @@ export default function SignupPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-black mb-2"
+                  >
                     Email Address *
                   </label>
                   <input
                     type="email"
                     id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
                     placeholder="admin@restaurant.com"
@@ -232,14 +255,17 @@ export default function SignupPage() {
               disabled={isLoading}
               className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
             >
-              {isLoading ? 'Creating Account...' : 'Create Restaurant Account'}
+              {isLoading ? "Creating Account..." : "Create Restaurant Account"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <a href="/login" className="text-black hover:text-gray-700 font-medium">
+              Already have an account?{" "}
+              <a
+                href="/login"
+                className="text-black hover:text-gray-700 font-medium"
+              >
                 Sign in
               </a>
             </p>
@@ -248,4 +274,4 @@ export default function SignupPage() {
       </div>
     </div>
   );
-} 
+}

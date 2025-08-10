@@ -28,11 +28,7 @@ import {
 } from "@/types/layout";
 import { Table as APITable, TableLayout, api } from "@/lib/api";
 import { showToast } from "@/lib/utils";
-import {
-  exportLayoutToFile,
-  importLayoutFromFile,
-  generateLayoutPreview,
-} from "@/lib/layout-utils";
+import { exportLayoutToFile, importLayoutFromFile } from "@/lib/layout-utils";
 
 export default function LayoutBuilderPage() {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -87,12 +83,11 @@ export default function LayoutBuilderPage() {
       try {
         // Fetch both tables and locations
         const { api } = await import("@/lib/api");
-        const [tablesResponse, locationsResponse] = await Promise.all([
+        const [, locationsResponse] = await Promise.all([
           api.getTables(),
           api.getLocations(),
         ]);
 
-        const tables = tablesResponse.tables || [];
         const locations = locationsResponse.locations || [];
 
         // Use proper location names from the locations API
@@ -454,7 +449,6 @@ export default function LayoutBuilderPage() {
       {showLoadModal && (
         <LoadLayoutModal
           layouts={savedLayouts}
-          currentLocation={currentLocation}
           onLoad={handleLoadLayout}
           onDelete={async (layoutId) => {
             try {
@@ -548,14 +542,12 @@ function SaveLayoutModal({
 // Load Layout Modal
 function LoadLayoutModal({
   layouts,
-  currentLocation,
   onLoad,
   onDelete,
   onClose,
   onOpen,
 }: {
   layouts: TableLayout[];
-  currentLocation: string;
   onLoad: (layoutId: string) => void;
   onDelete: (layoutId: string) => void;
   onClose: () => void;

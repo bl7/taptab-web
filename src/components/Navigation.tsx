@@ -39,6 +39,7 @@ export default function Navigation() {
 
   const featuresItems = [
     { name: 'QR Code Ordering', href: '/features/qr-ordering' },
+    { name: 'Chef\'s Screen', href: '/features/chefs-screen' },
     { name: 'Smart Rota System', href: '/features/rota' },
   ];
 

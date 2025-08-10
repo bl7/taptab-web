@@ -1,4 +1,10 @@
 import { tokenManager } from "./token-manager";
+import {
+  SimplePromotion,
+  PromotionFormData,
+  PromotionCalculationRequest,
+  PromotionCalculationResponse,
+} from "@/interfaces/promotion";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5050/api/v1";
@@ -2419,6 +2425,62 @@ class APIClient {
 
     return data.url;
   }
+
+  // Promotion methods
+  async getSimplePromotions(
+    filters?: Record<string, string | number | boolean>
+  ): Promise<{ success: boolean; data: { promotions: SimplePromotion[] } }> {
+    const params = filters
+      ? `?${new URLSearchParams(filters as Record<string, string>).toString()}`
+      : "";
+    const promotions = await this.request<{ promotions: SimplePromotion[] }>(
+      `/simple-promotions${params}`
+    );
+    return { success: true, data: promotions };
+  }
+
+  async getActiveSimplePromotions(): Promise<{
+    promotions: SimplePromotion[];
+  }> {
+    const response = await this.request<{ promotions: SimplePromotion[] }>(
+      "/simple-promotions/active"
+    );
+    return { promotions: response.promotions };
+  }
+
+  async createSimplePromotion(
+    promotion: PromotionFormData
+  ): Promise<{ success: boolean; data: { promotion: SimplePromotion } }> {
+    const response = await this.request<{ promotion: SimplePromotion }>(
+      "/simple-promotions",
+      {
+        method: "POST",
+        body: JSON.stringify(promotion),
+      }
+    );
+    return { success: true, data: response };
+  }
+
+  async updateSimplePromotion(
+    id: string,
+    promotion: Partial<PromotionFormData>
+  ): Promise<{ success: boolean; data: { promotion: SimplePromotion } }> {
+    const response = await this.request<{ promotion: SimplePromotion }>(
+      `/simple-promotions/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(promotion),
+      }
+    );
+    return { success: true, data: response };
+  }
+
+  async deleteSimplePromotion(id: string): Promise<{ success: boolean }> {
+    await this.request(`/simple-promotions/${id}`, {
+      method: "DELETE",
+    });
+    return { success: true };
+  }
 }
 
 // Export singleton instance
@@ -2592,3 +2654,165 @@ export class PublicAPIClient {
 }
 
 export const publicApi = new PublicAPIClient();
+
+// Promotions API functions
+export const getSimplePromotions = async (
+  token: string,
+  filters?: Record<string, string | number | boolean>
+): Promise<{ success: boolean; data: { promotions: SimplePromotion[] } }> => {
+  const params = filters
+    ? `?${new URLSearchParams(filters as Record<string, string>).toString()}`
+    : "";
+
+  const response = await fetch(`${API_BASE_URL}/simple-promotions${params}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch promotions: ${response.statusText}`);
+  }
+
+  const result = await response.json();
+  return result;
+};
+
+export const getActivePromotions = async (
+  token: string,
+  tenantId: string
+): Promise<SimplePromotion[]> => {
+  const response = await fetch(
+    `${API_BASE_URL}/simple-promotions/active?tenantId=${tenantId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch active promotions: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+  return result.data || [];
+};
+
+export const createSimplePromotion = async (
+  token: string,
+  promotion: PromotionFormData
+): Promise<{ success: boolean; data: { promotion: SimplePromotion } }> => {
+  const response = await fetch(`${API_BASE_URL}/simple-promotions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(promotion),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(
+      error.error?.message ||
+        `Failed to create promotion: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+  return result;
+};
+
+export const updateSimplePromotion = async (
+  token: string,
+  id: string,
+  promotion: Partial<PromotionFormData>
+): Promise<{ success: boolean; data: { promotion: SimplePromotion } }> => {
+  const response = await fetch(`${API_BASE_URL}/simple-promotions/${id}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(promotion),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(
+      error.error?.message ||
+        `Failed to update promotion: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+  return result;
+};
+
+export const deleteSimplePromotion = async (
+  token: string,
+  id: string
+): Promise<{ success: boolean }> => {
+  const response = await fetch(`${API_BASE_URL}/simple-promotions/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete promotion: ${response.statusText}`);
+  }
+
+  return { success: true };
+};
+
+// Public promotions API (no authentication required)
+export const getPublicActivePromotions = async (
+  tenantId: string
+): Promise<SimplePromotion[]> => {
+  const response = await fetch(
+    `${API_BASE_URL}/simple-promotions/public/active?tenantId=${tenantId}`
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to fetch public promotions: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+  return result.data || [];
+};
+
+export const calculatePublicPromotions = async (
+  request: PromotionCalculationRequest
+): Promise<PromotionCalculationResponse> => {
+  const response = await fetch(
+    `${API_BASE_URL}/simple-promotions/public/calculate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(request),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(
+      error.error?.message ||
+        `Failed to calculate promotions: ${response.statusText}`
+    );
+  }
+
+  const result = await response.json();
+  return result.data;
+};

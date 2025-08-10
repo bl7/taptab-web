@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import { X, Scissors, AlertCircle, Plus, Minus } from "lucide-react";
 import { Order, Table, api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { ButtonLoader } from "@/lib/utils";
 
 interface OrderSplitModalProps {
   order: Order | null;

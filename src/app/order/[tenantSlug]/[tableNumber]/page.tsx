@@ -15,7 +15,6 @@ import {
   Search,
   Filter,
   AlertTriangle,
-  Info,
 } from "lucide-react";
 import { OrderPaymentSection } from "@/components/payment";
 
@@ -101,7 +100,7 @@ export default function QROrderPage() {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
+
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedMenuItemDetails, setSelectedMenuItemDetails] =
     useState<MenuItem | null>(null);
@@ -318,9 +317,8 @@ export default function QROrderPage() {
       const paymentIntentData = await paymentIntentResponse.json();
       console.log("✅ Payment intent created:", paymentIntentData);
 
-      // Store order ID and client secret for payment
+      // Store order ID for payment
       setCurrentOrderId(orderId);
-      setClientSecret(paymentIntentData.data.clientSecret);
 
       // Show payment section
       setShowPayment(true);
@@ -384,9 +382,8 @@ export default function QROrderPage() {
         items: [...cart],
       });
 
-      // Clear the current order ID and client secret
+      // Clear the current order ID
       setCurrentOrderId(null);
-      setClientSecret(null);
     } catch (error) {
       console.error("❌ Error handling payment success:", error);
       setError(
@@ -631,9 +628,20 @@ export default function QROrderPage() {
 
                   {/* Item Details - Clean */}
                   <div className="flex-1">
-                    <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">
+                    <div className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-gray-700 transition-colors">
                       {item.name}
                     </div>
+
+                    {/* Details Link - Moved below name */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShowDetails(item);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline mb-3 transition-colors"
+                    >
+                      View Details
+                    </button>
 
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {item.description}
@@ -691,30 +699,6 @@ export default function QROrderPage() {
                     {/* Price - Clean */}
                     <div className="text-2xl font-bold text-gray-900 mb-4">
                       ${item.price.toFixed(2)}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowDetails(item);
-                        }}
-                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Info className="w-4 h-4" />
-                        DETAILS
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(item);
-                        }}
-                        className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD TO ORDER
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -832,21 +816,6 @@ export default function QROrderPage() {
             {/* Order Summary */}
             {cart.length > 0 && (
               <div className="mt-6 space-y-3">
-                <div className="bg-white rounded-lg p-4 shadow-sm">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-black">Items:</span>
-                    <span className="font-semibold text-black">
-                      ${getCartTotal().toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="font-bold text-black">Total Amount:</span>
-                    <span className="font-bold text-black">
-                      ${getCartTotal().toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
                 <button
                   onClick={handlePlaceOrder}
                   disabled={orderLoading}
@@ -996,9 +965,21 @@ export default function QROrderPage() {
                   {/* Mobile Item Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900 text-base truncate">
-                        {item.name}
-                      </h3>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900 text-base truncate">
+                          {item.name}
+                        </h3>
+                        {/* Details Link - Moved below name */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowDetails(item);
+                          }}
+                          className="text-sm text-blue-600 hover:text-blue-800 underline mt-1 transition-colors"
+                        >
+                          View Details
+                        </button>
+                      </div>
                       <span className="text-green-600 font-bold text-lg ml-2">
                         ${item.price.toFixed(2)}
                       </span>
@@ -1056,30 +1037,6 @@ export default function QROrderPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Mobile Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowDetails(item);
-                        }}
-                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <Info className="w-4 h-4" />
-                        DETAILS
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(item);
-                        }}
-                        className="flex-1 bg-black text-white py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD TO ORDER
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>

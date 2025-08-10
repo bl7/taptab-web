@@ -351,7 +351,6 @@ export default function TablesPage() {
         ) : (
           <TablesTab
             tables={tables}
-            locations={locations}
             onEdit={(table) => {
               setSelectedTable(table);
               setShowEditModal(true);
@@ -532,7 +531,6 @@ function LocationsTab({
 // Tables Tab Component
 function TablesTab({
   tables,
-  locations,
   onEdit,
   onDelete,
   onStatusUpdate,
@@ -541,7 +539,6 @@ function TablesTab({
   getStatusColor,
 }: {
   tables: Table[];
-  locations: Location[];
   onEdit: (table: Table) => void;
   onDelete: (id: string) => void;
   onStatusUpdate: (id: string, status: string) => void;
@@ -692,24 +689,22 @@ function AddLocationModal({
   }) => void;
   loading: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    name: "",
-    description: "",
-    isActive: true,
-  });
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) {
+    if (!name.trim()) {
       showToast.warning("Location name is required");
       return;
     }
 
     onSubmit({
-      name: formData.name.trim(),
-      description: formData.description.trim() || undefined,
-      isActive: formData.isActive,
+      name: name.trim(),
+      description: description.trim() || undefined,
+      isActive: isActive,
     });
   };
 
@@ -723,15 +718,17 @@ function AddLocationModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="location-name"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Location Name *
               </label>
               <input
+                id="location-name"
                 type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black"
                 required
                 placeholder="e.g., Main Floor, Patio, VIP Area"
@@ -739,27 +736,31 @@ function AddLocationModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="location-description"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Description
               </label>
               <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                id="location-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black h-20 resize-none"
                 placeholder="Optional description of the location"
               />
             </div>
 
             <div>
-              <label className="flex items-center gap-2">
+              <label
+                htmlFor="location-active"
+                className="flex items-center gap-2"
+              >
                 <input
+                  id="location-active"
                   type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
-                  }
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
                   className="rounded"
                 />
                 <span className="text-sm text-black">Active location</span>
@@ -801,24 +802,22 @@ function EditLocationModal({
   onSubmit: (data: Partial<Location>) => void;
   loading: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    name: location.name,
-    description: location.description || "",
-    isActive: location.isActive,
-  });
+  const [name, setName] = useState(location.name);
+  const [description, setDescription] = useState(location.description || "");
+  const [isActive, setIsActive] = useState(location.isActive);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name.trim()) {
+    if (!name.trim()) {
       showToast.warning("Location name is required");
       return;
     }
 
     onSubmit({
-      name: formData.name.trim(),
-      description: formData.description.trim() || undefined,
-      isActive: formData.isActive,
+      name: name.trim(),
+      description: description.trim() || undefined,
+      isActive: isActive,
     });
   };
 
@@ -832,15 +831,17 @@ function EditLocationModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-location-name"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Location Name *
               </label>
               <input
+                id="edit-location-name"
                 type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black"
                 required
                 placeholder="e.g., Main Floor, Patio, VIP Area"
@@ -848,27 +849,31 @@ function EditLocationModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-location-description"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Description
               </label>
               <textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                id="edit-location-description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black h-20 resize-none"
                 placeholder="Optional description of the location"
               />
             </div>
 
             <div>
-              <label className="flex items-center gap-2">
+              <label
+                htmlFor="edit-location-active"
+                className="flex items-center gap-2"
+              >
                 <input
+                  id="edit-location-active"
                   type="checkbox"
-                  checked={formData.isActive}
-                  onChange={(e) =>
-                    setFormData({ ...formData, isActive: e.target.checked })
-                  }
+                  checked={isActive}
+                  onChange={(e) => setIsActive(e.target.checked)}
                   className="rounded"
                 />
                 <span className="text-sm text-black">Active location</span>
@@ -880,7 +885,7 @@ function EditLocationModal({
                 <p className="text-sm text-yellow-800">
                   ⚠️ This location has {location.tableCount} table
                   {location.tableCount !== 1 ? "s" : ""} assigned.
-                  {!formData.isActive &&
+                  {!isActive &&
                     " Making it inactive will not affect existing tables."}
                 </p>
               </div>
@@ -926,28 +931,26 @@ function AddTableModal({
   }) => void;
   loading: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    number: "",
-    capacity: 4,
-    locationId: "",
-    status: "available",
-  });
+  const [number, setNumber] = useState("");
+  const [capacity, setCapacity] = useState(4);
+  const [locationId, setLocationId] = useState("");
+  const [status, setStatus] = useState("available");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.number.trim()) {
+    if (!number.trim()) {
       showToast.warning("Table number is required");
       return;
     }
 
-    const cleanTableNumber = formData.number.trim().replace(/\s+/g, "-");
+    const cleanTableNumber = number.trim().replace(/\s+/g, "-");
 
     const tableData = {
       number: cleanTableNumber,
-      capacity: formData.capacity,
-      locationId: formData.locationId || undefined,
-      status: formData.status,
+      capacity: capacity,
+      locationId: locationId || undefined,
+      status: status,
     };
 
     onSubmit(tableData);
@@ -965,15 +968,17 @@ function AddTableModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="table-number"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Table Number *
               </label>
               <input
+                id="table-number"
                 type="text"
-                value={formData.number}
-                onChange={(e) =>
-                  setFormData({ ...formData, number: e.target.value })
-                }
+                value={number}
+                onChange={(e) => setNumber(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black"
                 required
                 placeholder="e.g., 1, A1, VIP-1, Table-2"
@@ -984,18 +989,17 @@ function AddTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="table-capacity"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Capacity *
               </label>
               <input
+                id="table-capacity"
                 type="number"
-                value={formData.capacity}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    capacity: parseInt(e.target.value),
-                  })
-                }
+                value={capacity}
+                onChange={(e) => setCapacity(parseInt(e.target.value))}
                 className="w-full p-2 border rounded-lg text-black"
                 required
                 min="1"
@@ -1004,14 +1008,16 @@ function AddTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="table-location"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Location
               </label>
               <select
-                value={formData.locationId}
-                onChange={(e) =>
-                  setFormData({ ...formData, locationId: e.target.value })
-                }
+                id="table-location"
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black"
               >
                 <option value="">No location assigned</option>
@@ -1029,14 +1035,16 @@ function AddTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="table-status"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Initial Status
               </label>
               <select
-                value={formData.status}
-                onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
-                }
+                id="table-status"
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
                 className="w-full p-2 border rounded-lg text-black"
               >
                 <option value="available">Available</option>
@@ -1124,10 +1132,14 @@ function EditTableModal({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-table-number"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Table Number *
               </label>
               <input
+                id="edit-table-number"
                 type="text"
                 value={formData.number}
                 onChange={(e) =>
@@ -1140,10 +1152,14 @@ function EditTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-table-capacity"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Capacity *
               </label>
               <input
+                id="edit-table-capacity"
                 type="number"
                 value={formData.capacity}
                 onChange={(e) =>
@@ -1160,10 +1176,14 @@ function EditTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-table-location"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Location
               </label>
               <select
+                id="edit-table-location"
                 value={formData.locationId}
                 onChange={(e) =>
                   setFormData({ ...formData, locationId: e.target.value })
@@ -1180,10 +1200,14 @@ function EditTableModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-table-status"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Status
               </label>
               <select
+                id="edit-table-status"
                 value={formData.status}
                 onChange={(e) =>
                   setFormData({

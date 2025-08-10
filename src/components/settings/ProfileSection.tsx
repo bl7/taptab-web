@@ -5,13 +5,11 @@ import { Settings } from "@/lib/api";
 interface ProfileSectionProps {
   settings: Settings;
   onSettingsChange: (settings: Settings) => void;
-  saving: boolean;
 }
 
 export default function ProfileSection({
   settings,
   onSettingsChange,
-  saving,
 }: ProfileSectionProps) {
   return (
     <div className="space-y-6">

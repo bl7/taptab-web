@@ -10,7 +10,6 @@ import {
   Search,
   Filter,
   AlertTriangle,
-  Info,
 } from "lucide-react";
 import {
   Order,
@@ -363,9 +362,20 @@ export default function EditOrderModal({
 
                       {/* Item Details - Clean */}
                       <div className="flex-1">
-                        <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">
+                        <div className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-gray-700 transition-colors">
                           {item.name}
                         </div>
+
+                        {/* Details Link - Moved below name */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShowDetails(item);
+                          }}
+                          className="text-sm text-blue-600 hover:text-blue-800 underline mb-3 transition-colors"
+                        >
+                          View Details
+                        </button>
 
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                           {item.description}
@@ -423,30 +433,6 @@ export default function EditOrderModal({
                         {/* Price - Clean */}
                         <div className="text-2xl font-bold text-gray-900 mb-4">
                           ${item.price.toFixed(2)}
-                        </div>
-
-                        {/* Action Buttons */}
-                        <div className="flex gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShowDetails(item);
-                            }}
-                            className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                          >
-                            <Info className="w-4 h-4" />
-                            DETAILS
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              addToCart(item);
-                            }}
-                            className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                          >
-                            <Plus className="w-4 h-4" />
-                            ADD TO ORDER
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -715,6 +701,12 @@ export default function EditOrderModal({
                 <div className="border-t border-gray-200 pt-6">
                   <div className="flex gap-3">
                     <button
+                      onClick={handleCloseDetails}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
                       onClick={() => {
                         addToCart(selectedMenuItemDetails);
                         handleCloseDetails();
@@ -723,12 +715,6 @@ export default function EditOrderModal({
                     >
                       <Plus className="w-5 h-5" />
                       Add to Order
-                    </button>
-                    <button
-                      onClick={handleCloseDetails}
-                      className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-                    >
-                      Close
                     </button>
                   </div>
                 </div>
@@ -835,6 +821,17 @@ export default function EditOrderModal({
                         </span>
                       </div>
 
+                      {/* Details Link - Mobile */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowDetails(item);
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline mb-2 transition-colors"
+                      >
+                        View Details
+                      </button>
+
                       <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                         {item.description}
                       </p>
@@ -887,30 +884,6 @@ export default function EditOrderModal({
                           </div>
                         </div>
                       )}
-
-                      {/* Mobile Action Buttons */}
-                      <div className="flex gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleShowDetails(item);
-                          }}
-                          className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                        >
-                          <Info className="w-4 h-4" />
-                          DETAILS
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            addToCart(item);
-                          }}
-                          className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                        >
-                          <Plus className="w-4 h-4" />
-                          ADD TO ORDER
-                        </button>
-                      </div>
                     </div>
                   </div>
                 </div>

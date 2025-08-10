@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { X, Clock, Calendar, User, FileText } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { X, Clock, Calendar, User, FileText } from "lucide-react";
 
 interface StaffMember {
   id: string;
@@ -31,11 +31,24 @@ interface ShiftModalProps {
   onClose: () => void;
 }
 
-export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModalProps) {
+export default function ShiftModal({
+  shift,
+  staff,
+  onSave,
+  onClose,
+}: ShiftModalProps) {
   const [formData, setFormData] = useState<Shift>(shift);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const dayNames = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+  ];
 
   useEffect(() => {
     setFormData(shift);
@@ -45,32 +58,32 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
     const newErrors: Record<string, string> = {};
 
     if (!formData.staffId) {
-      newErrors.staffId = 'Please select a staff member';
+      newErrors.staffId = "Please select a staff member";
     }
 
     if (!formData.startTime) {
-      newErrors.startTime = 'Start time is required';
+      newErrors.startTime = "Start time is required";
     }
 
     if (!formData.endTime) {
-      newErrors.endTime = 'End time is required';
+      newErrors.endTime = "End time is required";
     }
 
     if (formData.startTime && formData.endTime) {
       const start = new Date(`2000-01-01T${formData.startTime}`);
       const end = new Date(`2000-01-01T${formData.endTime}`);
-      
+
       if (start >= end) {
-        newErrors.endTime = 'End time must be after start time';
+        newErrors.endTime = "End time must be after start time";
       }
     }
 
     if (formData.shiftHours <= 0) {
-      newErrors.shiftHours = 'Shift hours must be greater than 0';
+      newErrors.shiftHours = "Shift hours must be greater than 0";
     }
 
     if (formData.breakDuration < 0) {
-      newErrors.breakDuration = 'Break duration cannot be negative';
+      newErrors.breakDuration = "Break duration cannot be negative";
     }
 
     setErrors(newErrors);
@@ -79,47 +92,45 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted!', formData);
-    
+    console.log("Form submitted!", formData);
+
     if (validateForm()) {
       onSave(formData);
     }
   };
 
-  const handleTimeChange = (field: 'startTime' | 'endTime', value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
+  const handleTimeChange = (field: "startTime" | "endTime", value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     // Auto-calculate shift hours when both times are set
-    if (field === 'endTime' && formData.startTime && value) {
+    if (field === "endTime" && formData.startTime && value) {
       const start = new Date(`2000-01-01T${formData.startTime}`);
       const end = new Date(`2000-01-01T${value}`);
       const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      
+
       if (diffHours > 0) {
-        setFormData(prev => ({ 
-          ...prev, 
+        setFormData((prev) => ({
+          ...prev,
           [field]: value,
-          shiftHours: Math.round(diffHours * 100) / 100
+          shiftHours: Math.round(diffHours * 100) / 100,
         }));
       }
-    } else if (field === 'startTime' && formData.endTime && value) {
+    } else if (field === "startTime" && formData.endTime && value) {
       const start = new Date(`2000-01-01T${value}`);
       const end = new Date(`2000-01-01T${formData.endTime}`);
       const diffHours = (end.getTime() - start.getTime()) / (1000 * 60 * 60);
-      
+
       if (diffHours > 0) {
-        setFormData(prev => ({ 
-          ...prev, 
+        setFormData((prev) => ({
+          ...prev,
           [field]: value,
-          shiftHours: Math.round(diffHours * 100) / 100
+          shiftHours: Math.round(diffHours * 100) / 100,
         }));
       }
     } else {
-      setFormData(prev => ({ ...prev, [field]: value }));
+      setFormData((prev) => ({ ...prev, [field]: value }));
     }
   };
-
-
 
   return (
     <div className="fixed inset-0 text-black bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -127,7 +138,7 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
         <div className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-black">
-              {shift.id ? 'Edit Shift' : 'Add Shift'}
+              {shift.id ? "Edit Shift" : "Add Shift"}
             </h2>
             <button
               onClick={onClose}
@@ -138,10 +149,10 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
           </div>
         </div>
 
-        <form 
-          onSubmit={handleSubmit} 
+        <form
+          onSubmit={handleSubmit}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               handleSubmit(e);
             }
@@ -150,15 +161,21 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
         >
           {/* Staff Selection */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-black mb-2">
+            <label
+              htmlFor="shift-staff"
+              className="block text-sm font-semibold text-black mb-2"
+            >
               <User className="w-4 h-4 inline mr-2" />
               Staff Member
             </label>
             <select
+              id="shift-staff"
               value={formData.staffId}
-              onChange={(e) => setFormData(prev => ({ ...prev, staffId: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, staffId: e.target.value }))
+              }
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black ${
-                errors.staffId ? 'border-red-500' : 'border-gray-300'
+                errors.staffId ? "border-red-500" : "border-gray-300"
               }`}
             >
               <option value="">Select a staff member</option>
@@ -175,13 +192,22 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
 
           {/* Day Selection */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-black mb-2">
+            <label
+              htmlFor="shift-day"
+              className="block text-sm font-semibold text-black mb-2"
+            >
               <Calendar className="w-4 h-4 inline mr-2" />
               Day
             </label>
             <select
+              id="shift-day"
               value={formData.dayOfWeek}
-              onChange={(e) => setFormData(prev => ({ ...prev, dayOfWeek: parseInt(e.target.value) }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  dayOfWeek: parseInt(e.target.value),
+                }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black"
             >
               {dayNames.map((day, index) => (
@@ -194,13 +220,19 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
 
           {/* Shift Label */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-black mb-2">
+            <label
+              htmlFor="shift-label"
+              className="block text-sm font-semibold text-black mb-2"
+            >
               Shift Label (optional)
             </label>
             <input
+              id="shift-label"
               type="text"
-              value={formData.shiftLabel || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, shiftLabel: e.target.value }))}
+              value={formData.shiftLabel || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, shiftLabel: e.target.value }))
+              }
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
               placeholder="e.g., Morning, Evening, Split, etc."
             />
@@ -212,16 +244,20 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
           {/* Time Selection */}
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">
+              <label
+                htmlFor="shift-start-time"
+                className="block text-sm font-semibold text-black mb-2"
+              >
                 <Clock className="w-4 h-4 inline mr-2" />
                 Start Time
               </label>
               <input
+                id="shift-start-time"
                 type="time"
                 value={formData.startTime}
-                onChange={(e) => handleTimeChange('startTime', e.target.value)}
+                onChange={(e) => handleTimeChange("startTime", e.target.value)}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black ${
-                  errors.startTime ? 'border-red-500' : 'border-gray-300'
+                  errors.startTime ? "border-red-500" : "border-gray-300"
                 }`}
               />
               {errors.startTime && (
@@ -229,16 +265,20 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
               )}
             </div>
             <div>
-              <label className="block text-sm font-semibold text-black mb-2">
+              <label
+                htmlFor="shift-end-time"
+                className="block text-sm font-semibold text-black mb-2"
+              >
                 <Clock className="w-4 h-4 inline mr-2" />
                 End Time
               </label>
               <input
+                id="shift-end-time"
                 type="time"
                 value={formData.endTime}
-                onChange={(e) => handleTimeChange('endTime', e.target.value)}
+                onChange={(e) => handleTimeChange("endTime", e.target.value)}
                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black ${
-                  errors.endTime ? 'border-red-500' : 'border-gray-300'
+                  errors.endTime ? "border-red-500" : "border-gray-300"
                 }`}
               />
               {errors.endTime && (
@@ -249,17 +289,26 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
 
           {/* Shift Hours */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-black mb-2">
+            <label
+              htmlFor="shift-hours"
+              className="block text-sm font-semibold text-black mb-2"
+            >
               Shift Hours
             </label>
             <input
+              id="shift-hours"
               type="number"
               step="0.5"
               min="0"
               value={formData.shiftHours}
-              onChange={(e) => setFormData(prev => ({ ...prev, shiftHours: parseFloat(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  shiftHours: parseFloat(e.target.value) || 0,
+                }))
+              }
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black ${
-                errors.shiftHours ? 'border-red-500' : 'border-gray-300'
+                errors.shiftHours ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.shiftHours && (
@@ -269,32 +318,49 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
 
           {/* Break Duration */}
           <div className="mb-4">
-            <label className="block text-sm font-semibold text-black mb-2">
+            <label
+              htmlFor="shift-break"
+              className="block text-sm font-semibold text-black mb-2"
+            >
               Break Duration (minutes)
             </label>
             <input
+              id="shift-break"
               type="number"
               min="0"
               value={formData.breakDuration}
-              onChange={(e) => setFormData(prev => ({ ...prev, breakDuration: parseInt(e.target.value) || 0 }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  breakDuration: parseInt(e.target.value) || 0,
+                }))
+              }
               className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black ${
-                errors.breakDuration ? 'border-red-500' : 'border-gray-300'
+                errors.breakDuration ? "border-red-500" : "border-gray-300"
               }`}
             />
             {errors.breakDuration && (
-              <p className="text-red-500 text-sm mt-1">{errors.breakDuration}</p>
+              <p className="text-red-500 text-sm mt-1">
+                {errors.breakDuration}
+              </p>
             )}
           </div>
 
           {/* Notes */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-black mb-2">
+            <label
+              htmlFor="shift-notes"
+              className="block text-sm font-semibold text-black mb-2"
+            >
               <FileText className="w-4 h-4 inline mr-2" />
               Notes (optional)
             </label>
             <textarea
-              value={formData.notes || ''}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              id="shift-notes"
+              value={formData.notes || ""}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, notes: e.target.value }))
+              }
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-black placeholder-gray-500"
               placeholder="Add any notes about this shift..."
@@ -314,11 +380,11 @@ export default function ShiftModal({ shift, staff, onSave, onClose }: ShiftModal
               type="submit"
               className="flex-1 px-4 py-2 bg-black text-white rounded-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-black"
             >
-              {shift.id ? 'Update Shift' : 'Add Shift'}
+              {shift.id ? "Update Shift" : "Add Shift"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

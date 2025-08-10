@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { api, Settings, StripeConnectConfig } from "@/lib/api";
 import { StripeConnectSection } from "@/components/stripe";
 import { ProfileSection, SettingsTabs } from "@/components/settings";
-import { showToast, SectionLoader, ButtonLoader } from "@/lib/utils";
+import { showToast, SectionLoader } from "@/lib/utils";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings | null>(null);
@@ -97,7 +97,6 @@ export default function SettingsPage() {
           <ProfileSection
             settings={settings}
             onSettingsChange={handleSettingsChange}
-            saving={saving}
           />
 
           <div className="flex justify-end pt-6 border-t border-gray-200">

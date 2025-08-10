@@ -72,10 +72,14 @@ export function EditIngredientModal({
         <h2 className="text-xl font-semibold mb-4">Edit Ingredient</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-ingredient-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Name
             </label>
             <input
+              id="edit-ingredient-name"
               type="text"
               required
               value={formData.name}
@@ -87,10 +91,14 @@ export function EditIngredientModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-ingredient-description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Description
             </label>
             <textarea
+              id="edit-ingredient-description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -102,10 +110,14 @@ export function EditIngredientModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="edit-ingredient-unit"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Unit
               </label>
               <input
+                id="edit-ingredient-unit"
                 type="text"
                 required
                 value={formData.unit}
@@ -117,12 +129,16 @@ export function EditIngredientModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="edit-ingredient-cost"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Cost per Unit
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
+                  id="edit-ingredient-cost"
                   type="number"
                   step="0.01"
                   required

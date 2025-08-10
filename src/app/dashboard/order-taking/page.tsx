@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   Search,
@@ -11,12 +11,16 @@ import {
   Clock,
   User,
   AlertTriangle,
-  Info,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
 import { PageLoader } from "@/lib/utils";
 import { showToast } from "@/lib/utils";
+import {
+  PromotionsDisplay,
+  usePromotionsCalculation,
+} from "@/components/promotion";
+import { OrderItemForPromotion } from "@/interfaces/promotion";
 
 interface MenuItem {
   id: string;
@@ -116,10 +120,22 @@ export default function OrderTakingPage() {
   const [showSearch, setShowSearch] = useState(false);
   const [userName, setUserName] = useState("");
   const [restaurantName, setRestaurantName] = useState("");
+  const [tenantId, setTenantId] = useState<string>("");
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedMenuItemDetails, setSelectedMenuItemDetails] =
     useState<MenuItem | null>(null);
   const [showMobileCart, setShowMobileCart] = useState(false);
+
+  // Promotions calculation hook
+  const {
+    appliedPromotions,
+    subtotal: promotionsSubtotal,
+    totalDiscount,
+    finalAmount,
+    loading: promotionsLoading,
+    calculatePromotions,
+    clearCalculation,
+  } = usePromotionsCalculation(tenantId);
 
   useEffect(() => {
     const loadData = async () => {
@@ -143,6 +159,7 @@ export default function OrderTakingPage() {
             const user = JSON.parse(userData);
             setUserName(`${user.firstName} ${user.lastName}`);
             setRestaurantName(user.tenant?.name || "Restaurant");
+            setTenantId(user.tenant?.id || "");
           } catch (e) {
             console.error("Error parsing user data:", e);
             setUserName("Staff");
@@ -233,6 +250,26 @@ export default function OrderTakingPage() {
       0
     );
   };
+
+  // Convert cart items to promotion format
+  const getCartItemsForPromotions = useCallback((): OrderItemForPromotion[] => {
+    return cart.map((item) => ({
+      menuItemId: item.menuItem.id,
+      name: item.menuItem.name,
+      unitPrice: item.menuItem.price,
+      quantity: item.quantity,
+      categoryId: item.menuItem.categoryId,
+    }));
+  }, [cart]);
+
+  // Update promotions when cart changes
+  useEffect(() => {
+    if (cart.length > 0) {
+      calculatePromotions(getCartItemsForPromotions());
+    } else {
+      clearCalculation();
+    }
+  }, [cart, calculatePromotions, clearCalculation, getCartItemsForPromotions]);
 
   // Handle opening menu item details modal
   const handleShowDetails = (item: MenuItem) => {
@@ -418,9 +455,40 @@ export default function OrderTakingPage() {
 
                   {/* Item Details - Clean */}
                   <div className="flex-1">
-                    <div className="font-semibold text-lg mb-3 text-gray-900 group-hover:text-gray-700 transition-colors">
+                    <div className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-gray-700 transition-colors">
                       {item.name}
                     </div>
+
+                    {/* Promotion Badges */}
+                    {appliedPromotions.some((promo) =>
+                      promo.applied_items.includes(item.name)
+                    ) && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {appliedPromotions
+                          .filter((promo) =>
+                            promo.applied_items.includes(item.name)
+                          )
+                          .map((promo) => (
+                            <div
+                              key={promo.id}
+                              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200"
+                            >
+                              {promo.name}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Details Link - Moved below name */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShowDetails(item);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline mb-3 transition-colors"
+                    >
+                      View Details
+                    </button>
 
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                       {item.description}
@@ -478,30 +546,6 @@ export default function OrderTakingPage() {
                     {/* Price - Clean */}
                     <div className="text-2xl font-bold text-gray-900 mb-4">
                       ${item.price.toFixed(2)}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowDetails(item);
-                        }}
-                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Info className="w-4 h-4" />
-                        DETAILS
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(item);
-                        }}
-                        className="flex-1 bg-gray-900 text-white py-3 rounded-lg font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD TO ORDER
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -608,12 +652,28 @@ export default function OrderTakingPage() {
             )}
           </div>
 
+          {/* Promotions Display */}
+          {cart.length > 0 && (
+            <div className="px-4 py-3 border-t border-gray-200">
+              <PromotionsDisplay
+                promotions={appliedPromotions}
+                subtotal={promotionsSubtotal}
+                totalDiscount={totalDiscount}
+                finalAmount={finalAmount}
+                loading={promotionsLoading}
+              />
+            </div>
+          )}
+
           {/* Order Total - Compact */}
           <div className="px-4 py-4 bg-gray-50 border-t border-gray-200">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-semibold text-gray-900">TOTAL</span>
               <span className="text-lg font-bold text-gray-900">
-                ${getCartTotal().toFixed(2)}
+                $
+                {totalDiscount > 0
+                  ? finalAmount.toFixed(2)
+                  : getCartTotal().toFixed(2)}
               </span>
             </div>
 
@@ -747,6 +807,12 @@ export default function OrderTakingPage() {
                 <div className="border-t border-gray-200 pt-6">
                   <div className="flex gap-3">
                     <button
+                      onClick={handleCloseDetails}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                    >
+                      Close
+                    </button>
+                    <button
                       onClick={() => {
                         addToCart(selectedMenuItemDetails);
                         handleCloseDetails();
@@ -755,12 +821,6 @@ export default function OrderTakingPage() {
                     >
                       <Plus className="w-5 h-5" />
                       Add to Order
-                    </button>
-                    <button
-                      onClick={handleCloseDetails}
-                      className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-                    >
-                      Close
                     </button>
                   </div>
                 </div>
@@ -872,6 +932,37 @@ export default function OrderTakingPage() {
                       </span>
                     </div>
 
+                    {/* Promotion Badges - Mobile */}
+                    {appliedPromotions.some((promo) =>
+                      promo.applied_items.includes(item.name)
+                    ) && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {appliedPromotions
+                          .filter((promo) =>
+                            promo.applied_items.includes(item.name)
+                          )
+                          .map((promo) => (
+                            <div
+                              key={promo.id}
+                              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200"
+                            >
+                              {promo.name}
+                            </div>
+                          ))}
+                      </div>
+                    )}
+
+                    {/* Details Link - Mobile */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShowDetails(item);
+                      }}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline mb-2 transition-colors"
+                    >
+                      View Details
+                    </button>
+
                     <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                       {item.description}
                     </p>
@@ -924,30 +1015,6 @@ export default function OrderTakingPage() {
                         </div>
                       </div>
                     )}
-
-                    {/* Mobile Action Buttons */}
-                    <div className="flex gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleShowDetails(item);
-                        }}
-                        className="flex-shrink-0 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium text-sm hover:bg-gray-200 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <Info className="w-4 h-4" />
-                        DETAILS
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addToCart(item);
-                        }}
-                        className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-medium text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 active:scale-95"
-                      >
-                        <Plus className="w-4 h-4" />
-                        ADD TO ORDER
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -965,13 +1032,21 @@ export default function OrderTakingPage() {
                 </p>
                 <p className="text-lg font-bold text-gray-900">
                   $
-                  {cart
-                    .reduce(
-                      (sum, item) => sum + item.menuItem.price * item.quantity,
-                      0
-                    )
-                    .toFixed(2)}
+                  {totalDiscount > 0
+                    ? finalAmount.toFixed(2)
+                    : cart
+                        .reduce(
+                          (sum, item) =>
+                            sum + item.menuItem.price * item.quantity,
+                          0
+                        )
+                        .toFixed(2)}
                 </p>
+                {totalDiscount > 0 && (
+                  <p className="text-sm text-green-600 font-medium">
+                    You saved ${totalDiscount.toFixed(2)}!
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setShowMobileCart(true)}
@@ -1118,6 +1193,15 @@ export default function OrderTakingPage() {
               {/* Order Summary and Place Order Button */}
               {cart.length > 0 && (
                 <div className="mt-6 space-y-4">
+                  {/* Promotions Display - Mobile */}
+                  <PromotionsDisplay
+                    promotions={appliedPromotions}
+                    subtotal={promotionsSubtotal}
+                    totalDiscount={totalDiscount}
+                    finalAmount={finalAmount}
+                    loading={promotionsLoading}
+                  />
+
                   <div className="bg-gray-50 rounded-xl p-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-gray-900 text-sm">Items:</span>
@@ -1138,13 +1222,15 @@ export default function OrderTakingPage() {
                       </span>
                       <span className="font-bold text-gray-900">
                         $
-                        {cart
-                          .reduce(
-                            (sum, item) =>
-                              sum + item.menuItem.price * item.quantity,
-                            0
-                          )
-                          .toFixed(2)}
+                        {totalDiscount > 0
+                          ? finalAmount.toFixed(2)
+                          : cart
+                              .reduce(
+                                (sum, item) =>
+                                  sum + item.menuItem.price * item.quantity,
+                                0
+                              )
+                              .toFixed(2)}
                       </span>
                     </div>
                   </div>

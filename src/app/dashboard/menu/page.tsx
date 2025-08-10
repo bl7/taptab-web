@@ -17,6 +17,7 @@ import IngredientsTab from "@/components/menu/IngredientsTab";
 import AllergensTab from "@/components/menu/AllergensTab";
 import {
   AddItemModal,
+  AddCategoryModal,
   AddIngredientModal,
   EditIngredientModal,
   AddAllergenModal,
@@ -43,7 +44,7 @@ export default function MenuPage() {
     "menu" | "categories" | "ingredients" | "allergens"
   >("categories");
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false); // eslint-disable-line @typescript-eslint/no-unused-vars
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
   const [showAddIngredientModal, setShowAddIngredientModal] = useState(false);
   const [showEditIngredientModal, setShowEditIngredientModal] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(
@@ -245,7 +246,6 @@ export default function MenuPage() {
   };
 
   // Category handlers
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleCreateCategory = async (categoryData: {
     name: string;
     sortOrder?: number;
@@ -637,6 +637,14 @@ export default function MenuPage() {
           onSubmit={handleCreateItem}
           loading={apiLoading}
           onCreateIngredient={handleCreateIngredient}
+        />
+      )}
+
+      {showAddCategoryModal && (
+        <AddCategoryModal
+          onClose={() => setShowAddCategoryModal(false)}
+          onSubmit={handleCreateCategory}
+          loading={apiLoading}
         />
       )}
 

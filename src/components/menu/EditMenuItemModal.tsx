@@ -150,10 +150,14 @@ export function EditMenuItemModal({
             {/* Left Column */}
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="menu-item-name"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Name
                 </label>
                 <input
+                  id="menu-item-name"
                   type="text"
                   required
                   value={formData.name}
@@ -165,10 +169,14 @@ export function EditMenuItemModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="menu-item-description"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Description
                 </label>
                 <textarea
+                  id="menu-item-description"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
@@ -180,12 +188,16 @@ export function EditMenuItemModal({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="menu-item-price"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Price
                   </label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                     <input
+                      id="menu-item-price"
                       type="number"
                       step="0.01"
                       required
@@ -199,10 +211,14 @@ export function EditMenuItemModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label
+                    htmlFor="menu-item-category"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
                     Category
                   </label>
                   <select
+                    id="menu-item-category"
                     value={formData.categoryId}
                     onChange={(e) =>
                       setFormData({ ...formData, categoryId: e.target.value })
@@ -309,7 +325,14 @@ export function EditMenuItemModal({
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <label
+                      htmlFor={`ingredient-quantity-${ingredient.ingredientId}`}
+                      className="sr-only"
+                    >
+                      Quantity for {getIngredientName(ingredient.ingredientId)}
+                    </label>
                     <input
+                      id={`ingredient-quantity-${ingredient.ingredientId}`}
                       type="number"
                       step="0.01"
                       min="0"
@@ -323,7 +346,14 @@ export function EditMenuItemModal({
                       }
                       className="w-20 px-2 py-1 border border-gray-300 rounded text-black text-sm"
                     />
+                    <label
+                      htmlFor={`ingredient-unit-${ingredient.ingredientId}`}
+                      className="sr-only"
+                    >
+                      Unit for {getIngredientName(ingredient.ingredientId)}
+                    </label>
                     <input
+                      id={`ingredient-unit-${ingredient.ingredientId}`}
                       type="text"
                       value={ingredient.unit}
                       onChange={(e) =>

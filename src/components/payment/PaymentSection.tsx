@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PaymentMethodSelector, PaymentMethod } from "./PaymentMethodSelector";
 import { PaymentForm } from "./PaymentForm";
 import { ApplePayButton } from "./ApplePayButton";
 import { GooglePayButton } from "./GooglePayButton";
-import { PaymentAPI, PaymentIntent, StripeConfig } from "@/lib/payment-api";
+import { PaymentIntent, StripeConfig } from "@/lib/payment-api";
 
 interface PaymentSectionProps {
   tenantSlug: string;
@@ -98,13 +98,6 @@ export function PaymentSection({
 
     console.log("🔍 Final available methods:", methods);
     return methods;
-  };
-
-  const formatAmount = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: currency.toUpperCase(),
-    }).format(amount / 100);
   };
 
   if (error) {

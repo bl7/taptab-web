@@ -1,157 +1,150 @@
-export interface Promotion {
-  id: string;
-  tenantId: string;
+// Simple Promotions System Interfaces
+
+export interface SimplePromotion {
+  id?: string;
   name: string;
-  description: string;
-  type:
-    | "ITEM_DISCOUNT"
-    | "COMBO_DEAL"
-    | "CART_DISCOUNT"
-    | "BOGO"
-    | "FIXED_PRICE"
-    | "TIME_BASED"
-    | "COUPON";
-  discountType: "PERCENTAGE" | "FIXED_AMOUNT" | "FREE_ITEM" | "FIXED_PRICE";
-  discountValue?: number;
-  fixedPrice?: number;
-  minCartValue: number;
-  maxDiscountAmount?: number;
-  minItems: number;
-  maxItems?: number;
-  usageLimit?: number;
-  usageCount: number;
-  perCustomerLimit?: number;
-  startDate?: string;
-  endDate?: string;
-  timeRangeStart?: string;
-  timeRangeEnd?: string;
-  daysOfWeek?: number[];
-  requiresCode: boolean;
-  promoCode?: string;
-  autoApply: boolean;
-  customerSegments: string[];
-  customerTypes: string[];
-  priority: number;
-  canCombineWithOthers: boolean;
+  description?: string;
+  type: PromotionType;
+  discount_value: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  start_date?: string;
+  end_date?: string;
+  start_time?: string; // HH:MM format for happy hour
+  end_time?: string; // HH:MM format for happy hour
+  days_of_week?: number[]; // 1=Monday, 7=Sunday
+  priority?: number;
   isActive: boolean;
-  items?: PromotionItem[];
+  tenantId: string;
   createdAt?: string;
   updatedAt?: string;
+
+  // Targeting fields
+  target_type: TargetType;
+  target_category_id?: string;
+  target_product_ids?: string[];
+
+  // BOGO-specific fields
+  buy_quantity?: number;
+  get_quantity?: number;
+  buy_target_type?: TargetType;
+  buy_target_category_id?: string;
+  buy_target_product_ids?: string[];
+  get_target_type?: TargetType;
+  get_target_category_id?: string;
+  get_target_product_ids?: string[];
 }
 
-export interface PromotionItem {
-  id: string;
-  menuItemId?: string;
-  categoryId?: string;
-  requiredQuantity: number;
-  freeQuantity: number;
-  discountedPrice?: number;
-  isRequired: boolean;
-  maxQuantity?: number;
-  menuItemName?: string;
-  categoryName?: string;
+export type PromotionType =
+  | "HAPPY_HOUR"
+  | "BOGO"
+  | "PERCENTAGE_OFF"
+  | "FIXED_OFF";
+
+export type TargetType = "ALL" | "CATEGORY" | "PRODUCTS";
+
+export interface PromotionCalculationRequest {
+  orderItems: OrderItem[];
+  tenantId: string;
+  orderTime: string;
 }
 
-export interface PromotionAnalytics {
+export interface OrderItem {
+  menuItemId: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+  categoryId: string;
+}
+
+// Alias for backward compatibility
+export type OrderItemForPromotion = OrderItem;
+
+export interface PromotionCalculationResponse {
+  applicablePromotions: AppliedPromotion[];
+  total_discount: number;
+  final_total: number;
+}
+
+export interface AppliedPromotion {
   id: string;
   name: string;
-  type: string;
-  discountType: string;
-  total_uses: number;
-  total_discount_given: number;
-  total_original_amount: number;
-  avg_discount_per_use: number;
+  type: PromotionType;
+  discount_amount: number;
+  applied_items: string[];
 }
 
-export interface PromotionPreview {
-  originalSubtotal: number;
-  estimatedFinalAmount: number;
-  promotions: {
-    applicablePromotions: ApplicablePromotion[];
-    totalDiscount: number;
-    autoAppliedPromotions: ApplicablePromotion[];
-  };
-  tax?: number;
-  serviceCharge?: number;
-}
+export interface PromotionFormData {
+  name: string;
+  description?: string;
+  type: PromotionType;
+  discount_value: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  days_of_week?: number[];
+  priority?: number;
+  isActive: boolean;
 
-export interface ApplicablePromotion {
-  promotionId: string;
-  promotionName: string;
-  promotionType: string;
-  discountAmount: number;
-  discountType: string;
-  applied: boolean;
-  reason?: string;
-}
+  // Targeting
+  target_type: TargetType;
+  target_category_id?: string;
+  target_product_ids?: string[];
 
-export interface PromotionValidation {
-  valid: boolean;
-  promotion?: Promotion;
-  estimatedDiscount: number;
-  reason?: string;
-  error?: {
-    code: string;
-    message: string;
-  };
+  // BOGO
+  buy_quantity?: number;
+  get_quantity?: number;
+  buy_target_type?: TargetType;
+  buy_target_category_id?: string;
+  buy_target_product_ids?: string[];
+  get_target_type?: TargetType;
+  get_target_category_id?: string;
+  get_target_product_ids?: string[];
 }
 
 export interface PromotionFilters {
-  active?: boolean;
-  type?: string;
+  type?: PromotionType;
+  isActive?: boolean;
+  start_date?: string;
+  end_date?: string;
   search?: string;
-  startDate?: string;
-  endDate?: string;
-  limit?: number;
-  offset?: number;
 }
 
-export interface PromotionMenuItem {
-  id: string;
-  name: string;
-  price: number;
-  categoryId: string;
-  description?: string;
-  imageUrl?: string;
-  isActive: boolean;
-}
-
-export interface Category {
-  id: string;
+// Create and Update request interfaces
+export interface SimplePromotionCreateRequest {
   name: string;
   description?: string;
-  displayOrder: number;
+  type: PromotionType;
+  discount_value: number;
+  min_order_amount?: number;
+  max_discount_amount?: number;
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  days_of_week?: number[];
+  priority?: number;
   isActive: boolean;
+
+  // Targeting
+  target_type: TargetType;
+  target_category_id?: string;
+  target_product_ids?: string[];
+
+  // BOGO
+  buy_quantity?: number;
+  get_quantity?: number;
+  buy_target_type?: TargetType;
+  buy_target_category_id?: string;
+  buy_target_product_ids?: string[];
+  get_target_type?: TargetType;
+  get_target_category_id?: string;
+  get_target_product_ids?: string[];
 }
 
-export interface CartItem {
-  menuItemId: string;
-  name: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  notes?: string;
-  categoryId?: string;
-}
-
-export interface Customer {
-  name?: string;
-  phone?: string;
-  email?: string;
-  segment?: string;
-  type?: string;
-}
-
-export interface OrderData {
-  tableId?: string;
-  items: Array<{
-    menuItemId: string;
-    quantity: number;
-    notes?: string;
-  }>;
-  customerName?: string;
-  customerPhone?: string;
-  customerEmail?: string;
-  appliedPromoCodes?: string[];
-  autoApplyPromotions?: boolean;
+export interface SimplePromotionUpdateRequest extends Partial<SimplePromotionCreateRequest> {
+  id: string;
 }

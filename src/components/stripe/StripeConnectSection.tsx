@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { api, StripeConnectConfig } from "@/lib/api";
-import { showToast, ButtonLoader, SectionLoader } from "@/lib/utils";
+import { showToast, SectionLoader } from "@/lib/utils";
 
 interface StripeConnectSectionProps {
   onConfigUpdate?: (config: StripeConnectConfig) => void;
@@ -45,7 +45,7 @@ export default function StripeConnectSection({
     } finally {
       setLoading(false);
     }
-  }, []); // Remove onConfigUpdate dependency
+  }, [onConfigUpdate]);
 
   useEffect(() => {
     loadStripeConfig();

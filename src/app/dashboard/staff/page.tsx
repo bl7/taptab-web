@@ -28,6 +28,10 @@ interface StaffMember {
   lastLogin?: string;
 }
 
+interface CreateStaffMember extends Partial<StaffMember> {
+  password?: string;
+}
+
 export default function StaffPage() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +102,7 @@ export default function StaffPage() {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
+      showToast.operationFailed("load users");
     } finally {
       setLoading(false);
     }
@@ -109,7 +114,7 @@ export default function StaffPage() {
     }
   }, [fetchUsers, currentUser]);
 
-  const handleCreateUser = async (userData: Partial<StaffMember>) => {
+  const handleCreateUser = async (userData: CreateStaffMember) => {
     setApiLoading(true);
     try {
       const token = localStorage.getItem("token");
@@ -125,6 +130,7 @@ export default function StaffPage() {
       if (response.ok) {
         setShowAddModal(false);
         fetchUsers(); // Refresh the list
+        showToast.created("User");
       } else if (response.status === 401) {
         // Token is invalid, redirect to login
         localStorage.removeItem("token");
@@ -162,6 +168,12 @@ export default function StaffPage() {
         setShowEditModal(false);
         setSelectedUser(null);
         fetchUsers(); // Refresh the list
+        showToast.updated("User");
+      } else if (response.status === 401) {
+        // Token is invalid, redirect to login
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
       } else {
         const error = await response.json();
         showToast.operationFailed("update user", error.error);
@@ -174,8 +186,12 @@ export default function StaffPage() {
     }
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm("Are you sure you want to delete this user?")) {
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    // Show a warning toast first
+    const confirmed = confirm(
+      `Are you sure you want to delete ${userName}? This action cannot be undone.`
+    );
+    if (!confirmed) {
       return;
     }
 
@@ -191,6 +207,12 @@ export default function StaffPage() {
 
       if (response.ok) {
         fetchUsers(); // Refresh the list
+        showToast.deleted("User");
+      } else if (response.status === 401) {
+        // Token is invalid, redirect to login
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/login");
       } else {
         const error = await response.json();
         showToast.operationFailed("delete user", error.error);
@@ -456,7 +478,12 @@ export default function StaffPage() {
 
                         {canDeleteUser(user) ? (
                           <button
-                            onClick={() => handleDeleteUser(user.id)}
+                            onClick={() =>
+                              handleDeleteUser(
+                                user.id,
+                                `${user.firstName} ${user.lastName}`
+                              )
+                            }
                             disabled={apiLoading}
                             className="p-1 text-black hover:text-red-600 disabled:opacity-50"
                           >
@@ -510,24 +537,47 @@ function AddUserModal({
   loading,
 }: {
   onClose: () => void;
-  onSubmit: (data: Partial<StaffMember>) => void;
+  onSubmit: (data: CreateStaffMember) => void;
   loading: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    role: "WAITER",
-    password: "",
-  });
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [role, setRole] = useState("WAITER");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Basic validation
+    if (!email || !firstName || !lastName || !password) {
+      showToast.validationError("Please fill in all required fields");
+      return;
+    }
+
+    if (password.length < 6) {
+      showToast.validationError("Password must be at least 6 characters long");
+      return;
+    }
+
+    onSubmit({
+      email,
+      firstName,
+      lastName,
+      role,
+      password,
+    });
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-xl  text-black font-semibold mb-4">
           Add New Staff Member
@@ -543,58 +593,66 @@ function AddUserModal({
           className="space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-black mb-1">
+            <label
+              htmlFor="staff-email"
+              className="block text-sm font-medium text-black mb-1"
+            >
               Email
             </label>
             <input
+              id="staff-email"
               type="email"
               required
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="staff-firstname"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 First Name
               </label>
               <input
+                id="staff-firstname"
                 type="text"
                 required
-                value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="staff-lastname"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Last Name
               </label>
               <input
+                id="staff-lastname"
                 type="text"
                 required
-                value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1">
+            <label
+              htmlFor="staff-role"
+              className="block text-sm font-medium text-black mb-1"
+            >
               Role
             </label>
             <select
-              value={formData.role}
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
+              id="staff-role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
             >
               <option value="MANAGER">Manager</option>
@@ -603,6 +661,24 @@ function AddUserModal({
               <option value="KITCHEN">Kitchen</option>
               <option value="READONLY">Read Only</option>
             </select>
+          </div>
+
+          <div>
+            <label
+              htmlFor="staff-password"
+              className="block text-sm font-medium text-black mb-1"
+            >
+              Password
+            </label>
+            <input
+              id="staff-password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
+              placeholder="Enter password"
+            />
           </div>
 
           <div className="flex space-x-3 pt-4">
@@ -642,21 +718,39 @@ function EditUserModal({
   loading: boolean;
   isCurrentUser: boolean;
 }) {
-  const [formData, setFormData] = useState({
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    role: user.role,
-    isActive: user.isActive,
-  });
+  const [email, setEmail] = useState(user.email);
+  const [firstName, setFirstName] = useState(user.firstName);
+  const [lastName, setLastName] = useState(user.lastName);
+  const [role, setRole] = useState(user.role);
+  const [isActive, setIsActive] = useState(user.isActive);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    // Basic validation
+    if (!email || !firstName || !lastName) {
+      showToast.validationError("Please fill in all required fields");
+      return;
+    }
+
+    onSubmit({
+      email,
+      firstName,
+      lastName,
+      role,
+      isActive,
+    });
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-xl font-semibold mb-4">Edit Staff Member</h2>
         <form
@@ -670,58 +764,66 @@ function EditUserModal({
           className="space-y-4"
         >
           <div>
-            <label className="block text-sm font-medium text-black mb-1">
+            <label
+              htmlFor="edit-staff-email"
+              className="block text-sm font-medium text-black mb-1"
+            >
               Email
             </label>
             <input
+              id="edit-staff-email"
               type="email"
               required
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-staff-firstname"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 First Name
               </label>
               <input
+                id="edit-staff-firstname"
                 type="text"
                 required
-                value={formData.firstName}
-                onChange={(e) =>
-                  setFormData({ ...formData, firstName: e.target.value })
-                }
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-black mb-1">
+              <label
+                htmlFor="edit-staff-lastname"
+                className="block text-sm font-medium text-black mb-1"
+              >
                 Last Name
               </label>
               <input
+                id="edit-staff-lastname"
                 type="text"
                 required
-                value={formData.lastName}
-                onChange={(e) =>
-                  setFormData({ ...formData, lastName: e.target.value })
-                }
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-black mb-1">
+            <label
+              htmlFor="edit-staff-role"
+              className="block text-sm font-medium text-black mb-1"
+            >
               Role
             </label>
             <select
-              value={formData.role}
-              onChange={(e) =>
-                setFormData({ ...formData, role: e.target.value })
-              }
+              id="edit-staff-role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
               disabled={isCurrentUser}
             >
@@ -740,12 +842,10 @@ function EditUserModal({
 
           <div className="flex items-center">
             <input
+              id="edit-staff-active"
               type="checkbox"
-              id="isActive"
-              checked={formData.isActive}
-              onChange={(e) =>
-                setFormData({ ...formData, isActive: e.target.checked })
-              }
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
               className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded"
               disabled={isCurrentUser}
             />

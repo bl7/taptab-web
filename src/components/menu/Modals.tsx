@@ -137,10 +137,14 @@ export function AddItemModal({
         <h2 className="text-xl font-semibold mb-4">Add Menu Item</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="add-item-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Name
             </label>
             <input
+              id="add-item-name"
               type="text"
               required
               value={formData.name}
@@ -152,10 +156,14 @@ export function AddItemModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="add-item-description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Description
             </label>
             <textarea
+              id="add-item-description"
               required
               value={formData.description}
               onChange={(e) =>
@@ -168,12 +176,16 @@ export function AddItemModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="add-item-price"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Price
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
+                  id="add-item-price"
                   type="number"
                   step="0.01"
                   required
@@ -187,10 +199,14 @@ export function AddItemModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="add-item-category"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Category
               </label>
               <select
+                id="add-item-category"
                 value={formData.categoryId}
                 onChange={(e) =>
                   setFormData({ ...formData, categoryId: e.target.value })
@@ -495,10 +511,14 @@ export function AddIngredientModal({
         <h2 className="text-xl font-semibold mb-4">Add Ingredient</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="ingredient-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Name
             </label>
             <input
+              id="ingredient-name"
               type="text"
               required
               value={formData.name}
@@ -510,10 +530,15 @@ export function AddIngredientModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
+            <label
+              htmlFor="ingredient-description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Description *
             </label>
             <textarea
+              id="ingredient-description"
+              required
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -525,10 +550,14 @@ export function AddIngredientModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="ingredient-unit"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Unit
               </label>
               <input
+                id="ingredient-unit"
                 type="text"
                 required
                 value={formData.unit}
@@ -540,12 +569,16 @@ export function AddIngredientModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="ingredient-cost"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Cost per Unit
               </label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black" />
                 <input
+                  id="ingredient-cost"
                   type="number"
                   step="0.01"
                   required
@@ -750,10 +783,14 @@ export function AddAllergenModal({
         <h2 className="text-xl font-semibold mb-4">Add Allergen</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="add-allergen-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Name
             </label>
             <input
+              id="add-allergen-name"
               type="text"
               required
               value={formData.name}
@@ -765,10 +802,14 @@ export function AddAllergenModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="add-allergen-description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Description
             </label>
             <textarea
+              id="add-allergen-description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -779,10 +820,14 @@ export function AddAllergenModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="add-allergen-severity"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Severity Level
             </label>
             <select
+              id="add-allergen-severity"
               value={formData.severity}
               onChange={(e) =>
                 setFormData({
@@ -868,10 +913,14 @@ export function EditAllergenModal({
         <h2 className="text-xl font-semibold mb-4">Edit Allergen</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-allergen-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Name
             </label>
             <input
+              id="edit-allergen-name"
               type="text"
               required
               value={formData.name}
@@ -883,10 +932,14 @@ export function EditAllergenModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-allergen-description"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Description
             </label>
             <textarea
+              id="edit-allergen-description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
@@ -897,10 +950,14 @@ export function EditAllergenModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              htmlFor="edit-allergen-severity"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
               Severity Level
             </label>
             <select
+              id="edit-allergen-severity"
               value={formData.severity}
               onChange={(e) =>
                 setFormData({
@@ -936,6 +993,108 @@ export function EditAllergenModal({
               className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
             >
               {loading ? "Updating..." : "Update Allergen"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// Add Category Modal Component
+export function AddCategoryModal({
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  onClose: () => void;
+  onSubmit: (data: { name: string; sortOrder?: number }) => void;
+  loading: boolean;
+}) {
+  const [formData, setFormData] = useState({
+    name: "",
+    sortOrder: 1,
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
+      return;
+    }
+
+    onSubmit({
+      name: formData.name.trim(),
+      sortOrder: formData.sortOrder,
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-semibold mb-4">Add New Category</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="add-category-name"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Category Name *
+            </label>
+            <input
+              id="add-category-name"
+              type="text"
+              required
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
+              placeholder="e.g., Appetizers, Main Course, Desserts"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="add-category-sort-order"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Sort Order
+            </label>
+            <input
+              id="add-category-sort-order"
+              type="number"
+              value={formData.sortOrder}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  sortOrder: parseInt(e.target.value) || 1,
+                })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
+              min="1"
+              placeholder="1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Lower numbers appear first in the menu
+            </p>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50"
+            >
+              {loading ? "Creating..." : "Create Category"}
             </button>
           </div>
         </form>
