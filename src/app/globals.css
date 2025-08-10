@@ -1779,3 +1779,24 @@ textarea:-ms-input-placeholder {
   color: black !important;
   opacity: 0.7;
 }
+
+/* Force all form text to be black */
+.simple-promotion-form label,
+.simple-promotion-form span,
+.simple-promotion-form p,
+.simple-promotion-form input,
+.simple-promotion-form select,
+.simple-promotion-form textarea {
+  color: black !important;
+}
+
+/* Ensure specific text elements are black */
+.simple-promotion-form .text-sm {
+  color: black !important;
+}
+
+.simple-promotion-form .text-gray-700,
+.simple-promotion-form .text-gray-600,
+.simple-promotion-form .text-gray-500 {
+  color: black !important;
+}

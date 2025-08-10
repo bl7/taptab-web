@@ -2451,6 +2451,10 @@ class APIClient {
   async createSimplePromotion(
     promotion: PromotionFormData
   ): Promise<{ success: boolean; data: { promotion: SimplePromotion } }> {
+    console.log("🔗 Creating Simple Promotion - Data being sent:");
+    console.log("  Promotion data:", JSON.stringify(promotion, null, 2));
+    console.log("  API endpoint:", "/simple-promotions");
+
     const response = await this.request<{ promotion: SimplePromotion }>(
       "/simple-promotions",
       {

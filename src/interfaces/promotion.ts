@@ -78,23 +78,24 @@ export interface PromotionFormData {
   name: string;
   description?: string;
   type: PromotionType;
-  discount_value: number;
+  discount_value?: number;
   min_order_amount?: number;
   max_discount_amount?: number;
-  start_date?: string;
-  end_date?: string;
+  startDate?: string; // Changed from start_date to startDate
+  endDate?: string; // Changed from end_date to endDate
   start_time?: string;
   end_time?: string;
   days_of_week?: number[];
   priority?: number;
-  isActive: boolean;
+  isActive?: boolean;
+  tenantId?: string; // Add missing tenantId field
 
-  // Targeting
-  target_type: TargetType;
+  // Targeting fields
+  target_type?: TargetType;
   target_category_id?: string;
   target_product_ids?: string[];
 
-  // BOGO
+  // BOGO-specific fields
   buy_quantity?: number;
   get_quantity?: number;
   buy_target_type?: TargetType;
@@ -118,23 +119,24 @@ export interface SimplePromotionCreateRequest {
   name: string;
   description?: string;
   type: PromotionType;
-  discount_value: number;
+  discount_value?: number;
   min_order_amount?: number;
   max_discount_amount?: number;
-  start_date?: string;
-  end_date?: string;
+  startDate?: string; // Changed from start_date to startDate
+  endDate?: string; // Changed from end_date to endDate
   start_time?: string;
   end_time?: string;
   days_of_week?: number[];
   priority?: number;
-  isActive: boolean;
+  isActive?: boolean;
+  tenantId?: string; // Add missing tenantId field
 
-  // Targeting
-  target_type: TargetType;
+  // Targeting fields
+  target_type?: TargetType;
   target_category_id?: string;
   target_product_ids?: string[];
 
-  // BOGO
+  // BOGO-specific fields
   buy_quantity?: number;
   get_quantity?: number;
   buy_target_type?: TargetType;
@@ -145,6 +147,7 @@ export interface SimplePromotionCreateRequest {
   get_target_product_ids?: string[];
 }
 
-export interface SimplePromotionUpdateRequest extends Partial<SimplePromotionCreateRequest> {
+export interface SimplePromotionUpdateRequest
+  extends Partial<SimplePromotionCreateRequest> {
   id: string;
 }

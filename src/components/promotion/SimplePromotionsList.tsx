@@ -179,7 +179,7 @@ export const SimplePromotionsList: React.FC<SimplePromotionsListProps> = ({
                         Min Order:
                       </span>
                       <span className="ml-2 text-gray-900">
-                        ${promotion.min_order_amount.toFixed(2)}
+                        ${Number(promotion.min_order_amount || 0).toFixed(2)}
                       </span>
                     </div>
                   )}
@@ -191,7 +191,7 @@ export const SimplePromotionsList: React.FC<SimplePromotionsListProps> = ({
                         Max Discount:
                       </span>
                       <span className="ml-2 text-gray-900">
-                        ${promotion.max_discount_amount.toFixed(2)}
+                        ${Number(promotion.max_discount_amount || 0).toFixed(2)}
                       </span>
                     </div>
                   )}
@@ -243,7 +243,9 @@ export const SimplePromotionsList: React.FC<SimplePromotionsListProps> = ({
 
             <div className="flex items-center gap-2 ml-4">
               <button
-                onClick={() => promotion.id && onToggle(promotion.id, !promotion.isActive)}
+                onClick={() =>
+                  promotion.id && onToggle(promotion.id, !promotion.isActive)
+                }
                 className={`px-3 py-1 text-sm font-medium rounded-md transition-colors ${
                   promotion.isActive
                     ? "bg-red-100 text-red-700 hover:bg-red-200"
@@ -288,7 +290,9 @@ export const SimplePromotionsList: React.FC<SimplePromotionsListProps> = ({
                     Cancel
                   </button>
                   <button
-                    onClick={() => promotion.id && handleDeleteConfirm(promotion.id)}
+                    onClick={() =>
+                      promotion.id && handleDeleteConfirm(promotion.id)
+                    }
                     className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
                   >
                     Delete
