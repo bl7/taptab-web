@@ -2,7 +2,7 @@
 import { api } from "./api";
 
 // Types based on the API documentation
-export type OrderStatus = "active" | "closed" | "cancelled";
+export type OrderStatus = "active" | "closed" | "cancelled" | "merged";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type PaymentMethod = "CASH" | "CARD" | "QR" | "STRIPE";
 export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER" | "SPLIT";

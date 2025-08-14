@@ -12,7 +12,7 @@ import {
   Building2,
   Users,
 } from "lucide-react";
-import { api, Table, Location } from "@/lib/api";
+import { api, Table, Location, TableLayout } from "@/lib/api";
 import TableQRCode from "@/components/TableQRCode";
 import { showToast, PageLoader } from "@/lib/utils";
 
@@ -22,6 +22,9 @@ export default function TablesPage() {
   const [activeTab, setActiveTab] = useState<TabType>("locations");
   const [tables, setTables] = useState<Table[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [defaultLayouts, setDefaultLayouts] = useState<{
+    [locationId: string]: TableLayout;
+  }>({});
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -74,6 +77,31 @@ export default function TablesPage() {
 
       setTables(tablesResponse.tables || []);
       setLocations(locationsResponse.locations || []);
+
+      // Fetch default layouts for each location
+      const layoutsMap: { [locationId: string]: TableLayout } = {};
+      for (const location of locationsResponse.locations || []) {
+        try {
+          const layoutsResponse = await api.getTableLayouts({
+            locationId: location.id,
+          });
+
+          // Find the default layout for this location
+          const defaultLayout = layoutsResponse.layouts.find(
+            (layout) => layout.isDefault
+          );
+          if (defaultLayout) {
+            layoutsMap[location.id] = defaultLayout;
+          }
+        } catch (error) {
+          console.warn(
+            `Failed to fetch layouts for location ${location.name}:`,
+            error
+          );
+        }
+      }
+
+      setDefaultLayouts(layoutsMap);
     } catch (error) {
       console.error("❌ Error fetching data:", error);
       if (error instanceof Error && error.message.includes("401")) {
@@ -351,6 +379,8 @@ export default function TablesPage() {
         ) : (
           <TablesTab
             tables={tables}
+            locations={locations}
+            defaultLayouts={defaultLayouts}
             onEdit={(table) => {
               setSelectedTable(table);
               setShowEditModal(true);
@@ -531,6 +561,8 @@ function LocationsTab({
 // Tables Tab Component
 function TablesTab({
   tables,
+  locations,
+  defaultLayouts,
   onEdit,
   onDelete,
   onStatusUpdate,
@@ -539,6 +571,8 @@ function TablesTab({
   getStatusColor,
 }: {
   tables: Table[];
+  locations: Location[];
+  defaultLayouts: { [locationId: string]: TableLayout };
   onEdit: (table: Table) => void;
   onDelete: (id: string) => void;
   onStatusUpdate: (id: string, status: string) => void;
@@ -549,116 +583,197 @@ function TablesTab({
   return (
     <div>
       {tables.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {tables.map((table) => (
-            <div
-              key={table.id}
-              className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
-            >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-black">
-                      Table {table.number}
-                    </h3>
-                    <p className="text-sm text-black flex items-center gap-1">
-                      <Users className="h-4 w-4" />
-                      Capacity: {table.capacity} people
-                    </p>
-                    {table.locationDetails ? (
-                      <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                        <MapPin className="h-3 w-3" />
-                        {table.locationDetails.name}
-                      </p>
-                    ) : (
-                      table.location && (
-                        <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
-                          <MapPin className="h-3 w-3" />
-                          {table.location}
-                        </p>
-                      )
-                    )}
-                  </div>
-                  <div className="flex space-x-1">
-                    <button
-                      onClick={() => onShowQR(table)}
-                      className="p-2 text-black hover:text-blue-600 rounded-lg hover:bg-blue-50"
-                      title="Generate QR Code"
-                    >
-                      <QrCode className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => onEdit(table)}
-                      disabled={apiLoading}
-                      className="p-2 text-black hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50"
-                      title="Edit Table"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(table.id)}
-                      disabled={apiLoading}
-                      className="p-2 text-black hover:text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
-                      title="Delete Table"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+        <div className="space-y-8">
+          {/* Group tables by location */}
+          {locations.map((location) => {
+            const locationTables = tables.filter(
+              (table) =>
+                table.locationId === location.id ||
+                table.location === location.name
+            );
+            const defaultLayout = defaultLayouts[location.id];
+
+            if (locationTables.length === 0) return null;
+
+            return (
+              <div key={location.id} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-black flex items-center gap-2">
+                    <Building2 className="h-5 w-5" />
+                    {location.name}
+                  </h2>
+                  {defaultLayout && (
+                    <span className="px-3 py-1 text-sm bg-green-100 text-green-800 rounded-full">
+                      Default Layout: {defaultLayout.name}
+                    </span>
+                  )}
                 </div>
 
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                        table.status
-                      )}`}
-                    >
-                      {table.status.charAt(0).toUpperCase() +
-                        table.status.slice(1)}
-                    </span>
-                    {table.currentOrderId && (
-                      <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
-                        Has Order
-                      </span>
-                    )}
-                  </div>
+                {/* Layout Preview */}
+                {defaultLayout && (
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h3 className="text-sm font-medium text-black mb-3">
+                      Layout Preview
+                    </h3>
+                    <div className="bg-white rounded border border-gray-300 p-4 min-h-[200px] relative">
+                      {/* Simple layout visualization */}
+                      <div className="text-sm text-gray-600 mb-2">
+                        Tables: {defaultLayout.layoutJson.tables?.length || 0} |
+                        Objects: {defaultLayout.layoutJson.objects?.length || 0}
+                      </div>
 
-                  <select
-                    value={table.status}
-                    onChange={(e) => onStatusUpdate(table.id, e.target.value)}
-                    disabled={apiLoading}
-                    className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:opacity-50"
-                    style={{ color: "black" }}
-                  >
-                    <option
-                      value="available"
-                      style={{ color: "black", backgroundColor: "white" }}
+                      {/* Layout canvas placeholder */}
+                      <div className="bg-gray-100 rounded border-2 border-dashed border-gray-300 h-32 flex items-center justify-center">
+                        <div className="text-center text-gray-500">
+                          <TableIcon className="h-8 w-8 mx-auto mb-2" />
+                          <p className="text-sm">
+                            Layout: {defaultLayout.name}
+                          </p>
+                          <p className="text-xs">Click to view full layout</p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() =>
+                          window.open("/dashboard/layout", "_blank")
+                        }
+                        className="mt-3 w-full px-3 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors"
+                      >
+                        View Full Layout
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tables Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {locationTables.map((table) => (
+                    <div
+                      key={table.id}
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
                     >
-                      Available
-                    </option>
-                    <option
-                      value="occupied"
-                      style={{ color: "black", backgroundColor: "white" }}
-                    >
-                      Occupied
-                    </option>
-                    <option
-                      value="reserved"
-                      style={{ color: "black", backgroundColor: "white" }}
-                    >
-                      Reserved
-                    </option>
-                    <option
-                      value="cleaning"
-                      style={{ color: "black", backgroundColor: "white" }}
-                    >
-                      Cleaning
-                    </option>
-                  </select>
+                      <div className="p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-black">
+                              Table {table.number}
+                            </h3>
+                            <p className="text-sm text-black flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              Capacity: {table.capacity} people
+                            </p>
+                            {table.locationDetails ? (
+                              <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                                <MapPin className="h-3 w-3" />
+                                {table.locationDetails.name}
+                              </p>
+                            ) : (
+                              table.location && (
+                                <p className="text-xs text-gray-600 flex items-center gap-1 mt-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {table.location}
+                                </p>
+                              )
+                            )}
+                          </div>
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => onShowQR(table)}
+                              className="p-2 text-black hover:text-blue-600 rounded-lg hover:bg-blue-50"
+                              title="Generate QR Code"
+                            >
+                              <QrCode className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => onEdit(table)}
+                              disabled={apiLoading}
+                              className="p-2 text-black hover:text-gray-600 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                              title="Edit Table"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => onDelete(table.id)}
+                              disabled={apiLoading}
+                              className="p-2 text-black hover:text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                              title="Delete Table"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                                table.status
+                              )}`}
+                            >
+                              {table.status.charAt(0).toUpperCase() +
+                                table.status.slice(1)}
+                            </span>
+                            {table.currentOrderId && (
+                              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded">
+                                Has Order
+                              </span>
+                            )}
+                          </div>
+
+                          <select
+                            value={table.status}
+                            onChange={(e) =>
+                              onStatusUpdate(table.id, e.target.value)
+                            }
+                            disabled={apiLoading}
+                            className="w-full text-sm p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent disabled:opacity-50"
+                            style={{ color: "black" }}
+                          >
+                            <option
+                              value="available"
+                              style={{
+                                color: "black",
+                                backgroundColor: "white",
+                              }}
+                            >
+                              Available
+                            </option>
+                            <option
+                              value="occupied"
+                              style={{
+                                color: "black",
+                                backgroundColor: "white",
+                              }}
+                            >
+                              Occupied
+                            </option>
+                            <option
+                              value="reserved"
+                              style={{
+                                color: "black",
+                                backgroundColor: "white",
+                              }}
+                            >
+                              Reserved
+                            </option>
+                            <option
+                              value="cleaning"
+                              style={{
+                                color: "black",
+                                backgroundColor: "white",
+                              }}
+                            >
+                              Cleaning
+                            </option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12">

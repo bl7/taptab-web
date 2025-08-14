@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/pg';
-import { verifyToken, JWTPayload } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 
 // GET - Get rota for a specific week
 export async function GET(request: NextRequest) {
@@ -14,7 +14,15 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const decoded: JWTPayload = await verifyToken(token);
+    const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const { searchParams } = new URL(request.url);
     const weekStartDate = searchParams.get('weekStartDate');
 
@@ -80,7 +88,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decoded: JWTPayload = await verifyToken(token);
+    const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const body = await request.json();
     const { weekStartDate, shifts, status = 'draft' } = body;
 

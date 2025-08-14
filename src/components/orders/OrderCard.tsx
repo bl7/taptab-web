@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { User, MapPin, AlertTriangle, Scissors } from "lucide-react";
+import { User, MapPin, AlertTriangle, Scissors, X } from "lucide-react";
 import { Order } from "@/lib/orders-api";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +32,7 @@ export default function OrderCard({
   isUrgent,
   onClick,
   onPaymentModal,
+  onCancelModal,
   onEditOrder,
   onPrintReceipt,
   onCloseOrder,
@@ -190,8 +191,8 @@ export default function OrderCard({
         ))}
       </div>
 
-      {/* Action Buttons - Only show for active orders */}
-      {order.status === "active" && (
+      {/* Action Buttons - Only show for active or merged orders */}
+      {(order.status === "active" || order.status === "merged") && (
         <div className="space-y-2">
           {/* Primary Actions Row */}
           <div className="flex space-x-2">
@@ -223,7 +224,21 @@ export default function OrderCard({
                   Print Receipt
                 </Button>
 
-                {onCloseOrder && (
+                {order.paymentStatus === "pending" && (
+                  <Button
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCancelModal(order);
+                    }}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel Order
+                  </Button>
+                )}
+
+                {onCloseOrder && order.paymentStatus === "paid" && (
                   <Button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -247,16 +262,18 @@ export default function OrderCard({
                   Pay & Close
                 </Button>
 
-                <Button
-                  variant="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditOrder(order);
-                  }}
-                  className="flex-1 text-sm"
-                >
-                  Edit Order
-                </Button>
+                {order.paymentStatus === "pending" && (
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditOrder(order);
+                    }}
+                    className="flex-1 text-sm"
+                  >
+                    Edit Order
+                  </Button>
+                )}
 
                 <Button
                   variant="secondary"
@@ -268,42 +285,70 @@ export default function OrderCard({
                 >
                   Print Receipt
                 </Button>
+
+                {order.paymentStatus === "pending" && (
+                  <Button
+                    variant="destructive"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCancelModal(order);
+                    }}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancel Order
+                  </Button>
+                )}
+
+                {onCloseOrder && order.paymentStatus === "paid" && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCloseOrder(order);
+                    }}
+                    className="flex-1 text-sm bg-green-600 hover:bg-green-700"
+                  >
+                    Close Order
+                  </Button>
+                )}
               </>
             )}
           </div>
 
-          {/* Secondary Actions Row - Only for non-QR orders */}
-          {!isQROrder(order) && (onMoveTable || onSplitOrder) && (
-            <div className="flex justify-center gap-2">
-              {onMoveTable && (
-                <Button
-                  variant="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveTable(order);
-                  }}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <MapPin className="h-4 w-4" />
-                  Move Table
-                </Button>
-              )}
+          {/* Secondary Actions Row - Only for non-QR orders with pending payment */}
+          {!isQROrder(order) &&
+            order.paymentStatus === "pending" &&
+            (onMoveTable || onSplitOrder) && (
+              <div className="flex justify-center gap-2">
+                {onMoveTable && (
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onMoveTable(order);
+                    }}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Move Table
+                  </Button>
+                )}
 
-              {onSplitOrder && order.items.length > 1 && (
-                <Button
-                  variant="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSplitOrder(order);
-                  }}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <Scissors className="h-4 w-4" />
-                  Split Order
-                </Button>
-              )}
-            </div>
-          )}
+                {onSplitOrder && order.items.length > 1 && (
+                  <Button
+                    variant="secondary"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSplitOrder(order);
+                    }}
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    <Scissors className="h-4 w-4" />
+                    Split Order
+                  </Button>
+                )}
+              </div>
+            )}
         </div>
       )}
 

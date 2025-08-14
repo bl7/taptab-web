@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Lock } from "lucide-react";
+import { Mail, Lock, Clock, AlertCircle } from "lucide-react";
 import Image from "next/image";
 import { tokenManager } from "@/lib/token-manager";
 
@@ -16,10 +16,15 @@ function LoginForm() {
   const [message, setMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [otpExpiryCountdown, setOtpExpiryCountdown] = useState(0);
   const [isResending, setIsResending] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // OTP expiration time in seconds (5 minutes)
+  const OTP_EXPIRY_TIME = 5 * 60; // 5 minutes
+  const RESEND_COOLDOWN = 60; // 1 minute cooldown for resend
 
   useEffect(() => {
     const successMessage = searchParams.get("message");
@@ -64,6 +69,22 @@ function LoginForm() {
     }
   }, [resendCountdown]);
 
+  // Countdown timer for OTP expiry
+  useEffect(() => {
+    if (otpExpiryCountdown > 0) {
+      const timer = setTimeout(() => {
+        setOtpExpiryCountdown(otpExpiryCountdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpExpiryCountdown]);
+
+  const formatTime = (seconds: number): string => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
   const handleResendOTP = async () => {
     if (resendCountdown > 0) return;
 
@@ -85,8 +106,9 @@ function LoginForm() {
         throw new Error(data.error || "Failed to resend OTP");
       }
 
-      // Start countdown timer (60 seconds)
-      setResendCountdown(60);
+      // Start countdown timers
+      setResendCountdown(RESEND_COOLDOWN);
+      setOtpExpiryCountdown(OTP_EXPIRY_TIME);
       setMessage("OTP resent successfully!");
     } catch (error: unknown) {
       const errorMessage =
@@ -143,12 +165,24 @@ function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send OTP");
+        // Handle specific error types
+        if (response.status === 503) {
+          throw new Error(
+            "Service temporarily unavailable. Please try again in a moment."
+          );
+        } else if (response.status === 408) {
+          throw new Error("Request timed out. Please try again.");
+        } else if (response.status === 500 && data.error) {
+          throw new Error(data.error);
+        } else {
+          throw new Error(data.error || "Failed to send OTP");
+        }
       }
 
       setShowOtpInput(true);
-      // Start countdown timer (60 seconds)
-      setResendCountdown(60);
+      // Start countdown timers
+      setResendCountdown(RESEND_COOLDOWN);
+      setOtpExpiryCountdown(OTP_EXPIRY_TIME);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Failed to send OTP";
@@ -161,6 +195,11 @@ function LoginForm() {
   const handleVerifyOTP = async () => {
     if (!otp || otp.length !== 6) {
       setError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
+    if (otpExpiryCountdown === 0) {
+      setError("OTP has expired. Please request a new one.");
       return;
     }
 
@@ -179,7 +218,24 @@ function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Invalid OTP");
+        // Handle specific error messages
+        const errorMessage = data.error || "Failed to verify OTP";
+
+        // If OTP is invalid and we have attempts remaining, show helpful message
+        if (
+          errorMessage.includes("Wrong OTP") ||
+          errorMessage.includes("attempts remaining")
+        ) {
+          setError(errorMessage);
+        } else if (errorMessage.includes("Too many wrong attempts")) {
+          setError("Too many wrong attempts. Please request a new OTP.");
+          // Reset OTP input and expiry countdown
+          setOtp("");
+          setOtpExpiryCountdown(0);
+        } else {
+          setError(errorMessage);
+        }
+        return;
       }
 
       // Store tokens in localStorage (in production, use secure storage)
@@ -194,6 +250,18 @@ function LoginForm() {
       console.log("🏪 Tenant:", data.user.tenant?.name || "N/A");
       console.log("🔑 Token:", data.token);
       console.log("📝 Full user data:", data.user);
+
+      // Show token expiration info
+      const tokenInfo = tokenManager.getTokenInfo();
+      if (tokenInfo) {
+        console.log(
+          "⏰ Token expires in:",
+          Math.round(tokenInfo.expiresIn / 3600),
+          "hours"
+        );
+        console.log("📅 Remember Me:", tokenInfo.isRememberMe ? "Yes" : "No");
+        console.log("🕐 Expires at:", tokenInfo.expiresAt.toLocaleString());
+      }
 
       // Redirect to dashboard
       router.push("/dashboard/staff");
@@ -298,14 +366,49 @@ function LoginForm() {
                       maxLength={6}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    We&apos;ve sent a 6-digit code to {email}
-                    {resendCountdown > 0 && (
-                      <span className="block mt-1 text-blue-600">
-                        Resend available in {resendCountdown}s
-                      </span>
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs text-gray-500">
+                      We&apos;ve sent a 6-digit code to {email}
+                    </p>
+
+                    {/* OTP Expiry Countdown */}
+                    {otpExpiryCountdown > 0 && (
+                      <div className="flex items-center justify-center space-x-1 text-xs">
+                        <Clock className="h-3 w-3 text-orange-500" />
+                        <span
+                          className={`font-medium ${
+                            otpExpiryCountdown < 60
+                              ? "text-red-600"
+                              : otpExpiryCountdown < 120
+                              ? "text-orange-600"
+                              : "text-blue-600"
+                          }`}
+                        >
+                          OTP expires in {formatTime(otpExpiryCountdown)}
+                        </span>
+                      </div>
                     )}
-                  </p>
+
+                    {/* OTP Expired Warning */}
+                    {otpExpiryCountdown === 0 && showOtpInput && (
+                      <div className="flex items-center justify-center space-x-1 text-xs text-red-600">
+                        <AlertCircle className="h-3 w-3" />
+                        <span className="font-medium">
+                          OTP has expired. Please request a new one.
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Resend Countdown */}
+                    {resendCountdown > 0 && (
+                      <div className="flex items-center justify-center space-x-1 text-xs text-blue-600">
+                        <Clock className="h-3 w-3" />
+                        <span className="font-medium">
+                          Resend available in {resendCountdown}s
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Remember Me Checkbox */}
@@ -328,10 +431,16 @@ function LoginForm() {
                 <div className="space-y-3">
                   <Button
                     onClick={handleVerifyOTP}
-                    disabled={isLoading || otp.length !== 6}
-                    className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-lg font-medium"
+                    disabled={
+                      isLoading || otp.length !== 6 || otpExpiryCountdown === 0
+                    }
+                    className="w-full bg-black hover:bg-gray-800 text-white py-3 rounded-lg font-medium disabled:opacity-50"
                   >
-                    {isLoading ? "Verifying..." : "Sign In"}
+                    {isLoading
+                      ? "Verifying..."
+                      : otpExpiryCountdown === 0
+                      ? "OTP Expired"
+                      : "Sign In"}
                   </Button>
 
                   <Button
@@ -344,6 +453,8 @@ function LoginForm() {
                       ? "Resending..."
                       : resendCountdown > 0
                       ? `Resend in ${resendCountdown}s`
+                      : otpExpiryCountdown === 0
+                      ? "Request New OTP"
                       : "Resend OTP"}
                   </Button>
 

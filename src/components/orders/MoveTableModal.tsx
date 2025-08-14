@@ -89,7 +89,13 @@ export default function MoveTableModal({
       console.log("✅ Move operation successful:", result);
 
       // Call success handler with updated order and move details
-      onMoveSuccess(result.data.order, result.data.moveDetails);
+      onMoveSuccess(result.data.order, {
+        fromTable: result.data.fromTable,
+        toTable: result.data.toTable,
+        movedBy: result.data.movedBy,
+        movedAt: result.data.movedAt,
+        reason: finalReason,
+      });
 
       // Close modal
       onClose();

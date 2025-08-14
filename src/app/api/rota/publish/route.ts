@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/pg';
-import { verifyToken, JWTPayload } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 import { sendRotaEmail } from '@/lib/email';
 
 // POST - Publish rota and send emails
@@ -15,7 +15,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decoded: JWTPayload = await verifyToken(token);
+    const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const body = await request.json();
     const { weekStartDate } = body;
 

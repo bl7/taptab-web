@@ -11,6 +11,7 @@ interface RefreshResponse {
   success: boolean;
   token?: string;
   refreshToken?: string;
+  user?: Record<string, unknown>;
   message?: string;
 }
 
@@ -21,55 +22,62 @@ class TokenManager {
 
   // Get token from localStorage
   private getToken(): string | null {
-    return localStorage.getItem('token') || localStorage.getItem('bossToken');
+    return localStorage.getItem("token");
   }
 
   // Get refresh token from localStorage
   private getRefreshToken(): string | null {
-    return localStorage.getItem('refreshToken');
+    return localStorage.getItem("refreshToken");
   }
 
   // Set tokens in localStorage
-  private setTokens(token: string, refreshToken?: string): void {
-    localStorage.setItem('token', token);
+  private setTokens(token: string, refreshToken?: string, user?: Record<string, unknown>): void {
+    localStorage.setItem("token", token);
     if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem("refreshToken", refreshToken);
+    }
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
     }
   }
 
   // Clear tokens from localStorage
   private clearTokens(): void {
-    localStorage.removeItem('token');
-    localStorage.removeItem('bossToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
   }
 
   // Decode JWT token without verification (for expiration check)
   private decodeToken(token: string): TokenPayload | null {
     try {
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => {
+            return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+          })
+          .join("")
+      );
       return JSON.parse(jsonPayload);
     } catch {
       return null;
     }
   }
 
-  // Check if token is expired or about to expire (within 1 hour for normal, 1 day for remember me)
+  // Check if token is expired or about to expire
   private isTokenExpiringSoon(token: string): boolean {
     const decoded = this.decodeToken(token);
     if (!decoded) return true;
 
     const now = Math.floor(Date.now() / 1000);
     const expiresIn = decoded.exp - now;
-    
+
     // Check if this is a remember me token (longer duration)
     const isRememberMeToken = expiresIn > 24 * 3600; // If token lasts more than 24 hours
-    
+
     // Return true if token expires in less than 1 day for remember me, 1 hour for normal
     const bufferTime = isRememberMeToken ? 24 * 3600 : 3600; // 1 day vs 1 hour
     return expiresIn < bufferTime;
@@ -93,18 +101,18 @@ class TokenManager {
     return decoded.exp < now;
   }
 
-  // Refresh token by calling the backend
+  // Refresh token by calling our API
   private async refreshToken(): Promise<RefreshResponse> {
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
-      return { success: false, message: 'No refresh token available' };
+      return { success: false, message: "No refresh token available" };
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5050/api/v1'}/auth/refresh`, {
-        method: 'POST',
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ refreshToken }),
       });
@@ -112,23 +120,24 @@ class TokenManager {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        this.setTokens(data.token, data.refreshToken);
-        return { 
-          success: true, 
-          token: data.token, 
-          refreshToken: data.refreshToken 
+        this.setTokens(data.token, data.refreshToken, data.user);
+        return {
+          success: true,
+          token: data.token,
+          refreshToken: data.refreshToken,
+          user: data.user,
         };
       } else {
-        return { 
-          success: false, 
-          message: data.message || 'Failed to refresh token' 
+        return {
+          success: false,
+          message: data.message || "Failed to refresh token",
         };
       }
     } catch (error) {
-      console.error('Token refresh error:', error);
-      return { 
-        success: false, 
-        message: 'Network error during token refresh' 
+      console.error("Token refresh error:", error);
+      return {
+        success: false,
+        message: "Network error during token refresh",
       };
     }
   }
@@ -137,7 +146,7 @@ class TokenManager {
   public async getValidToken(): Promise<string | null> {
     const token = this.getToken();
     const refreshToken = this.getRefreshToken();
-    
+
     if (!token) {
       return null;
     }
@@ -184,13 +193,19 @@ class TokenManager {
 
     const now = Math.floor(Date.now() / 1000);
     const expiresIn = decoded.exp - now;
-    
+
     // Check if this is a remember me token (longer duration)
     const isRememberMeToken = expiresIn > 24 * 3600; // If token lasts more than 24 hours
-    
+
     // Refresh 1 day before expiry for remember me, 1 hour for normal
     const refreshBuffer = isRememberMeToken ? 24 * 3600 : 3600; // 1 day vs 1 hour
     const refreshIn = Math.max(expiresIn - refreshBuffer, 300) * 1000; // At least 5 minutes
+
+    console.log(
+      `🔄 Scheduling token refresh in ${Math.round(
+        refreshIn / 1000 / 60
+      )} minutes`
+    );
 
     this.refreshTimeout = setTimeout(async () => {
       await this.performTokenRefresh();
@@ -207,18 +222,18 @@ class TokenManager {
 
     try {
       const refreshResult = await this.refreshToken();
-      
+
       if (refreshResult.success) {
-        console.log('✅ Token refreshed successfully');
+        console.log("✅ Token refreshed successfully");
         // Schedule next refresh
         this.scheduleTokenRefresh();
       } else {
-        console.error('❌ Token refresh failed:', refreshResult.message);
+        console.error("❌ Token refresh failed:", refreshResult.message);
         this.clearTokens();
         this.redirectToLogin();
       }
     } catch (error) {
-      console.error('❌ Token refresh error:', error);
+      console.error("❌ Token refresh error:", error);
       this.clearTokens();
       this.redirectToLogin();
     } finally {
@@ -245,8 +260,8 @@ class TokenManager {
 
   // Redirect to login
   private redirectToLogin(): void {
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
+    if (typeof window !== "undefined") {
+      window.location.href = "/login";
     }
   }
 
@@ -254,7 +269,7 @@ class TokenManager {
   public async getAuthHeaders(): Promise<Record<string, string>> {
     const token = await this.getValidToken();
     return {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     };
   }
@@ -263,20 +278,56 @@ class TokenManager {
   public isAuthenticated(): boolean {
     const token = this.getToken();
     const refreshToken = this.getRefreshToken();
-    
+
     if (!token) return false;
-    
+
     // If access token is valid, user is authenticated
     if (!this.isTokenExpired(token)) {
       return true;
     }
-    
+
     // If access token is expired but refresh token is valid, user is still authenticated
     if (refreshToken && !this.isRefreshTokenExpired(refreshToken)) {
       return true;
     }
-    
+
     return false;
+  }
+
+  // Get current user data
+  public getCurrentUser(): Record<string, unknown> | null {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  // Get token expiration info
+  public getTokenInfo(): {
+    expiresIn: number;
+    isRememberMe: boolean;
+    expiresAt: Date;
+  } | null {
+    const token = this.getToken();
+    if (!token) return null;
+
+    const decoded = this.decodeToken(token);
+    if (!decoded) return null;
+
+    const now = Math.floor(Date.now() / 1000);
+    const expiresIn = decoded.exp - now;
+    const isRememberMe = expiresIn > 24 * 3600; // More than 24 hours
+
+    return {
+      expiresIn,
+      isRememberMe,
+      expiresAt: new Date(decoded.exp * 1000),
+    };
   }
 }
 
@@ -284,6 +335,6 @@ class TokenManager {
 export const tokenManager = new TokenManager();
 
 // Initialize token manager when module loads
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   tokenManager.init();
-} 
+}

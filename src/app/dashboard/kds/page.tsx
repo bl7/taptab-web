@@ -279,7 +279,7 @@ export default function KDSPage() {
     try {
       await api.updateOrderStatus(
         orderId,
-        status as "active" | "closed" | "cancelled"
+        status as "active" | "closed" | "cancelled" | "merged"
       );
       await refreshOrders();
     } catch (error) {

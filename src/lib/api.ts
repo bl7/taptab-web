@@ -147,7 +147,7 @@ export interface Order {
   total: number;
   totalAmount?: number;
   finalAmount?: number;
-  status: "active" | "closed" | "cancelled";
+  status: "active" | "closed" | "cancelled" | "merged";
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   paymentMethod?: "CASH" | "CARD" | "QR" | "STRIPE";
   waiterId: string;
@@ -158,6 +158,27 @@ export interface Order {
   customerPhone?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CancelledOrder extends Order {
+  cancellationReason?: string;
+  cancelledBy?: string;
+  cancelledAt: string;
+}
+
+export interface CancelledOrdersResponse {
+  orders: CancelledOrder[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
+  filters: {
+    startDate?: string;
+    endDate?: string;
+    period?: string;
+  };
 }
 
 export interface Location {
@@ -1139,7 +1160,7 @@ class APIClient {
 
   async updateOrderStatus(
     id: string,
-    status: "active" | "closed" | "cancelled"
+    status: "active" | "closed" | "cancelled" | "merged"
   ): Promise<{ order: Order }> {
     const response = await this.request<{
       data?: { order: Order };
@@ -1296,28 +1317,25 @@ class APIClient {
     orderId: string,
     data: {
       tableId: string;
-      reason: string;
+      reason?: string;
     }
   ): Promise<{
     success: boolean;
     data: {
       order: Order;
-      moveDetails: {
-        orderId: string;
-        fromTable: string;
-        toTable: string;
-        reason: string;
-        movedBy: string;
-        movedAt: string;
-      };
+      fromTable: string;
+      toTable: string;
+      movedBy: string;
+      movedAt: string;
     };
     message: string;
+    timestamp: string;
   }> {
     console.log("🔄 API: Moving order to table:", {
       orderId,
       tableId: data.tableId,
       reason: data.reason,
-      url: `${this.baseURL}/v1/orders/${orderId}/move-table`,
+      url: `${this.baseURL}/orders/${orderId}/move-table`,
     });
 
     try {
@@ -1882,17 +1900,55 @@ class APIClient {
     startDate?: string;
     endDate?: string;
   }): Promise<AnalyticsSales> {
-    const queryParams = new URLSearchParams();
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.startDate) queryParams.append("startDate", params.startDate);
+      if (params?.endDate) queryParams.append("endDate", params.endDate);
 
-    const queryString = queryParams.toString();
-    const endpoint = queryString
-      ? `/analytics/sales?${queryString}`
-      : "/analytics/sales";
+      const queryString = queryParams.toString();
+      const endpoint = queryString
+        ? `/analytics/sales?${queryString}`
+        : "/analytics/sales";
 
-    const response = await this.request<{ data: AnalyticsSales }>(endpoint);
-    return response.data;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(endpoint);
+      console.log("Sales analytics response:", response);
+
+      // New external API structure: { success: true, data: { totalOrders, totalSales, averageOrderValue, topItems } }
+      if (
+        response.totalOrders !== undefined &&
+        response.totalSales !== undefined
+      ) {
+        return {
+          totalOrders: response.totalOrders,
+          totalSales: response.totalSales,
+          averageOrderValue: response.averageOrderValue || 0,
+          topItems: response.topItems || [],
+          dailySales: [], // External API doesn't provide dailySales, using empty array
+        };
+      } else {
+        console.error(
+          "Unexpected sales analytics response structure:",
+          response
+        );
+        return {
+          totalOrders: 0,
+          totalSales: 0,
+          averageOrderValue: 0,
+          topItems: [],
+          dailySales: [],
+        };
+      }
+    } catch (error) {
+      console.warn("Sales analytics API failed, using fallback data:", error);
+      return {
+        totalOrders: 0,
+        totalSales: 0,
+        averageOrderValue: 0,
+        topItems: [],
+        dailySales: [],
+      };
+    }
   }
 
   async getOrderAnalytics(): Promise<AnalyticsOrders> {
@@ -1906,89 +1962,223 @@ class APIClient {
   async getDashboardOverview(
     period: "week" | "month" | "year" = "month"
   ): Promise<{ summary: DashboardSummary }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(
-      `/dashboard/overview?period=${period}`
-    );
-    console.log("thisbitch", "Dashboard overview response:", response);
-
-    // Handle different response structures
-    if (response.summary) {
-      return { summary: response.summary };
-    } else if (response.data?.summary) {
-      return { summary: response.data.summary };
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected dashboard overview response structure:",
-        response
+    try {
+      // Since the overview endpoint is still failing, construct overview from individual endpoints
+      console.log(
+        "Constructing dashboard overview from individual endpoints..."
       );
-      return {
-        summary: {
-          totalOrders: { value: 0, growth: 0, period: "This month" },
-          activeOrders: { value: 0, status: "Currently processing" },
-          cancelledOrders: { value: 0, status: "Cancelled today" },
-          totalRevenue: { value: 0, growth: 0, period: "This month" },
-          totalCustomers: { value: 0, newToday: 0 },
-          avgOrderValue: { value: 0, growth: 0 },
-          paymentMethods: {
-            cash: { count: 0, revenue: 0 },
-            card: { count: 0, revenue: 0 },
-            qr: { count: 0, revenue: 0 },
-            online: { count: 0, revenue: 0 },
-            stripe: { count: 0, revenue: 0 },
-          },
+
+      const [
+        ,
+        ,
+        revenueTrend,
+        ,
+        ,
+      ] = await Promise.all([
+        this.getTopItems(period, 10),
+        this.getPeakHours(30),
+        this.getRevenueTrend(30),
+        this.getStaffPerformance(period),
+        this.getPopularCombinations(5),
+      ]);
+
+      // Calculate totals from revenue trend
+      const totalSales = revenueTrend.dailyData.reduce(
+        (sum, day) => sum + (day.revenue || 0),
+        0
+      );
+      const totalOrders = revenueTrend.dailyData.reduce(
+        (sum, day) => sum + (day.orders || 0),
+        0
+      );
+      const averageOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+
+      // Transform to internal format
+      const summary: DashboardSummary = {
+        totalOrders: {
+          value: totalOrders,
+          growth: 0,
+          period: `${period} period`,
+        },
+        activeOrders: {
+          value: 0, // Not available from individual endpoints
+          status: "Currently processing",
+        },
+        cancelledOrders: {
+          value: 0, // Not available from individual endpoints
+          status: "Cancelled today",
+        },
+        totalRevenue: {
+          value: totalSales,
+          growth: 0,
+          period: `${period} period`,
+        },
+        totalCustomers: {
+          value: 0, // Not available from individual endpoints
+          newToday: 0,
+        },
+        avgOrderValue: {
+          value: averageOrderValue,
+          growth: 0,
+        },
+        paymentMethods: {
+          cash: { count: 0, revenue: 0 },
+          card: { count: 0, revenue: 0 },
+          qr: { count: 0, revenue: 0 },
+          online: { count: 0, revenue: 0 },
+          stripe: { count: 0, revenue: 0 },
         },
       };
+
+      console.log("Dashboard overview constructed successfully:", summary);
+      return { summary };
+    } catch (error) {
+      console.warn(
+        "Dashboard overview construction failed, using fallback data:",
+        error
+      );
+      return this.getDefaultDashboardSummary(period);
     }
   }
 
-  async getLiveOrders(): Promise<{ orders: LiveOrder[] }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>("/dashboard/live-orders");
-    console.log("thisbitch", "Live orders response:", response);
+  private getDefaultDashboardSummary(period: string): {
+    summary: DashboardSummary;
+  } {
+    return {
+      summary: {
+        totalOrders: { value: 0, growth: 0, period: `${period} period` },
+        activeOrders: { value: 0, status: "Currently processing" },
+        cancelledOrders: { value: 0, status: "Cancelled today" },
+        totalRevenue: { value: 0, growth: 0, period: `${period} period` },
+        totalCustomers: { value: 0, newToday: 0 },
+        avgOrderValue: { value: 0, growth: 0 },
+        paymentMethods: {
+          cash: { count: 0, revenue: 0 },
+          card: { count: 0, revenue: 0 },
+          qr: { count: 0, revenue: 0 },
+          online: { count: 0, revenue: 0 },
+          stripe: { count: 0, revenue: 0 },
+        },
+      },
+    };
+  }
 
-    // Handle different response structures
-    if (response.orders) {
-      return { orders: response.orders };
-    } else if (response.data?.orders) {
-      return { orders: response.data.orders };
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected live orders response structure:",
-        response
-      );
+  async getLiveOrders(): Promise<{ orders: LiveOrder[] }> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>("/dashboard/live-orders");
+      console.log("Live orders response:", response);
+
+      // Handle different response structures
+      if (response.orders) {
+        return { orders: response.orders };
+      } else if (response.data?.orders) {
+        return { orders: response.data.orders };
+      } else if (response && Object.keys(response).length === 0) {
+        // Empty response - likely endpoint not implemented yet
+        console.warn(
+          "Live orders endpoint returned empty response - likely not implemented yet"
+        );
+        return { orders: [] };
+      } else {
+        console.warn("Unexpected live orders response structure:", response);
+        return { orders: [] };
+      }
+    } catch (error) {
+      console.warn("Live orders API failed, using fallback data:", error);
       return { orders: [] };
     }
   }
 
-  async getRevenueTrend(days: number = 7): Promise<RevenueTrend> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(
-      `/dashboard/revenue-trend?days=${days}`
-    );
-    console.log("thisbitch", "Revenue trend response:", response);
+  async getCancelledOrders(params?: {
+    period?: "today" | "yesterday" | "week" | "month" | "year";
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<CancelledOrdersResponse> {
+    try {
+      const queryParams = new URLSearchParams();
 
-    // Handle different response structures
-    if (
-      response.growth !== undefined &&
-      response.totalRevenue !== undefined &&
-      response.dailyData
-    ) {
-      return response;
-    } else if (
-      response.data?.growth !== undefined &&
-      response.data?.totalRevenue !== undefined &&
-      response.data?.dailyData
-    ) {
-      return response.data;
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected revenue trend response structure:",
-        response
+      if (params?.period) queryParams.append("period", params.period);
+      if (params?.startDate) queryParams.append("startDate", params.startDate);
+      if (params?.endDate) queryParams.append("endDate", params.endDate);
+      if (params?.limit) queryParams.append("limit", params.limit.toString());
+      if (params?.offset)
+        queryParams.append("offset", params.offset.toString());
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString
+        ? `/orders/cancelled?${queryString}`
+        : "/orders/cancelled";
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(endpoint);
+      console.log("Cancelled orders response:", response);
+
+      // Handle the response structure: { success: true, data: { orders, pagination, filters } }
+      if (response.data?.orders && response.data?.pagination) {
+        return {
+          orders: response.data.orders,
+          pagination: response.data.pagination,
+          filters: response.data.filters || {},
+        };
+      } else if (response.orders && response.pagination) {
+        // Handle direct response structure: { orders, pagination, filters }
+        return {
+          orders: response.orders,
+          pagination: response.pagination,
+          filters: response.filters || {},
+        };
+      } else {
+        console.error(
+          "Unexpected cancelled orders response structure:",
+          response
+        );
+        return {
+          orders: [],
+          pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+          filters: {},
+        };
+      }
+    } catch (error) {
+      console.warn("Cancelled orders API failed, using fallback data:", error);
+      return {
+        orders: [],
+        pagination: { total: 0, limit: 50, offset: 0, hasMore: false },
+        filters: {},
+      };
+    }
+  }
+
+  async getRevenueTrend(days: number = 7): Promise<RevenueTrend> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(
+        `/dashboard/revenue-trend?days=${days}`
       );
+      console.log("Revenue trend response:", response);
+
+      // New external API structure: { success: true, data: { revenueTrend: [...] } }
+      if (response.revenueTrend) {
+        return {
+          growth: 0, // Calculate from revenueTrend data if needed
+          totalRevenue: response.revenueTrend.reduce(
+            (sum: number, item: { revenue?: number }) => sum + (item.revenue || 0),
+            0
+          ),
+          dailyData: response.revenueTrend,
+        };
+      } else {
+        console.error("Unexpected revenue trend response structure:", response);
+        return {
+          growth: 0,
+          totalRevenue: 0,
+          dailyData: [],
+        };
+      }
+    } catch (error) {
+      console.warn("Revenue trend API failed, using fallback data:", error);
       return {
         growth: 0,
         totalRevenue: 0,
@@ -1998,23 +2188,22 @@ class APIClient {
   }
 
   async getPeakHours(days: number = 30): Promise<PeakHours> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(
-      `/dashboard/peak-hours?days=${days}`
-    );
-    console.log("thisbitch", "Peak hours response:", response);
-
-    // Handle different response structures
-    if (response.peakHours) {
-      return response;
-    } else if (response.data?.peakHours) {
-      return response.data;
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected peak hours response structure:",
-        response
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(
+        `/dashboard/peak-hours?days=${days}`
       );
+      console.log("Peak hours response:", response);
+
+      // New external API structure: { success: true, data: { peakHours: [...] } }
+      if (response.peakHours) {
+        return { peakHours: response.peakHours };
+      } else {
+        console.error("Unexpected peak hours response structure:", response);
+        return { peakHours: [] };
+      }
+    } catch (error) {
+      console.warn("Peak hours API failed, using fallback data:", error);
       return { peakHours: [] };
     }
   }
@@ -2023,26 +2212,37 @@ class APIClient {
     period: "week" | "month" | "year" = "month",
     limit: number = 10
   ): Promise<TopItems> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(
-      `/dashboard/top-items?period=${period}&limit=${limit}`
-    );
-    console.log("thisbitch", "Top items response:", response);
-
-    // Handle different response structures
-    if (response.topItems && response.totalRevenue !== undefined) {
-      return response;
-    } else if (
-      response.data?.topItems &&
-      response.data?.totalRevenue !== undefined
-    ) {
-      return response.data;
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected top items response structure:",
-        response
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(
+        `/dashboard/top-items?period=${period}&limit=${limit}`
       );
+      console.log("Top items response:", response);
+
+      // New external API structure: { success: true, data: { topItems: [...] } }
+      if (response.topItems) {
+        // Transform external API response to internal format
+        const topItems = response.topItems.map((item: { menuItemId: string; name: string; quantity: number; revenue: number; orderCount: number }) => ({
+          menuItemId: item.menuItemId,
+          name: item.name,
+          quantity: item.quantity,
+          revenue: item.revenue,
+          orderCount: item.orderCount,
+        }));
+
+        return {
+          topItems,
+          totalRevenue: topItems.reduce(
+            (sum: number, item: { revenue: number }) => sum + item.revenue,
+            0
+          ),
+        };
+      } else {
+        console.error("Unexpected top items response structure:", response);
+        return { topItems: [], totalRevenue: 0 };
+      }
+    } catch (error) {
+      console.warn("Top items API failed, using fallback data:", error);
       return { topItems: [], totalRevenue: 0 };
     }
   }
@@ -2050,23 +2250,25 @@ class APIClient {
   async getStaffPerformance(
     period: "week" | "month" | "year" = "month"
   ): Promise<{ staffPerformance: StaffPerformance[] }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(
-      `/dashboard/staff-performance?period=${period}`
-    );
-    console.log("thisbitch", "Staff performance response:", response);
-
-    // Handle different response structures
-    if (response.staffPerformance) {
-      return { staffPerformance: response.staffPerformance };
-    } else if (response.data?.staffPerformance) {
-      return { staffPerformance: response.data.staffPerformance };
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected staff performance response structure:",
-        response
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(
+        `/dashboard/staff-performance?period=${period}`
       );
+      console.log("Staff performance response:", response);
+
+      // New external API structure: { success: true, data: { staffPerformance: [...] } }
+      if (response.staffPerformance) {
+        return { staffPerformance: response.staffPerformance };
+      } else {
+        console.error(
+          "Unexpected staff performance response structure:",
+          response
+        );
+        return { staffPerformance: [] };
+      }
+    } catch (error) {
+      console.warn("Staff performance API failed, using fallback data:", error);
       return { staffPerformance: [] };
     }
   }
@@ -2074,22 +2276,27 @@ class APIClient {
   async getPopularCombinations(
     limit: number = 5
   ): Promise<{ combinations: PopularCombination[] }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(
-      `/dashboard/popular-combinations?limit=${limit}`
-    );
-    console.log("thisbitch", "Popular combinations response:", response);
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(
+        `/dashboard/popular-combinations?limit=${limit}`
+      );
+      console.log("Popular combinations response:", response);
 
-    // Handle different response structures
-    if (response.combinations) {
-      return { combinations: response.combinations };
-    } else if (response.data?.combinations) {
-      return { combinations: response.data.combinations };
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected popular combinations response structure:",
-        response
+      // New external API structure: { success: true, data: { combinations: [...] } }
+      if (response.combinations) {
+        return { combinations: response.combinations };
+      } else {
+        console.error(
+          "Unexpected popular combinations response structure:",
+          response
+        );
+        return { combinations: [] };
+      }
+    } catch (error) {
+      console.warn(
+        "Popular combinations API failed, using fallback data:",
+        error
       );
       return { combinations: [] };
     }
@@ -2108,63 +2315,66 @@ class APIClient {
       | "year"
       | "custom";
   }): Promise<ComprehensiveAnalytics> {
-    const queryParams = new URLSearchParams();
-    if (params?.startDate) queryParams.append("startDate", params.startDate);
-    if (params?.endDate) queryParams.append("endDate", params.endDate);
-    if (params?.period) queryParams.append("period", params.period);
+    try {
+      const queryParams = new URLSearchParams();
+      if (params?.startDate) queryParams.append("startDate", params.startDate);
+      if (params?.endDate) queryParams.append("endDate", params.endDate);
+      if (params?.period) queryParams.append("period", params.period);
 
-    const queryString = queryParams.toString();
-    const endpoint = queryString
-      ? `/analytics/comprehensive?${queryString}`
-      : "/analytics/comprehensive";
+      const queryString = queryParams.toString();
+      const endpoint = queryString
+        ? `/analytics/comprehensive?${queryString}`
+        : "/analytics/comprehensive";
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const response = await this.request<any>(endpoint);
-    console.log("thisbitch", "Comprehensive analytics response:", response);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const response = await this.request<any>(endpoint);
+      console.log("Comprehensive analytics response:", response);
 
-    // Handle different response structures
-    if (
-      response.period &&
-      response.summary &&
-      response.growth &&
-      response.topItems &&
-      response.dailyData
-    ) {
-      return response;
-    } else if (
-      response.data?.period &&
-      response.data?.summary &&
-      response.data?.growth &&
-      response.data?.topItems &&
-      response.data?.dailyData
-    ) {
-      return response.data;
-    } else {
-      console.error(
-        "thisbitch",
-        "Unexpected comprehensive analytics response structure:",
-        response
+      // New external API structure: { success: true, data: { period, summary, growth, topItems, dailyData } }
+      if (
+        response.period &&
+        response.summary &&
+        response.growth &&
+        response.topItems &&
+        response.dailyData
+      ) {
+        return response;
+      } else {
+        console.error(
+          "Unexpected comprehensive analytics response structure:",
+          response
+        );
+        return this.getDefaultComprehensiveAnalytics();
+      }
+    } catch (error) {
+      console.warn(
+        "Comprehensive analytics API failed, using fallback data:",
+        error
       );
-      return {
-        period: { start: "", end: "", type: "week" },
-        summary: {
-          totalOrders: 0,
-          totalRevenue: 0,
-          avgOrderValue: 0,
-          uniqueCustomers: 0,
-          orderStatus: {
-            pending: 0,
-            preparing: 0,
-            ready: 0,
-            paid: 0,
-            cancelled: 0,
-          },
-        },
-        growth: { orders: 0, revenue: 0, avgOrderValue: 0, customers: 0 },
-        topItems: [],
-        dailyData: [],
-      };
+      return this.getDefaultComprehensiveAnalytics();
     }
+  }
+
+  private getDefaultComprehensiveAnalytics(): ComprehensiveAnalytics {
+    return {
+      period: { start: "", end: "", type: "week" },
+      summary: {
+        totalOrders: 0,
+        totalRevenue: 0,
+        avgOrderValue: 0,
+        uniqueCustomers: 0,
+        orderStatus: {
+          pending: 0,
+          preparing: 0,
+          ready: 0,
+          paid: 0,
+          cancelled: 0,
+        },
+      },
+      growth: { orders: 0, revenue: 0, avgOrderValue: 0, customers: 0 },
+      topItems: [],
+      dailyData: [],
+    };
   }
 
   // Settings endpoints

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/pg';
-import { comparePassword, generateToken, generateRefreshToken } from '@/lib/auth';
+import { verifyPassword, generateToken, generateRefreshToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const isPasswordValid = await comparePassword(password, user.password);
+    const isPasswordValid = await verifyPassword(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json(
         { message: 'Invalid credentials' },

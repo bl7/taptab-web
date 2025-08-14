@@ -1,7 +1,7 @@
 import { Order } from "./api";
 
 // New order status system utilities
-export type OrderStatus = "active" | "closed" | "cancelled";
+export type OrderStatus = "active" | "closed" | "cancelled" | "merged";
 export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 export type PaymentMethod = "CASH" | "CARD" | "QR" | "STRIPE";
 export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER" | "SPLIT";
@@ -9,12 +9,15 @@ export type OrderSource = "QR_ORDERING" | "WAITER" | "CASHIER" | "SPLIT";
 /**
  * Check if an order should be visible on tables based on the new status system
  * Orders are visible when:
- * - status === 'active' AND
+ * - status === 'active' OR status === 'merged' AND
  * - (orderSource === 'QR_ORDERING' OR orderSource === 'SPLIT' OR (orderSource IN ['WAITER', 'CASHIER'] AND paymentStatus === 'pending'))
+ *
+ * Note: Merged orders ARE visible on tables as they represent active merged orders
  */
 export function isOrderVisibleOnTable(order: Order): boolean {
   return (
-    order.status?.toLowerCase() === "active" &&
+    (order.status?.toLowerCase() === "active" ||
+      order.status?.toLowerCase() === "merged") &&
     (order.orderSource === "QR_ORDERING" ||
       order.orderSource === "SPLIT" ||
       (["WAITER", "WAITER_ORDERING", "CASHIER", "CASHIER_ORDERING"].includes(
@@ -32,6 +35,7 @@ export function getOrderStatusDisplay(order: Order) {
     active: "🟢 Active",
     closed: "🔴 Closed",
     cancelled: "⚫ Cancelled",
+    merged: "🔄 Merged",
   };
 
   const paymentStatusMap = {

@@ -228,7 +228,7 @@ export default function DashboardPage() {
             </div>
             <div className="text-right">
               <p className="text-sm font-semibold text-gray-900">
-                ${combo.revenue.toFixed(2)}
+                ${(combo.revenue || 0).toFixed(2)}
               </p>
               <p className="text-xs text-gray-500">Revenue</p>
             </div>
@@ -261,7 +261,30 @@ export default function DashboardPage() {
       );
     }
 
-    const maxRevenue = Math.max(...dailyData.map((d) => d.revenue));
+    if (!dailyData || !Array.isArray(dailyData) || dailyData.length === 0) {
+      return (
+        <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Revenue Trend
+            </h3>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <span className="text-sm text-gray-500">No data</span>
+            </div>
+          </div>
+          <div className="h-48 flex items-center justify-center">
+            <p className="text-gray-500">No revenue data available</p>
+          </div>
+        </div>
+      );
+    }
+
+    const maxRevenue = Math.max(
+      ...dailyData.map(
+        (d) => (d as { dailyRevenue?: number })?.dailyRevenue || 0
+      )
+    );
 
     return (
       <div className="bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
@@ -333,7 +356,16 @@ export default function DashboardPage() {
                 d={`M 0,100 ${dailyData
                   .map((day, index) => {
                     const x = (index / (dailyData.length - 1)) * 100;
-                    const y = 100 - (day.revenue / maxRevenue) * 100; // NORMAL: higher revenue = higher Y
+                    const revenue =
+                      (day as { dailyRevenue?: number })?.dailyRevenue || 0;
+                    const safeRevenue =
+                      typeof revenue === "number" && !isNaN(revenue)
+                        ? revenue
+                        : 0;
+                    const y =
+                      maxRevenue > 0
+                        ? 100 - (safeRevenue / maxRevenue) * 100
+                        : 100; // NORMAL: higher revenue = higher Y
                     return `L ${x},${y}`;
                   })
                   .join(" ")} L 100,100 Z`}
@@ -350,7 +382,16 @@ export default function DashboardPage() {
                 points={dailyData
                   .map((day, index) => {
                     const x = (index / (dailyData.length - 1)) * 100;
-                    const y = 100 - (day.revenue / maxRevenue) * 100; // NORMAL: higher revenue = higher Y
+                    const revenue =
+                      (day as { dailyRevenue?: number })?.dailyRevenue || 0;
+                    const safeRevenue =
+                      typeof revenue === "number" && !isNaN(revenue)
+                        ? revenue
+                        : 0;
+                    const y =
+                      maxRevenue > 0
+                        ? 100 - (safeRevenue / maxRevenue) * 100
+                        : 100; // NORMAL: higher revenue = higher Y
                     return `${x},${y}`;
                   })
                   .join(" ")}
@@ -360,7 +401,21 @@ export default function DashboardPage() {
             {/* Revenue values on the line */}
             <div className="absolute inset-0 flex justify-between items-center px-2">
               {dailyData.map((day, index) => {
-                const y = 100 - (day.revenue / maxRevenue) * 100;
+                // Additional safety checks
+                if (!day || typeof day !== "object") {
+                  return null;
+                }
+
+                const revenue =
+                  (day as { dailyRevenue?: number })?.dailyRevenue || 0;
+
+                // Ensure revenue is a number
+                const safeRevenue =
+                  typeof revenue === "number" && !isNaN(revenue) ? revenue : 0;
+
+                const y =
+                  maxRevenue > 0 ? 100 - (safeRevenue / maxRevenue) * 100 : 100;
+
                 return (
                   <div
                     key={index}
@@ -370,7 +425,7 @@ export default function DashboardPage() {
                       marginTop: "-8px",
                     }}
                   >
-                    ${day.revenue.toFixed(0)}
+                    ${safeRevenue.toFixed(0)}
                   </div>
                 );
               })}

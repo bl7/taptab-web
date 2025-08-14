@@ -1,22 +1,56 @@
-import nodemailer from 'nodemailer';
+import nodemailer from "nodemailer";
 
-// Create transporter for Zoho SMTP
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.zoho.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+// Cache the transporter globally to persist between cold starts
+let cachedTransporter: nodemailer.Transporter | null = null;
 
-export async function sendOTPEmail(email: string, otp: string) {
+export async function createTransporter(): Promise<nodemailer.Transporter> {
+  if (cachedTransporter) {
+    return cachedTransporter;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || "smtp.zoho.com",
+    port: parseInt(process.env.SMTP_PORT || "587"),
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASSWORD,
+    },
+    // Connection pooling and timeout settings
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 100,
+    socketTimeout: 30000, // 30 seconds
+    connectionTimeout: 10000, // 10 seconds
+  });
+
+  // Verify connection
   try {
+    await transporter.verify();
+    console.log("✅ SMTP connection verified");
+  } catch (error) {
+    console.error("❌ SMTP connection verification failed:", error);
+    // Don't throw here - let the actual send attempt handle it
+  }
+
+  cachedTransporter = transporter;
+  return transporter;
+}
+
+export async function sendOTPEmail(
+  email: string,
+  otp: string,
+  retryCount = 0
+): Promise<boolean> {
+  const maxRetries = 2;
+
+  try {
+    const transporter = await createTransporter();
+
     const mailOptions = {
       from: process.env.SMTP_EMAIL,
       to: email,
-      subject: 'Taptab POS - Login Code',
+      subject: "Taptab POS - Login Code",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
@@ -46,22 +80,48 @@ export async function sendOTPEmail(email: string, otp: string) {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email sent: ', info.messageId);
+    console.log("✅ Email sent successfully:", info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending email: ', error);
-    throw new Error('Failed to send email');
+    console.error(
+      `❌ Error sending email (attempt ${retryCount + 1}/${maxRetries + 1}):`,
+      error
+    );
+
+    // Retry logic for cold start issues
+    if (retryCount < maxRetries) {
+      console.log(
+        `🔄 Retrying email send in 1 second... (attempt ${retryCount + 2}/${
+          maxRetries + 1
+        })`
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Clear cached transporter on retry to force reconnection
+      cachedTransporter = null;
+
+      return sendOTPEmail(email, otp, retryCount + 1);
+    }
+
+    throw new Error(
+      `Failed to send email after ${maxRetries + 1} attempts: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`
+    );
   }
 }
 
-export async function sendPasswordResetEmail(email: string, resetToken: string) {
+export async function sendPasswordResetEmail(
+  email: string,
+  resetToken: string
+) {
   try {
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
-    
+
     const mailOptions = {
       from: process.env.SMTP_EMAIL,
       to: email,
-      subject: 'Taptab POS - Password Reset',
+      subject: "Taptab POS - Password Reset",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
@@ -91,12 +151,13 @@ export async function sendPasswordResetEmail(email: string, resetToken: string) 
       `,
     };
 
+    const transporter = await createTransporter();
     const info = await transporter.sendMail(mailOptions);
-    console.log('Password reset email sent: ', info.messageId);
+    console.log("Password reset email sent: ", info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending password reset email: ', error);
-    throw new Error('Failed to send password reset email');
+    console.error("Error sending password reset email: ", error);
+    throw new Error("Failed to send password reset email");
   }
 }
 
@@ -105,7 +166,7 @@ export async function sendWelcomeEmail(email: string, name: string) {
     const mailOptions = {
       from: process.env.SMTP_EMAIL,
       to: email,
-      subject: 'Welcome to Taptab POS',
+      subject: "Welcome to Taptab POS",
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center;">
@@ -141,21 +202,22 @@ export async function sendWelcomeEmail(email: string, name: string) {
       `,
     };
 
+    const transporter = await createTransporter();
     const info = await transporter.sendMail(mailOptions);
-    console.log('Welcome email sent: ', info.messageId);
+    console.log("Welcome email sent: ", info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending welcome email: ', error);
-    throw new Error('Failed to send welcome email');
+    console.error("Error sending welcome email: ", error);
+    throw new Error("Failed to send welcome email");
   }
 }
 
 export async function sendRotaEmail(
-  email: string, 
-  firstName: string, 
-  lastName: string, 
-  restaurantName: string, 
-  weekStartDate: string, 
+  email: string,
+  firstName: string,
+  lastName: string,
+  restaurantName: string,
+  weekStartDate: string,
   shifts: Array<{
     day: string;
     startTime: string;
@@ -169,60 +231,114 @@ export async function sendRotaEmail(
   try {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
-    
+
     const formatDate = (date: string) => {
-      return new Date(date).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(date).toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     };
 
     const formatTime = (time: string) => {
-      return new Date(`2000-01-01T${time}`).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true
+      return new Date(`2000-01-01T${time}`).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
       });
     };
 
-    const totalHours = shifts.reduce((sum, shift) => sum + (Number(shift.shiftHours) || 0), 0);
+    const totalHours = shifts.reduce(
+      (sum, shift) => sum + (Number(shift.shiftHours) || 0),
+      0
+    );
 
     // Group shifts by day to handle multiple shifts per day
     const shiftsByDay = new Map();
-    shifts.forEach(shift => {
+    shifts.forEach((shift) => {
       if (!shiftsByDay.has(shift.day)) {
         shiftsByDay.set(shift.day, []);
       }
       shiftsByDay.get(shift.day).push(shift);
     });
 
-    const shiftsHtml = Array.from(shiftsByDay.entries()).map(([day, dayShifts]) => {
-      const dayShiftsHtml = dayShifts.map((shift: { day: string; startTime: string; endTime: string; shiftHours: number; breakDuration: number; notes?: string; shiftLabel?: string }, index: number) => `
+    const shiftsHtml = Array.from(shiftsByDay.entries())
+      .map(([day, dayShifts]) => {
+        const dayShiftsHtml = dayShifts
+          .map(
+            (
+              shift: {
+                day: string;
+                startTime: string;
+                endTime: string;
+                shiftHours: number;
+                breakDuration: number;
+                notes?: string;
+                shiftLabel?: string;
+              },
+              index: number
+            ) => `
         <div style="background: white; padding: 12px; border-radius: 6px; margin: 8px 0; border-left: 4px solid #667eea;">
-          ${dayShifts.length > 1 ? `<div style="font-size: 12px; color: #667eea; margin-bottom: 5px; font-weight: bold;">Shift ${index + 1}${shift.shiftLabel ? ` - ${shift.shiftLabel}` : ''}</div>` : ''}
+          ${
+            dayShifts.length > 1
+              ? `<div style="font-size: 12px; color: #667eea; margin-bottom: 5px; font-weight: bold;">Shift ${
+                  index + 1
+                }${shift.shiftLabel ? ` - ${shift.shiftLabel}` : ""}</div>`
+              : ""
+          }
           <p style="color: #666; margin: 5px 0;">
-            <strong>Time:</strong> ${formatTime(shift.startTime)} - ${formatTime(shift.endTime)}
+            <strong>Time:</strong> ${formatTime(
+              shift.startTime
+            )} - ${formatTime(shift.endTime)}
           </p>
           <p style="color: #666; margin: 5px 0;">
             <strong>Hours:</strong> ${Number(shift.shiftHours)} hours
           </p>
-          ${shift.breakDuration > 0 ? `<p style="color: #666; margin: 5px 0;"><strong>Break:</strong> ${shift.breakDuration} minutes</p>` : ''}
-          ${shift.notes ? `<p style="color: #666; margin: 5px 0;"><strong>Notes:</strong> ${shift.notes}</p>` : ''}
+          ${
+            shift.breakDuration > 0
+              ? `<p style="color: #666; margin: 5px 0;"><strong>Break:</strong> ${shift.breakDuration} minutes</p>`
+              : ""
+          }
+          ${
+            shift.notes
+              ? `<p style="color: #666; margin: 5px 0;"><strong>Notes:</strong> ${shift.notes}</p>`
+              : ""
+          }
         </div>
-      `).join('');
+      `
+          )
+          .join("");
 
-      const dayTotalHours = dayShifts.reduce((sum: number, shift: { day: string; startTime: string; endTime: string; shiftHours: number; breakDuration: number; notes?: string; shiftLabel?: string }) => sum + (Number(shift.shiftHours) || 0), 0);
-      
-      return `
+        const dayTotalHours = dayShifts.reduce(
+          (
+            sum: number,
+            shift: {
+              day: string;
+              startTime: string;
+              endTime: string;
+              shiftHours: number;
+              breakDuration: number;
+              notes?: string;
+              shiftLabel?: string;
+            }
+          ) => sum + (Number(shift.shiftHours) || 0),
+          0
+        );
+
+        return `
         <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">
           <h3 style="color: #333; margin: 0 0 10px 0; font-size: 16px;">${day}</h3>
-          ${dayShifts.length > 1 ? `<p style="color: #667eea; margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">Day Total: ${dayTotalHours} hours</p>` : ''}
+          ${
+            dayShifts.length > 1
+              ? `<p style="color: #667eea; margin: 0 0 10px 0; font-size: 14px; font-weight: bold;">Day Total: ${dayTotalHours} hours</p>`
+              : ""
+          }
           ${dayShiftsHtml}
         </div>
       `;
-    }).join('');
+      })
+      .join("");
 
     const mailOptions = {
       from: process.env.SMTP_EMAIL,
@@ -239,18 +355,24 @@ export async function sendRotaEmail(
               Hi ${firstName} ${lastName},
             </p>
             <p style="color: #666; margin-bottom: 30px;">
-              Your schedule for the week of <strong>${formatDate(weekStartDate)}</strong> has been published.
+              Your schedule for the week of <strong>${formatDate(
+                weekStartDate
+              )}</strong> has been published.
             </p>
             <div style="background: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
               <h3 style="color: #333; margin-bottom: 15px;">Schedule Summary</h3>
               <p style="color: #666; margin-bottom: 10px;">
-                <strong>Week:</strong> ${formatDate(weekStartDate)} - ${formatDate(weekEndDate.toISOString().split('T')[0])}
+                <strong>Week:</strong> ${formatDate(
+                  weekStartDate
+                )} - ${formatDate(weekEndDate.toISOString().split("T")[0])}
               </p>
               <p style="color: #666; margin-bottom: 10px;">
                 <strong>Total Hours:</strong> ${totalHours} hours
               </p>
               <p style="color: #666; margin-bottom: 10px;">
-                <strong>Shifts:</strong> ${shifts.length} shifts across ${shiftsByDay.size} days
+                <strong>Shifts:</strong> ${shifts.length} shifts across ${
+        shiftsByDay.size
+      } days
               </p>
             </div>
             <div style="margin: 20px 0;">
@@ -270,11 +392,12 @@ export async function sendRotaEmail(
       `,
     };
 
+    const transporter = await createTransporter();
     const info = await transporter.sendMail(mailOptions);
-    console.log('Rota email sent: ', info.messageId);
+    console.log("Rota email sent: ", info.messageId);
     return true;
   } catch (error) {
-    console.error('Error sending rota email: ', error);
-    throw new Error('Failed to send rota email');
+    console.error("Error sending rota email: ", error);
+    throw new Error("Failed to send rota email");
   }
-} 
+}

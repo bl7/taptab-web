@@ -1305,7 +1305,7 @@ export default function OrdersPage() {
       // Update order status in the backend
       await api.updateOrderStatus(
         orderId,
-        status as "active" | "closed" | "cancelled"
+        status as "active" | "closed" | "cancelled" | "merged"
       );
       await refreshOrders();
     } catch (error) {

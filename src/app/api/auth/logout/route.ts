@@ -8,12 +8,12 @@ export async function POST(request: NextRequest) {
 
     // Blacklist the access token if provided
     if (token) {
-      await blacklistToken(token, 3600); // Blacklist for 1 hour
+      await blacklistToken(token);
     }
 
     // Blacklist the refresh token if provided
     if (refreshToken) {
-      await blacklistToken(refreshToken, 7 * 24 * 3600); // Blacklist for 7 days
+      await blacklistToken(refreshToken);
     }
 
     return NextResponse.json({

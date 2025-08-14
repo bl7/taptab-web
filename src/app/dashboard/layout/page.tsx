@@ -12,6 +12,8 @@ import {
   Square,
   RectangleHorizontal,
   X,
+  Plus,
+  Edit,
 } from "lucide-react";
 import { ObjectLibrary } from "@/components/layout/ObjectLibrary";
 import { KonvaStage } from "@/components/layout/KonvaStage";
@@ -36,6 +38,7 @@ export default function LayoutBuilderPage() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [showTableShapeModal, setShowTableShapeModal] = useState(false);
+  const [showExistingLayoutModal, setShowExistingLayoutModal] = useState(false);
   const [pendingTableDrop, setPendingTableDrop] = useState<{
     table: APITable;
     x: number;
@@ -60,6 +63,11 @@ export default function LayoutBuilderPage() {
     loadLayoutFromBackend,
   } = useLayoutStore();
 
+  // State for existing layouts
+  const [savedLayouts, setSavedLayouts] = useState<TableLayout[]>([]);
+  const [currentLayoutId, setCurrentLayoutId] = useState<string | null>(null);
+  const [, setIsLoadingLayouts] = useState(false);
+
   // Update canvas size on window resize
   useEffect(() => {
     const updateCanvasSize = () => {
@@ -76,6 +84,33 @@ export default function LayoutBuilderPage() {
     window.addEventListener("resize", updateCanvasSize);
     return () => window.addEventListener("resize", updateCanvasSize);
   }, []);
+
+  // Fetch saved layouts for current location
+  const fetchSavedLayouts = useCallback(async () => {
+    setIsLoadingLayouts(true);
+    try {
+      const locations = await api.getLocations();
+      const currentLocationObj = locations.locations.find(
+        (loc) => loc.name === currentLocation
+      );
+
+      if (currentLocationObj) {
+        const layouts = await api.getTableLayouts({
+          locationId: currentLocationObj.id,
+        });
+        setSavedLayouts(layouts.layouts);
+
+        // Check if there are existing layouts for this location
+        if (layouts.layouts.length > 0 && objects.length === 0) {
+          setShowExistingLayoutModal(true);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch layouts:", error);
+    } finally {
+      setIsLoadingLayouts(false);
+    }
+  }, [currentLocation, objects.length]);
 
   // Load saved layouts and locations on component mount
   useEffect(() => {
@@ -102,7 +137,8 @@ export default function LayoutBuilderPage() {
 
         setAvailableLocations(locationNames);
 
-        // Layouts will be loaded on demand
+        // Load layouts for current location
+        await fetchSavedLayouts();
       } catch (error) {
         console.error("Error loading locations:", error);
         // Fallback to default location
@@ -111,7 +147,7 @@ export default function LayoutBuilderPage() {
     };
 
     loadData();
-  }, [currentLocation, setAvailableLocations]);
+  }, [currentLocation, setAvailableLocations, fetchSavedLayouts]);
 
   // Handle drag start from object library
   const handleDragStart = useCallback((item: ObjectTemplate | APITable) => {
@@ -223,12 +259,54 @@ export default function LayoutBuilderPage() {
     [pendingTableDrop, addObject]
   );
 
-  // Save layout
+  // Save layout (create new or update existing)
   const handleSaveLayout = async (name: string, description?: string) => {
     try {
-      await saveLayoutToBackend(name, description);
+      if (currentLayoutId) {
+        // Update existing layout
+        await api.updateTableLayout(currentLayoutId, {
+          name,
+          description,
+          layoutJson: {
+            type: "freeform" as const,
+            dimensions: {
+              width: 800,
+              height: 600,
+              gridSize: 20,
+            },
+            tables: objects
+              .filter((obj) => obj.isExistingTable)
+              .map((obj) => ({
+                tableId: obj.tableId || obj.id,
+                position: { x: obj.x, y: obj.y },
+                size: { width: obj.width, height: obj.height },
+                shape: obj.shape || ("round" as const),
+                seats: obj.seats || 4,
+                rotation: obj.rotation || 0,
+              })),
+            objects: objects
+              .filter((obj) => !obj.isExistingTable)
+              .map((obj) => ({
+                type: obj.type,
+                position: { x: obj.x, y: obj.y },
+                size: { width: obj.width, height: obj.height },
+                color: obj.color,
+                name: obj.name,
+              })),
+            metadata: {
+              version: "1.0",
+              createdBy: "layout-builder",
+            },
+          },
+        });
+        showToast.updated("Layout");
+      } else {
+        // Create new layout
+        await saveLayoutToBackend(name, description);
+        showToast.saved("Layout");
+      }
       setShowSaveModal(false);
-      showToast.saved("Layout");
+      await fetchSavedLayouts(); // Refresh layouts
     } catch (error) {
       console.error("Failed to save layout:", error);
       showToast.operationFailed("save layout", (error as Error).message);
@@ -239,7 +317,9 @@ export default function LayoutBuilderPage() {
   const handleLoadLayout = async (layoutId: string) => {
     try {
       await loadLayoutFromBackend(layoutId);
+      setCurrentLayoutId(layoutId);
       setShowLoadModal(false);
+      setShowExistingLayoutModal(false);
       showToast.loaded("Layout");
     } catch (error) {
       console.error("Failed to load layout:", error);
@@ -247,24 +327,42 @@ export default function LayoutBuilderPage() {
     }
   };
 
-  // Fetch saved layouts for current location
-  const [savedLayouts, setSavedLayouts] = useState<TableLayout[]>([]);
-  const fetchSavedLayouts = async () => {
+  // Set layout as default
+  const handleSetDefaultLayout = async (layoutId: string) => {
     try {
-      const locations = await api.getLocations();
-      const currentLocationObj = locations.locations.find(
-        (loc) => loc.name === currentLocation
-      );
-
-      if (currentLocationObj) {
-        const layouts = await api.getTableLayouts({
-          locationId: currentLocationObj.id,
-        });
-        setSavedLayouts(layouts.layouts);
-      }
+      await api.setDefaultTableLayout(layoutId);
+      await fetchSavedLayouts(); // Refresh layouts to update default status
+      showToast.success("Layout set as default");
     } catch (error) {
-      console.error("Failed to fetch layouts:", error);
+      console.error("Failed to set default layout:", error);
+      showToast.operationFailed("set default layout", (error as Error).message);
     }
+  };
+
+  // Toggle layout active status
+  const handleToggleLayoutActive = async (
+    layoutId: string,
+    isActive: boolean
+  ) => {
+    try {
+      await api.updateTableLayout(layoutId, { isActive });
+      await fetchSavedLayouts(); // Refresh layouts
+      showToast.success(`Layout ${isActive ? "activated" : "deactivated"}`);
+    } catch (error) {
+      console.error("Failed to toggle layout status:", error);
+      showToast.operationFailed(
+        "toggle layout status",
+        (error as Error).message
+      );
+    }
+  };
+
+  // Create new layout
+  const handleCreateNewLayout = () => {
+    clearLayout();
+    setCurrentLayoutId(null);
+    setShowExistingLayoutModal(false);
+    showToast.success("New layout created! Start adding objects.");
   };
 
   // Clear layout
@@ -275,6 +373,7 @@ export default function LayoutBuilderPage() {
       )
     ) {
       clearLayout();
+      setCurrentLayoutId(null);
     }
   };
 
@@ -309,6 +408,7 @@ export default function LayoutBuilderPage() {
         setCurrentLocation(layout.location);
       }
       loadLayout(layout.objects);
+      setCurrentLayoutId(null); // Imported layouts are new
       showToast.success("Layout imported successfully!");
     } catch (error) {
       showToast.operationFailed("import layout", (error as Error).message);
@@ -321,6 +421,9 @@ export default function LayoutBuilderPage() {
     setCurrentLocation(newLocation);
     // Clear objects when switching locations
     clearLayout();
+    setCurrentLayoutId(null);
+    // Fetch layouts for new location
+    fetchSavedLayouts();
   };
 
   // Handle creating new location
@@ -329,6 +432,7 @@ export default function LayoutBuilderPage() {
       setAvailableLocations([...availableLocations, name]);
       setCurrentLocation(name);
       clearLayout();
+      setCurrentLayoutId(null);
     }
   };
 
@@ -362,8 +466,12 @@ export default function LayoutBuilderPage() {
               disabled={objects.length === 0}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <Save className="w-4 h-4" />
-              Save Layout
+              {currentLayoutId ? (
+                <Edit className="w-4 h-4" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              {currentLayoutId ? "Update Layout" : "Save Layout"}
             </button>
 
             <button
@@ -415,6 +523,12 @@ export default function LayoutBuilderPage() {
               <span>Object selected</span>
             </div>
           )}
+          {currentLayoutId && (
+            <div className="flex items-center gap-2">
+              <span>•</span>
+              <span className="text-blue-600">Editing existing layout</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -442,6 +556,7 @@ export default function LayoutBuilderPage() {
         <SaveLayoutModal
           onSave={handleSaveLayout}
           onClose={() => setShowSaveModal(false)}
+          isUpdate={!!currentLayoutId}
         />
       )}
 
@@ -453,6 +568,9 @@ export default function LayoutBuilderPage() {
           onDelete={async (layoutId) => {
             try {
               await api.deleteTableLayout(layoutId);
+              if (currentLayoutId === layoutId) {
+                setCurrentLayoutId(null);
+              }
               await fetchSavedLayouts(); // Refresh the list
               showToast.deleted("Layout");
             } catch (error) {
@@ -462,8 +580,21 @@ export default function LayoutBuilderPage() {
               );
             }
           }}
+          onSetDefault={handleSetDefaultLayout}
+          onToggleActive={handleToggleLayoutActive}
           onClose={() => setShowLoadModal(false)}
           onOpen={fetchSavedLayouts}
+        />
+      )}
+
+      {/* Existing Layout Modal */}
+      {showExistingLayoutModal && (
+        <ExistingLayoutModal
+          layouts={savedLayouts}
+          locationName={currentLocation}
+          onLoad={handleLoadLayout}
+          onCreateNew={handleCreateNewLayout}
+          onClose={() => setShowExistingLayoutModal(false)}
         />
       )}
 
@@ -486,23 +617,28 @@ export default function LayoutBuilderPage() {
 function SaveLayoutModal({
   onSave,
   onClose,
+  isUpdate,
 }: {
-  onSave: (name: string) => void;
+  onSave: (name: string, description?: string) => void;
   onClose: () => void;
+  isUpdate: boolean;
 }) {
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim()) {
-      onSave(name.trim());
+      onSave(name.trim(), description.trim());
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-96">
-        <h2 className="text-lg font-semibold mb-4">Save Layout</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          {isUpdate ? "Update Layout" : "Save Layout"}
+        </h2>
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label className="block text-sm font-medium text-black mb-2">
@@ -515,6 +651,18 @@ function SaveLayoutModal({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="Enter layout name..."
               autoFocus
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-black mb-2">
+              Description (optional)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              rows={3}
+              placeholder="Add a description for this layout..."
             />
           </div>
           <div className="flex justify-end gap-3">
@@ -530,7 +678,7 @@ function SaveLayoutModal({
               disabled={!name.trim()}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Save Layout
+              {isUpdate ? "Update Layout" : "Save Layout"}
             </button>
           </div>
         </form>
@@ -546,12 +694,16 @@ function LoadLayoutModal({
   onDelete,
   onClose,
   onOpen,
+  onSetDefault,
+  onToggleActive,
 }: {
   layouts: TableLayout[];
   onLoad: (layoutId: string) => void;
   onDelete: (layoutId: string) => void;
   onClose: () => void;
   onOpen?: () => void;
+  onSetDefault: (layoutId: string) => void;
+  onToggleActive: (layoutId: string, isActive: boolean) => void;
 }) {
   const [locationFilter, setLocationFilter] = useState<string>("all");
 
@@ -626,6 +778,11 @@ function LoadLayoutModal({
                         Default
                       </span>
                     )}
+                    {!layout.isActive && (
+                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                        Inactive
+                      </span>
+                    )}
                   </div>
                   {layout.description && (
                     <p className="text-sm text-black mt-1">
@@ -648,6 +805,33 @@ function LoadLayoutModal({
                   >
                     Load
                   </button>
+
+                  {/* Set as Default Button */}
+                  {!layout.isDefault && (
+                    <button
+                      onClick={() => onSetDefault(layout.id)}
+                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                      title="Set as default layout"
+                    >
+                      Set Default
+                    </button>
+                  )}
+
+                  {/* Toggle Active Status */}
+                  <button
+                    onClick={() => onToggleActive(layout.id, !layout.isActive)}
+                    className={`px-3 py-1 text-sm rounded transition-colors ${
+                      layout.isActive
+                        ? "bg-orange-600 text-white hover:bg-orange-700"
+                        : "bg-gray-600 text-white hover:bg-gray-700"
+                    }`}
+                    title={
+                      layout.isActive ? "Deactivate layout" : "Activate layout"
+                    }
+                  >
+                    {layout.isActive ? "Deactivate" : "Activate"}
+                  </button>
+
                   <button
                     onClick={() => {
                       if (confirm(`Delete layout "${layout.name}"?`)) {
@@ -670,6 +854,125 @@ function LoadLayoutModal({
             className="px-4 py-2 text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Existing Layout Modal
+function ExistingLayoutModal({
+  layouts,
+  locationName,
+  onLoad,
+  onCreateNew,
+  onClose,
+}: {
+  layouts: TableLayout[];
+  locationName: string;
+  onLoad: (layoutId: string) => void;
+  onCreateNew: () => void;
+  onClose: () => void;
+}) {
+  const [selectedLayout, setSelectedLayout] = useState<TableLayout | null>(
+    null
+  );
+
+  const handleLoad = () => {
+    if (selectedLayout) {
+      onLoad(selectedLayout.id);
+    }
+  };
+
+  const handleCreateNew = () => {
+    onCreateNew();
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-[500px]">
+        <h2 className="text-lg font-semibold mb-4">Existing Layouts Found</h2>
+        <p className="text-sm text-black mb-6">
+          Found <strong>{layouts.length}</strong> layout
+          {layouts.length > 1 ? "s" : ""} for <strong>{locationName}</strong>.
+          Would you like to load an existing layout or create a new one?
+        </p>
+
+        {layouts.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-black mb-3">
+              Existing Layouts:
+            </h3>
+            <div className="space-y-2 max-h-40 overflow-y-auto">
+              {layouts.map((layout) => (
+                <div
+                  key={layout.id}
+                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                    selectedLayout?.id === layout.id
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                  onClick={() => setSelectedLayout(layout)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="font-medium text-black">{layout.name}</h4>
+                      {layout.description && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {layout.description}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Tables: {layout.layoutJson.tables?.length || 0} |
+                        Objects: {layout.layoutJson.objects?.length || 0} |
+                        Created:{" "}
+                        {new Date(layout.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    {layout.isDefault && (
+                      <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                        Default
+                      </span>
+                    )}
+                    {!layout.isActive && (
+                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded-full">
+                        Inactive
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          {layouts.length > 0 && (
+            <button
+              onClick={handleLoad}
+              disabled={!selectedLayout}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              Load Selected Layout
+            </button>
+          )}
+          <button
+            onClick={handleCreateNew}
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Create New Layout
+          </button>
+        </div>
+
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-black border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
           </button>
         </div>
       </div>

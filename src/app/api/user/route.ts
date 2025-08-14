@@ -15,6 +15,13 @@ export async function GET(request: NextRequest) {
 
     const decoded = await verifyToken(token);
     
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.id]);
     const user = userResult.rows[0];
 

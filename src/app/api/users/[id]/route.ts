@@ -21,6 +21,14 @@ export async function GET(
     }
 
     const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const { id: userId } = await params;
 
     // Get user with tenant info
@@ -87,6 +95,14 @@ export async function PUT(
     }
 
     const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const { id: userId } = await params;
     const body = await request.json();
     const { email, firstName, lastName, role, password, isActive } = body;
@@ -198,6 +214,14 @@ export async function DELETE(
     }
 
     const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+    
     const { id: userId } = await params;
 
     // Check permissions

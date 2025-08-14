@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import pool from '@/lib/pg';
-import { verifyToken, JWTPayload } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 
 // GET - Get all saved rotas for the tenant
 export async function GET(request: NextRequest) {
@@ -14,7 +14,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const decoded: JWTPayload = await verifyToken(token);
+    const decoded = await verifyToken(token);
+    
+    if (!decoded) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
     
     // Only TENANT_ADMIN can access rota management
     if (decoded.role !== 'TENANT_ADMIN') {
