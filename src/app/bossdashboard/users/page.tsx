@@ -26,6 +26,7 @@ interface StaffMember {
   tenantName?: string;
   createdAt: string;
   lastLogin?: string;
+  password?: string;
 }
 
 export default function BossUsersPage() {
@@ -72,6 +73,12 @@ export default function BossUsersPage() {
   }, [fetchUsers]);
 
   const handleCreateUser = async (userData: Partial<StaffMember>) => {
+    // Validate PIN format (6 digits)
+    if (!userData.password || !/^\d{6}$/.test(userData.password)) {
+      showToast.validationError("PIN must be exactly 6 digits (0-9)");
+      return;
+    }
+
     setApiLoading(true);
     try {
       const token = localStorage.getItem("bossToken");
@@ -404,6 +411,24 @@ function AddUserModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Basic validation
+    if (
+      !formData.email ||
+      !formData.firstName ||
+      !formData.lastName ||
+      !formData.password
+    ) {
+      showToast.validationError("Please fill in all required fields");
+      return;
+    }
+
+    // Validate PIN format (6 digits)
+    if (!/^\d{6}$/.test(formData.password)) {
+      showToast.validationError("PIN must be exactly 6 digits (0-9)");
+      return;
+    }
+
     onSubmit(formData);
   };
 
@@ -478,17 +503,24 @@ function AddUserModal({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">
-              Password (optional)
+              PIN *
             </label>
             <input
               type="password"
+              required
               value={formData.password}
               onChange={(e) =>
                 setFormData({ ...formData, password: e.target.value })
               }
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent text-white"
-              placeholder="Leave empty for OTP login"
+              placeholder="Enter 6-digit PIN"
+              maxLength={6}
+              pattern="[0-9]*"
+              inputMode="numeric"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Must be exactly 6 digits (0-9)
+            </p>
           </div>
           <div className="flex space-x-3 pt-4">
             <button

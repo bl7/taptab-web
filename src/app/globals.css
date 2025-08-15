@@ -2,6 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Menu Item Availability Styles */
+@layer components {
+  .availability-badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+
+  .availability-badge.available {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .availability-badge.unavailable {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .menu-item-card.unavailable {
+    @apply opacity-60 grayscale;
+  }
+
+  .out-of-stock-overlay {
+    @apply absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center rounded-t-lg;
+  }
+
+  .add-to-order-btn.disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  /* Line clamp utility for text truncation */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Smooth transitions for availability changes */
+  .menu-item-card {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  .availability-badge {
+    @apply transition-colors duration-200 ease-in-out;
+  }
+
+  /* Hover effects for available items */
+  .menu-item-card:not(.unavailable):hover {
+    @apply transform scale-105 shadow-lg;
+  }
+
+  /* Focus states for accessibility */
+  .add-to-order-btn:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+
+  /* Loading states */
+  .loading-skeleton {
+    @apply animate-pulse bg-gray-200 rounded;
+  }
+
+  /* Cart animations */
+  .cart-item {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  .cart-item-enter {
+    @apply opacity-0 transform translate-y-4;
+  }
+
+  .cart-item-enter-active {
+    @apply opacity-100 transform translate-y-0;
+  }
+
+  .cart-item-exit {
+    @apply opacity-100 transform translate-y-0;
+  }
+
+  .cart-item-exit-active {
+    @apply opacity-0 transform translate-y-4;
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -26,14 +106,6 @@ select option {
 
 select option:checked {
   color: black !important;
-}
-
-/* Line clamp utility for text truncation */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 /* Order Source Badge Styles */

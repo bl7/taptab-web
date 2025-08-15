@@ -29,6 +29,7 @@ export interface MenuItem {
   categoryId: string;
   image?: string;
   isActive: boolean;
+  available: boolean; // Added availability field
   createdAt: string;
   updatedAt: string;
   ingredients?: MenuItemIngredient[];

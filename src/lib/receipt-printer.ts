@@ -62,6 +62,18 @@ export interface WebSocketOrderEvent {
   notificationId?: string; // Add unique notification ID from backend
 }
 
+export interface WebSocketAvailabilityEvent {
+  type: "MENU_ITEM_AVAILABILITY_UPDATE";
+  title?: string;
+  payload: {
+    itemId: string;
+    available: boolean;
+    itemName: string;
+    tenantId: string;
+  };
+  timestamp: string;
+}
+
 export interface OrderNotification {
   id: string;
   order: OrderData;
@@ -83,6 +95,12 @@ export class ReceiptPrinter {
   private maxRetries: number = 5;
   private notifications: OrderNotification[] = [];
   private onNotificationCallback?: (notification: OrderNotification) => void;
+  private onAvailabilityChangeCallback?: (payload: {
+    itemId: string;
+    available: boolean;
+    itemName: string;
+    tenantId: string;
+  }) => void;
   private connectionAttempts: number = 0;
   private maxConnectionAttempts: number = 3;
   private receiptGenerator: ReceiptGenerator;
@@ -266,6 +284,34 @@ export class ReceiptPrinter {
         );
       }
     });
+
+    // MENU ITEM AVAILABILITY UPDATE EVENT HANDLER
+    // Backend sends: menuItemAvailabilityUpdate event
+    this.socket.on(
+      "menuItemAvailabilityUpdate",
+      (data: WebSocketAvailabilityEvent) => {
+        console.log("🔄 Menu item availability update received");
+        console.log("📋 Event details:", {
+          type: data.type,
+          itemId: data.payload?.itemId,
+          available: data.payload?.available,
+          itemName: data.payload?.itemName,
+          tenantId: data.payload?.tenantId,
+          timestamp: data.timestamp,
+        });
+
+        // Process availability update
+        if (data.type === "MENU_ITEM_AVAILABILITY_UPDATE" && data.payload) {
+          console.log("✅ Processing availability update");
+          this.processAvailabilityUpdate(data.payload);
+        } else {
+          console.log(
+            "⚠️ Ignoring menuItemAvailabilityUpdate event with unexpected structure:",
+            data
+          );
+        }
+      }
+    );
 
     // Disconnection
     this.socket.on("disconnect", () => {
@@ -463,6 +509,50 @@ export class ReceiptPrinter {
     return false;
   }
 
+  // Process menu item availability update
+  private processAvailabilityUpdate(payload: {
+    itemId: string;
+    available: boolean;
+    itemName: string;
+    tenantId: string;
+  }) {
+    console.log("🔄 Processing availability update");
+    console.log("📋 Availability details:", {
+      itemId: payload.itemId,
+      itemName: payload.itemName,
+      available: payload.available,
+      tenantId: payload.tenantId,
+    });
+
+    try {
+      // Import the availability store dynamically to avoid circular dependencies
+      import("@/lib/menu-availability-store").then(
+        ({ useMenuAvailabilityStore }) => {
+          // Update the availability store
+          useMenuAvailabilityStore
+            .getState()
+            .setItemAvailability(payload.itemId, payload.available);
+
+          console.log(
+            `✅ Updated availability for ${payload.itemName}: ${
+              payload.available ? "Available" : "Out of Stock"
+            }`
+          );
+
+          // Show browser notification
+          this.showAvailabilityBrowserNotification(payload);
+
+          // Trigger any availability change callbacks
+          if (this.onAvailabilityChangeCallback) {
+            this.onAvailabilityChangeCallback(payload);
+          }
+        }
+      );
+    } catch (error) {
+      console.error("❌ Failed to process availability update:", error);
+    }
+  }
+
   // Mark notification as processed
   private markNotificationAsProcessed(notificationId: string): void {
     this.processedNotificationIds.set(notificationId, Date.now());
@@ -603,6 +693,28 @@ export class ReceiptPrinter {
     }
   }
 
+  // Show availability change browser notification
+  private showAvailabilityBrowserNotification(payload: {
+    itemId: string;
+    available: boolean;
+    itemName: string;
+    tenantId: string;
+  }) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      const status = payload.available ? "Available" : "Out of Stock";
+      const emoji = payload.available ? "✅" : "❌";
+
+      new Notification(`${emoji} Menu Item ${status}!`, {
+        body: `${payload.itemName} is now ${
+          payload.available ? "available" : "out of stock"
+        }`,
+        icon: "/icon.png",
+        tag: `availability_${payload.itemId}`,
+        requireInteraction: false,
+      });
+    }
+  }
+
   // Set notification callback
   onNotification(callback: (notification: OrderNotification) => void) {
     // Only set callback if not already set to prevent duplicates
@@ -618,6 +730,33 @@ export class ReceiptPrinter {
       console.log("⚠️ Notification callback already set, skipping");
       console.log("🔍 Callback Already Set Details:", {
         existingCallbackType: typeof this.onNotificationCallback,
+        newCallbackType: typeof callback,
+      });
+    }
+  }
+
+  // Set availability change callback
+  onAvailabilityChange(
+    callback: (payload: {
+      itemId: string;
+      available: boolean;
+      itemName: string;
+      tenantId: string;
+    }) => void
+  ) {
+    // Only set callback if not already set to prevent duplicates
+    if (!this.onAvailabilityChangeCallback) {
+      console.log("🎯 Setting availability change callback");
+      console.log("🔍 Availability Callback Setup Details:", {
+        callbackType: typeof callback,
+        callbackExists: !!callback,
+        previousCallback: !!this.onAvailabilityChangeCallback,
+      });
+      this.onAvailabilityChangeCallback = callback;
+    } else {
+      console.log("⚠️ Availability change callback already set, skipping");
+      console.log("🔍 Availability Callback Already Set Details:", {
+        existingCallbackType: typeof this.onAvailabilityChangeCallback,
         newCallbackType: typeof callback,
       });
     }
@@ -679,6 +818,7 @@ export class ReceiptPrinter {
       this.socket.off("authentication_error");
       this.socket.off("newOrder");
       this.socket.off("orderModified"); // Added this line
+      this.socket.off("menuItemAvailabilityUpdate");
       this.socket.offAny();
 
       // Disconnect the socket

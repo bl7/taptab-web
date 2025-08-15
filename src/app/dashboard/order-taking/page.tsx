@@ -21,6 +21,8 @@ import {
   usePromotionsCalculation,
 } from "@/components/promotion";
 import { OrderItemForPromotion } from "@/interfaces/promotion";
+import { useMenuAvailabilityStore } from "@/lib/menu-availability-store";
+import { useBulkAvailability } from "@/lib/use-availability-guard";
 
 interface MenuItem {
   id: string;
@@ -31,6 +33,7 @@ interface MenuItem {
   categoryId: string;
   image?: string;
   isActive: boolean;
+  available: boolean; // Added availability field
   createdAt: string;
   updatedAt: string;
   tags?: Array<{
@@ -97,13 +100,13 @@ export default function OrderTakingPage() {
       case "LOW":
         return "bg-green-100 text-green-800 border-green-200";
       case "MEDIUM":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+        return "bg-yellow-100 text-yellow-800 border-green-200";
       case "HIGH":
-        return "bg-orange-100 text-orange-800 border-orange-200";
+        return "bg-orange-100 text-orange-800 border-green-200";
       case "CRITICAL":
-        return "bg-red-100 text-red-800 border-red-200";
+        return "bg-red-100 text-red-800 border-green-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-gray-100 text-gray-800 border-green-200";
     }
   };
 
@@ -125,6 +128,7 @@ export default function OrderTakingPage() {
   const [selectedMenuItemDetails, setSelectedMenuItemDetails] =
     useState<MenuItem | null>(null);
   const [showMobileCart, setShowMobileCart] = useState(false);
+  const [showUnavailable, setShowUnavailable] = useState(true); // Show unavailable items by default
 
   // Promotions calculation hook
   const {
@@ -136,6 +140,10 @@ export default function OrderTakingPage() {
     calculatePromotions,
     clearCalculation,
   } = usePromotionsCalculation(tenantId);
+
+  // Get availability for all items
+  const { availableItems, unavailableItems, hasUnavailable } =
+    useBulkAvailability(menuItems.map((item) => item.id));
 
   useEffect(() => {
     const loadData = async () => {
@@ -151,6 +159,30 @@ export default function OrderTakingPage() {
         setMenuItems(menuResponse.items || []);
         setCategories(categoriesResponse.categories || []);
         setTables(tablesResponse.tables || []);
+
+        // Debug: Log the actual structure of menu items from backend
+        if (menuResponse.items && menuResponse.items.length > 0) {
+          console.log("Sample menu item from backend:", menuResponse.items[0]);
+          console.log("All menu items:", menuResponse.items);
+        }
+
+        // Initialize availability store with menu items
+        if (menuResponse.items) {
+          const availabilityData = menuResponse.items.map((item: MenuItem) => ({
+            id: item.id,
+            available: item.available, // Use the actual available field from backend
+            lastUpdated: new Date(),
+          }));
+
+          // Use the availability store to set bulk availability
+          useMenuAvailabilityStore
+            .getState()
+            .setBulkAvailability(availabilityData);
+
+          console.log(
+            `Initialized availability for ${availabilityData.length} menu items`
+          );
+        }
 
         // Get user and restaurant info
         const userData = localStorage.getItem("user");
@@ -182,22 +214,42 @@ export default function OrderTakingPage() {
           const matchesSearch =
             item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.description.toLowerCase().includes(searchTerm.toLowerCase());
-          return matchesSearch && item.isActive;
+          const matchesAvailability =
+            showUnavailable ||
+            useMenuAvailabilityStore.getState().isItemAvailable(item.id);
+          return matchesSearch && item.isActive && matchesAvailability;
         })
       : menuItems.filter((item) => {
           const matchesCategory = item.categoryId === selectedCategory;
           const matchesSearch =
             item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.description.toLowerCase().includes(searchTerm.toLowerCase());
+          const matchesAvailability =
+            showUnavailable ||
+            useMenuAvailabilityStore.getState().isItemAvailable(item.id);
           console.log(
             `Item: ${item.name}, CategoryId: ${item.categoryId}, Selected: ${selectedCategory}, Matches: ${matchesCategory}`
           );
-          return matchesCategory && matchesSearch && item.isActive;
+          return (
+            matchesCategory &&
+            matchesSearch &&
+            item.isActive &&
+            matchesAvailability
+          );
         });
 
   const addToCart = (item: MenuItem) => {
     if (!selectedTable) {
       showToast.warning("Please select a table first");
+      return;
+    }
+
+    // Check if item is available before adding to cart
+    const isAvailable = useMenuAvailabilityStore
+      .getState()
+      .isItemAvailable(item.id);
+    if (!isAvailable) {
+      showToast.error("This item is currently out of stock");
       return;
     }
 
@@ -333,7 +385,7 @@ export default function OrderTakingPage() {
   }
 
   return (
-    <>
+    <div>
       {/* Desktop/Tablet Layout */}
       <div className="hidden md:flex h-screen bg-gray-50">
         {/* Left Panel - Menu */}
@@ -427,129 +479,198 @@ export default function OrderTakingPage() {
             ))}
           </div>
 
+          {/* Availability Toggle */}
+          <div className="px-3 md:px-6 py-3 border-b border-gray-200 bg-white">
+            <div className="flex items-center space-x-2">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={showUnavailable}
+                  onChange={(e) => setShowUnavailable(e.target.checked)}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">
+                  Show out of stock items
+                </span>
+              </label>
+            </div>
+
+            {/* Availability Summary */}
+            {hasUnavailable && (
+              <div className="text-sm text-gray-600 mt-2">
+                <span className="text-green-600 font-medium">
+                  {availableItems.length} items available
+                </span>
+                {unavailableItems.length > 0 && (
+                  <span className="text-red-600 ml-2">
+                    • {unavailableItems.length} items out of stock
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Menu Grid - Responsive */}
           <div className="flex-1 p-3 md:p-6 overflow-y-auto bg-gray-50">
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
-              {filteredItems.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => addToCart(item)}
-                  className="bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 min-h-[250px] md:min-h-[280px] flex flex-col group"
-                >
-                  {/* Image Container - Responsive */}
-                  <div className="w-full h-32 md:h-40 rounded-lg mb-4 overflow-hidden">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={400}
-                        height={160}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-6xl group-hover:scale-105 transition-transform duration-200">
-                        🍽️
-                      </div>
-                    )}
-                  </div>
+              {filteredItems.map((item) => {
+                const isAvailable = useMenuAvailabilityStore
+                  .getState()
+                  .isItemAvailable(item.id);
 
-                  {/* Item Details - Clean */}
-                  <div className="flex-1">
-                    <div className="font-semibold text-lg mb-2 text-gray-900 group-hover:text-gray-700 transition-colors">
-                      {item.name}
-                    </div>
+                return (
+                  <div
+                    key={item.id}
+                    onClick={() => isAvailable && addToCart(item)}
+                    className={`bg-white rounded-xl p-4 md:p-6 shadow-sm border border-gray-200 transition-all duration-200 min-h-[250px] md:min-h-[280px] flex flex-col group ${
+                      isAvailable
+                        ? "cursor-pointer hover:shadow-md hover:border-gray-300"
+                        : "cursor-not-allowed opacity-60"
+                    }`}
+                  >
+                    {/* Image Container - Responsive */}
+                    <div className="w-full h-32 md:h-40 rounded-lg mb-4 overflow-hidden relative">
+                      {item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={400}
+                          height={160}
+                          className={`w-full h-full object-cover transition-transform duration-200 ${
+                            isAvailable ? "group-hover:scale-105" : ""
+                          }`}
+                        />
+                      ) : (
+                        <div
+                          className={`w-full h-full bg-gray-100 flex items-center justify-center text-6xl transition-transform duration-200 ${
+                            isAvailable ? "group-hover:scale-105" : ""
+                          }`}
+                        >
+                          🍽️
+                        </div>
+                      )}
 
-                    {/* Promotion Badges */}
-                    {appliedPromotions.some((promo) =>
-                      promo.applied_items.includes(item.name)
-                    ) && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {appliedPromotions
-                          .filter((promo) =>
-                            promo.applied_items.includes(item.name)
-                          )
-                          .map((promo) => (
-                            <div
-                              key={promo.id}
-                              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200"
-                            >
-                              {promo.name}
-                            </div>
-                          ))}
-                      </div>
-                    )}
-
-                    {/* Details Link - Moved below name */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShowDetails(item);
-                      }}
-                      className="text-sm text-blue-600 hover:text-blue-800 underline mb-3 transition-colors"
-                    >
-                      View Details
-                    </button>
-
-                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                      {item.description}
-                    </p>
-
-                    {/* Tags */}
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {item.tags.map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="px-2 py-1 rounded-full text-xs font-medium"
-                            style={{
-                              backgroundColor: tag.color + "20",
-                              color: tag.color,
-                            }}
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Allergens */}
-                    {item.allergens && item.allergens.length > 0 && (
-                      <div className="mb-3">
-                        <div className="flex items-center gap-1 mb-1">
-                          <AlertTriangle className="h-3 w-3 text-orange-500" />
-                          <span className="text-xs font-medium text-orange-700">
-                            Allergens:
+                      {/* Out of Stock Overlay */}
+                      {!isAvailable && (
+                        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                          <span className="text-white font-bold text-sm">
+                            Out of Stock
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-1">
-                          {item.allergens.map((allergen) => (
+                      )}
+                    </div>
+
+                    {/* Item Details - Clean */}
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="font-semibold text-lg text-gray-900 group-hover:text-gray-700 transition-colors">
+                          {item.name}
+                        </div>
+
+                        {/* Availability Badge */}
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            isAvailable
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {isAvailable ? "✅ Available" : "❌ Out of Stock"}
+                        </span>
+                      </div>
+
+                      {/* Promotion Badges */}
+                      {appliedPromotions.some((promo) =>
+                        promo.applied_items.includes(item.name)
+                      ) && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {appliedPromotions
+                            .filter((promo) =>
+                              promo.applied_items.includes(item.name)
+                            )
+                            .map((promo) => (
+                              <div
+                                key={promo.id}
+                                className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200"
+                              >
+                                {promo.name}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Details Link - Moved below name */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowDetails(item);
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline mb-3 transition-colors"
+                      >
+                        View Details
+                      </button>
+
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {item.description}
+                      </p>
+
+                      {/* Tags */}
+                      {item.tags && item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-3">
+                          {item.tags.map((tag) => (
                             <span
-                              key={allergen.id}
-                              className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
-                                allergen.severity
-                              )}`}
-                              title={`${allergen.description}${
-                                allergen.sources?.length
-                                  ? ` - Sources: ${allergen.sources
-                                      .map((s) => s.ingredientName)
-                                      .join(", ")}`
-                                  : ""
-                              }`}
+                              key={tag.id}
+                              className="px-2 py-1 rounded-full text-xs font-medium"
+                              style={{
+                                backgroundColor: tag.color + "20",
+                                color: tag.color,
+                              }}
                             >
-                              {allergen.name}
+                              {tag.name}
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Price - Clean */}
-                    <div className="text-2xl font-bold text-gray-900 mb-4">
-                      ${item.price.toFixed(2)}
+                      {/* Allergens */}
+                      {item.allergens && item.allergens.length > 0 && (
+                        <div className="mb-3">
+                          <div className="flex items-center gap-1 mb-1">
+                            <AlertTriangle className="h-3 w-3 text-orange-500" />
+                            <span className="text-xs font-medium text-orange-700">
+                              Allergens:
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {item.allergens.map((allergen) => (
+                              <span
+                                key={allergen.id}
+                                className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
+                                  allergen.severity
+                                )}`}
+                                title={`${allergen.description}${
+                                  allergen.sources?.length
+                                    ? ` - Sources: ${allergen.sources
+                                        .map((s) => s.ingredientName)
+                                        .join(", ")}`
+                                    : ""
+                                }`}
+                              >
+                                {allergen.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Price - Clean */}
+                      <div className="text-2xl font-bold text-gray-900 mb-4">
+                        ${item.price.toFixed(2)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -897,128 +1018,160 @@ export default function OrderTakingPage() {
         {/* Mobile Menu Items - Single Column */}
         <div className="flex-1 px-4 py-4 overflow-y-auto">
           <div className="space-y-4">
-            {filteredItems.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => addToCart(item)}
-                className="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 cursor-pointer transition-all duration-200 hover:shadow-md hover:border-gray-300 active:scale-95"
-              >
-                <div className="flex items-start space-x-4">
-                  {/* Mobile Image */}
-                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        width={80}
-                        height={80}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-2xl">
-                        🍽️
-                      </div>
-                    )}
-                  </div>
+            {filteredItems.map((item) => {
+              const isAvailable = useMenuAvailabilityStore
+                .getState()
+                .isItemAvailable(item.id);
 
-                  {/* Mobile Item Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-900 text-base truncate">
-                        {item.name}
-                      </h3>
-                      <span className="text-green-600 font-bold text-lg ml-2">
-                        ${item.price.toFixed(2)}
-                      </span>
-                    </div>
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => isAvailable && addToCart(item)}
+                  className={`bg-white rounded-2xl p-4 shadow-sm border border-gray-200 transition-all duration-200 active:scale-95 ${
+                    isAvailable
+                      ? "cursor-pointer hover:shadow-md hover:border-gray-300"
+                      : "cursor-not-allowed opacity-60"
+                  }`}
+                >
+                  <div className="flex items-start space-x-4">
+                    {/* Mobile Image */}
+                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 relative">
+                      {item.image ? (
+                        <Image
+                          src={item.image}
+                          alt={item.name}
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-100 flex items-center justify-center text-2xl">
+                          🍽️
+                        </div>
+                      )}
 
-                    {/* Promotion Badges - Mobile */}
-                    {appliedPromotions.some((promo) =>
-                      promo.applied_items.includes(item.name)
-                    ) && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {appliedPromotions
-                          .filter((promo) =>
-                            promo.applied_items.includes(item.name)
-                          )
-                          .map((promo) => (
-                            <div
-                              key={promo.id}
-                              className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200"
-                            >
-                              {promo.name}
-                            </div>
-                          ))}
-                      </div>
-                    )}
-
-                    {/* Details Link - Mobile */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShowDetails(item);
-                      }}
-                      className="text-sm text-blue-600 hover:text-blue-800 underline mb-2 transition-colors"
-                    >
-                      View Details
-                    </button>
-
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                      {item.description}
-                    </p>
-
-                    {/* Tags */}
-                    {item.tags && item.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {item.tags.map((tag) => (
-                          <span
-                            key={tag.id}
-                            className="px-2 py-1 rounded-full text-xs font-medium"
-                            style={{
-                              backgroundColor: tag.color + "20",
-                              color: tag.color,
-                            }}
-                          >
-                            {tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Allergens */}
-                    {item.allergens && item.allergens.length > 0 && (
-                      <div className="mb-2">
-                        <div className="flex items-center gap-1 mb-1">
-                          <AlertTriangle className="h-3 w-3 text-orange-500" />
-                          <span className="text-xs font-medium text-orange-700">
-                            Allergens:
+                      {/* Out of Stock Overlay */}
+                      {!isAvailable && (
+                        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">
+                            Out of Stock
                           </span>
                         </div>
-                        <div className="flex flex-wrap gap-1">
-                          {item.allergens.map((allergen) => (
+                      )}
+                    </div>
+
+                    {/* Mobile Item Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 text-base truncate">
+                            {item.name}
+                          </h3>
+
+                          {/* Availability Badge */}
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium mt-1 inline-block ${
+                              isAvailable
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
+                            {isAvailable ? "✅ Available" : "❌ Out of Stock"}
+                          </span>
+                        </div>
+                        <span className="text-green-600 font-bold text-lg ml-2">
+                          ${item.price.toFixed(2)}
+                        </span>
+                      </div>
+
+                      {/* Promotion Badges - Mobile */}
+                      {appliedPromotions.some((promo) =>
+                        promo.applied_items.includes(item.name)
+                      ) && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {appliedPromotions
+                            .filter((promo) =>
+                              promo.applied_items.includes(item.name)
+                            )
+                            .map((promo) => (
+                              <div
+                                key={promo.id}
+                                className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full border border-green-200"
+                              >
+                                {promo.name}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Details Link - Mobile */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShowDetails(item);
+                        }}
+                        className="text-sm text-blue-600 hover:text-blue-800 underline mb-2 transition-colors"
+                      >
+                        View Details
+                      </button>
+
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                        {item.description}
+                      </p>
+
+                      {/* Tags */}
+                      {item.tags && item.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {item.tags.map((tag) => (
                             <span
-                              key={allergen.id}
-                              className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
-                                allergen.severity
-                              )}`}
-                              title={`${allergen.description}${
-                                allergen.sources?.length
-                                  ? ` - Sources: ${allergen.sources
-                                      .map((s) => s.ingredientName)
-                                      .join(", ")}`
-                                  : ""
-                              }`}
+                              key={tag.id}
+                              className="px-2 py-1 rounded-full text-xs font-medium"
+                              style={{
+                                backgroundColor: tag.color + "20",
+                                color: tag.color,
+                              }}
                             >
-                              {allergen.name}
+                              {tag.name}
                             </span>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {/* Allergens */}
+                      {item.allergens && item.allergens.length > 0 && (
+                        <div className="mb-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <AlertTriangle className="h-3 w-3 text-orange-500" />
+                            <span className="text-xs font-medium text-orange-700">
+                              Allergens:
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1">
+                            {item.allergens.map((allergen) => (
+                              <span
+                                key={allergen.id}
+                                className={`text-xs px-2 py-1 rounded border ${getSeverityColor(
+                                  allergen.severity
+                                )}`}
+                                title={`${allergen.description}${
+                                  allergen.sources?.length
+                                    ? ` - Sources: ${allergen.sources
+                                        .map((s) => s.ingredientName)
+                                        .join(", ")}`
+                                    : ""
+                                }`}
+                              >
+                                {allergen.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -1310,6 +1463,6 @@ export default function OrderTakingPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -1,0 +1,126 @@
+TAPTAB WEBAPP: NOTIFICATION TO RECEIPT DATA EXTRACTION
+======================================================
+
+This document explains how order data flows from WebSocket notifications to being extracted for receipt creation.
+
+1. NOTIFICATION RECEPTION
+-------------------------
+
+1.1 WebSocket Connection Setup
+- The ReceiptPrinter class establishes a WebSocket connection to the backend server
+- Connection is authenticated using JWT tokens
+- Event listeners are set up for different order events
+
+1.2 Notification Types
+- "PRINT_RECEIPT": New orders that need printing
+- "PRINT_MODIFIED_RECEIPT": Modified orders that need updated receipts
+
+1.3 Data Structure Received
+```typescript
+interface WebSocketOrderEvent {
+  type: "PRINT_RECEIPT" | "PRINT_MODIFIED_RECEIPT";
+  order: OrderData;
+  timestamp: string;
+  changes?: OrderChanges;
+  notificationId?: string;
+}
+```
+
+2. ORDER DATA STRUCTURE
+-----------------------
+
+2.1 Core Order Data
+```typescript
+interface OrderData {
+  id: string;
+  orderNumber: string;
+  tableNumber: string;
+  totalAmount: number;
+  finalAmount: number;
+  status: string;
+  customerName: string;
+  customerPhone: string;
+  orderSource?: string;
+  waiterName?: string;
+  sourceDetails?: string;
+  waiterId?: string;
+  restaurantName?: string;
+  items: OrderItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+```
+
+2.2 Order Items
+```typescript
+interface OrderItem {
+  id: string;
+  menuItemId: string;
+  menuItemName: string;
+  quantity: number;
+  price: number;
+  total: number;
+  notes?: string;
+}
+```
+
+2.3 Order Changes (for modifications)
+```typescript
+interface OrderChanges {
+  addedItems: Array<{name: string, quantity: number, price: number, notes: string}>;
+  removedItems: Array<{name: string, quantity: number, price: number, notes: string}>;
+  modifiedItems: Array<{name: string, oldQuantity: number, newQuantity: number, price: number, notes: string}>;
+  modificationType: "add" | "remove" | "modify" | "mixed";
+  modifiedBy: string;
+}
+```
+
+3. DATA EXTRACTION FOR RECEIPT
+------------------------------
+
+3.1 New Order Processing
+- Receives "newOrder" event with type "PRINT_RECEIPT"
+- Validates notification ID to prevent duplicate processing
+- Maps backend data to internal OrderData interface
+- Creates OrderNotification object
+- Extracts data for receipt generation
+
+3.2 Modified Order Processing
+- Receives "orderModified" event with type "PRINT_MODIFIED_RECEIPT"
+- Validates changes object and notification ID
+- Maps backend data to internal OrderData interface
+- Creates OrderNotification object with changes
+- Extracts data for receipt generation including modification details
+
+4. DATA TRANSFORMATION
+----------------------
+
+4.1 Backend Data Mapping
+- Converts backend order structure to internal OrderData format
+- Handles missing fields with fallback values
+- Ensures data consistency for receipt generation
+
+4.2 Receipt Data Preparation
+- Extracts relevant fields for receipt display
+- Calculates totals and item prices
+- Formats customer and waiter information
+- Prepares item lists with quantities and notes
+
+5. COMPLETE DATA FLOW SUMMARY
+-----------------------------
+
+1. Backend sends WebSocket notification with order data
+2. ReceiptPrinter receives and validates notification
+3. Order data is mapped to internal OrderData interface
+4. Data is extracted and formatted for receipt creation
+5. Receipt content is prepared with all necessary information
+
+6. KEY COMPONENTS INVOLVED
+--------------------------
+
+- ReceiptPrinter: Main notification processor and data orchestrator
+- WebSocket connections: Backend notifications
+- Data mapping: Converting backend data to internal formats
+- Receipt data preparation: Extracting and formatting for display
+
+This flow ensures that order notifications are efficiently processed and transformed into structured data ready for receipt creation.

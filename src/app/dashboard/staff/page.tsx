@@ -555,8 +555,9 @@ function AddUserModal({
       return;
     }
 
-    if (password.length < 6) {
-      showToast.validationError("Password must be at least 6 characters long");
+    // Validate PIN format (6 digits)
+    if (!/^\d{6}$/.test(password)) {
+      showToast.validationError("PIN must be exactly 6 digits (0-9)");
       return;
     }
 
@@ -668,7 +669,7 @@ function AddUserModal({
               htmlFor="staff-password"
               className="block text-sm font-medium text-black mb-1"
             >
-              Password
+              PIN *
             </label>
             <input
               id="staff-password"
@@ -677,8 +678,14 @@ function AddUserModal({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent text-black"
-              placeholder="Enter password"
+              placeholder="Enter 6-digit PIN"
+              maxLength={6}
+              pattern="[0-9]*"
+              inputMode="numeric"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Must be exactly 6 digits (0-9)
+            </p>
           </div>
 
           <div className="flex space-x-3 pt-4">

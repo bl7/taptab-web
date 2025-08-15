@@ -92,9 +92,17 @@ export async function POST(request: NextRequest) {
     const { email, firstName, lastName, role, password, tenantId } = body;
 
     // Validate required fields
-    if (!email || !firstName || !lastName || !role) {
+    if (!email || !firstName || !lastName || !role || !password) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate PIN format (6 digits)
+    if (!/^\d{6}$/.test(password)) {
+      return NextResponse.json(
+        { error: "PIN must be exactly 6 digits" },
         { status: 400 }
       );
     }
@@ -130,11 +138,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password if provided
-    let hashedPassword = null;
-    if (password) {
-      hashedPassword = await hashPassword(password);
-    }
+    // Hash PIN (password is now required)
+    const hashedPassword = await hashPassword(password);
 
     // Create user
     const result = await pool.query(
